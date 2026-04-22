@@ -1,5 +1,5 @@
 # Move Generation
-from move import Move
+from core.move import Move, MoveFlag
 
 #our square function
 def iterateBits(bb):
@@ -65,6 +65,25 @@ def generateMoves(gs):
             allMoves.append(Move(sq, to_sq))
     
     return allMoves
+
+def applyMove(gs, move):
+    from_bb = 1 << move.from_sq
+    to_bb = 1 << move.to_sq
+
+    for attr in PIECE_BITBOARDS:
+        bb = getattr(gs, attr)
+        if bb & from_bb:
+            setattr(gs, attr, (bb & ~from_bb) | to_bb)
+            break
+
+    if move.flags & MoveFlag.CAPTURE:
+        for attr in PIECE_BITBOARDS:
+            bb = getattr(gs, attr)
+            if bb & to_bb:
+                setattr(gs, attr, bb & ~to_bb)
+                break
+
+    gs.whiteToMove = not gs.whiteToMove
 
 
 

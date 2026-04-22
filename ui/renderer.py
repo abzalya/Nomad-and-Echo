@@ -3,6 +3,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core import board
+from core import move_generator
 
 p.init()
 
@@ -19,23 +20,6 @@ def loadImages(square_size):
     piece_size = int(square_size * 0.9)
     for piece in pieces:
         IMAGES[piece] = p.transform.scale(p.image.load("assets/pieces/" + piece + ".png"), (piece_size, piece_size))
-
-def main():
-    screen = p.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT),p.RESIZABLE)
-    p.display.set_caption("Chess")
-
-    gs = board.gameState()
-    w, h = screen.get_size()
-    loadImages(min(w, h) // 8)
-    running = True
-
-    while running:
-        for e in p.event.get():
-            if e.type == p.QUIT:
-                running = False
-        
-        drawGameState(screen, gs)
-        p.display.flip()
 
 def drawGameState(screen, gs):
     w, h = screen.get_size()
@@ -65,13 +49,13 @@ PIECE_BITBOARDS = [
     ("wR", "whiteRooks"),
     ("wN", "whiteKnights"),
     ("wB", "whiteBishops"),
-    ("wQ", "whiteQueen"),
+    ("wQ", "whiteQueens"),
     ("wK", "whiteKing"),
     ("bp", "blackPawns"),
     ("bR", "blackRooks"),
     ("bN", "blackKnights"),
     ("bB", "blackBishops"),
-    ("bQ", "blackQueen"),
+    ("bQ", "blackQueens"),
     ("bK", "blackKing"),
 ]
 
@@ -89,7 +73,69 @@ def drawPieces(square_size, board_start_x, board_start_y, screen, gs):
         screen.blit(IMAGES[key], (x, y))
 
 
+def screenToSquare(mx, my, board_start_x, board_start_y, square_size):
+    col = (mx - board_start_x) // square_size
+    row = (my - board_start_y) // square_size
+    if 0 <= col < 8 and 0 <= row < 8:
+        return (7 - row) * 8 + col
+    return None
 
+def drawHighlights(screen, moves, square_size, board_start_x, board_start_y):
+    for m in moves:
+        col = m.to_sq % 8
+        row = 7 - m.to_sq // 8
+        x = board_start_x + col * square_size
+        y = board_start_y + row * square_size
+        s = p.Surface((square_size, square_size), p.SRCALPHA)
+        s.fill((0, 255, 0, 80))
+        screen.blit(s, (x, y))
+
+def main():
+    screen = p.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), p.RESIZABLE)
+    p.display.set_caption("Chess")
+
+    gs = board.gameState()
+    w, h = screen.get_size()
+    loadImages(min(w, h) // 8)
+    running = True
+
+    allLegalMoves = move_generator.generateMoves(gs)
+    selectedSq = None
+    movesFromSelected = []
+
+    while running:
+        w, h = screen.get_size()
+        square_size = min(w, h) // 8
+        board_start_x = (w - square_size * 8) // 2
+        board_start_y = (h - square_size * 8) // 2
+
+        for e in p.event.get():
+            if e.type == p.QUIT:
+                running = False
+            if e.type == p.MOUSEBUTTONDOWN:
+                sq = screenToSquare(e.pos[0], e.pos[1], board_start_x, board_start_y, square_size)
+                if sq is None:
+                    selectedSq = None
+                    movesFromSelected = []
+                elif selectedSq is None:
+                    selectedSq = sq
+                    movesFromSelected = [m for m in allLegalMoves if m.from_sq == sq]
+                else:
+                    move = next((m for m in movesFromSelected if m.to_sq == sq), None)
+                    if move:
+                        move_generator.applyMove(gs, move)
+                        allLegalMoves = move_generator.generateMoves(gs)
+                    selectedSq = None
+                    movesFromSelected = []
+
+        drawGameState(screen, gs)
+        drawHighlights(screen, movesFromSelected, square_size, board_start_x, board_start_y)
+        p.display.flip()
 
 if __name__ == "__main__":
     main()
+
+
+#Bugs found: pawn moves allow captures on paper, highlights enemy square. but eating the enemy pawn doesnt clear the piece on the board
+#king is unable to eat? i dont know if there is a pawn hidden behind the pawn or something ?
+#sometimes, when i click apiece thats "ghosting" it will calculate legal moves of the other piece. for example. knight above the king will somehow allow the king to jump as a knight later. 
