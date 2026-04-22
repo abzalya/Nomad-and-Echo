@@ -1,4 +1,5 @@
 # Move Generation
+from move import Move
 
 #our square function
 def iterateBits(bb):
@@ -25,34 +26,64 @@ PIECE_BITBOARDS = [
     "whiteRooks",
     "whiteKnights",
     "whiteBishops",
-    "whiteQueen",
+    "whiteQueens",
     "whiteKing",
     "blackPawns",
     "blackRooks",
     "blackKnights",
     "blackBishops",
-    "blackQueen",
+    "blackQueens",
     "blackKing",
 ]
 
-# way to get them 
-#getattr(gs, piece)
+def generateMoves(gs):
+    allMoves = []
+    whitePieces = gs.whitePawns | gs.whiteRooks | gs.whiteKnights | gs.whiteBishops | gs.whiteQueens | gs.whiteKing
+    blackPieces = gs.blackPawns | gs.blackRooks | gs.blackKnights | gs.blackBishops | gs.blackQueens | gs.blackKing
+    allPieces = whitePieces | blackPieces
+
+    if gs.whiteToMove:
+        ownPieces = whitePieces
+        enemyPieces = blackPieces
+    else:
+        ownPieces = blackPieces
+        enemyPieces = whitePieces
+    
+    for sq in iterateBits(gs.whitePawns if gs.whiteToMove else gs.blackPawns):
+        bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces)
+        for to_sq in iterateBits(bb):
+            allMoves.append(Move(sq, to_sq))
+    
+    for sq in iterateBits(gs.whiteKnights if gs.whiteToMove else gs.blackKnights):
+        bb = knightMoves(sq, ownPieces)
+        for to_sq in iterateBits(bb):
+            allMoves.append(Move(sq, to_sq))
+    
+    for sq in iterateBits(gs.whiteKing if gs.whiteToMove else gs.blackKing):
+        bb = kingMoves(sq, ownPieces)
+        for to_sq in iterateBits(bb):
+            allMoves.append(Move(sq, to_sq))
+    
+    return allMoves
+
+
 
 
 #Selected Piece Logic
 def selectedPiece(sq, gs):
     bb = 1 << sq
     for piece in PIECE_BITBOARDS:
-        if bb & getattr(gs, piece) > 1:
+        if bb & getattr(gs, piece) != 0:
             return piece
     return None    
 
 
-# Starting off with knights
 NOT_A_FILE = 0xFEFEFEFEFEFEFEFE
 NOT_H_FILE = 0x7F7F7F7F7F7F7F7F
 NOT_AB_FILE = 0xFCFCFCFCFCFCFCFC
 NOT_GH_FILE = 0x3F3F3F3F3F3F3F3F
+RANK_2 = 0x000000000000FF00
+RANK_7 = 0x00FF000000000000
 
 def knightAttacks(sq):
     bb = 1 << sq
@@ -65,6 +96,10 @@ def knightAttacks(sq):
     attacks |= ((bb >> 10) & NOT_GH_FILE)
     attacks |= ((bb >>  6) & NOT_AB_FILE)
     return attacks
+
+def knightMoves(sq, ownPieces):
+    attacks = knightAttacks(sq)
+    return attacks & ~ownPieces
 
 #In practice people precompute all 64 results once at startup into a lookup table so you're never recalculating:
 #KNIGHT_ATTACKS = [knight_attacks(sq) for sq in range(64)]
@@ -80,7 +115,47 @@ def kingAttacks(sq):
     attacks |= ((bb >> 7) & NOT_H_FILE) #bot right
     attacks |= ((bb >> 9) & NOT_A_FILE) #bot left
     return attacks
-    
+
+def kingMoves(sq, ownPieces):
+    attacks = kingAttacks(sq)
+    return attacks & ~ownPieces
+
+def pawnMoves(sq, whiteToMove):
+    bb = 1 << sq
+    if whiteToMove:
+        moves = (bb << 8)
+        if (bb & RANK_2 != 0):
+            moves |= (bb << 16)
+        return moves
+    else:
+        moves = (bb >> 8)
+        if (bb & RANK_7 != 0):
+            moves |= (bb >> 16)
+        return moves
+
+def pawnAttacks(sq, whiteToMove, enemyPieces):
+    bb = 1 << sq
+    if whiteToMove:
+        attacks  = (bb << 7) & NOT_H_FILE
+        attacks |= (bb << 9) & NOT_A_FILE
+    else:
+        attacks  = (bb >> 7) & NOT_A_FILE
+        attacks |= (bb >> 9) & NOT_H_FILE
+    return attacks & enemyPieces
+
+def pawnActions(sq, whiteToMove, ownPieces, enemyPieces):
+    moves   = pawnMoves(sq, whiteToMove)
+    attacks = pawnAttacks(sq, whiteToMove, enemyPieces)
+    return (moves | attacks) & ~ownPieces
+        
+
+
+def verticalRayAttacks(sq):
+    #apply a ray on all the squares (empty board)
+    #& with bitboards of all pieces
+    #find lsb index using iterate bits ?
+    pass
+
 
 #Notes
 #global colour check in my head is essentially
