@@ -100,7 +100,7 @@ def main():
     loadImages(min(w, h) // 8)
     running = True
 
-    allLegalMoves = move_generator.generateMoves(gs)
+    allLegalMoves = move_generator.legalMoves(gs)
     selectedSq = None
     movesFromSelected = []
 
@@ -125,7 +125,7 @@ def main():
                     move = next((m for m in movesFromSelected if m.to_sq == sq), None)
                     if move:
                         move_generator.applyMove(gs, move)
-                        allLegalMoves = move_generator.generateMoves(gs)
+                        allLegalMoves = move_generator.legalMoves(gs)
                         selectedSq = None
                         movesFromSelected = []
                     else:
@@ -144,8 +144,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-#Bugs found: pawn moves allow captures on paper, highlights enemy square. but eating the enemy pawn doesnt clear the piece on the board
-#king is unable to eat? i dont know if there is a pawn hidden behind the pawn or something ?
-#sometimes, when i click apiece thats "ghosting" it will calculate legal moves of the other piece. for example. knight above the king will somehow allow the king to jump as a knight later. 
