@@ -153,7 +153,6 @@ def legalMoves(gs):
     return allLegalMoves
 
 
-
 FULL = 0xFFFFFFFFFFFFFFFF
 NOT_A_FILE = 0xFEFEFEFEFEFEFEFE
 NOT_H_FILE = 0x7F7F7F7F7F7F7F7F
@@ -191,24 +190,23 @@ def kingAttacks(sq):
     attacks |= ((bb << 9) & NOT_H_FILE) #top right
     attacks |= ((bb >> 7) & NOT_H_FILE) #bot right
     attacks |= ((bb >> 9) & NOT_A_FILE) #bot left
-    return attacks
+    return attacks & FULL #there was a legal move that was moving the king off the board preventing checkmate. apply the FULL Mask to fix. 
 
 def kingMoves(sq, ownPieces):
     attacks = kingAttacks(sq)
     return attacks & ~ownPieces
 
-def pawnMoves(sq, whiteToMove):
+def pawnMoves(sq, whiteToMove, allPieces):
     bb = 1 << sq
     if whiteToMove:
-        moves = (bb << 8)
-        if (bb & RANK_2 != 0):
-            moves |= (bb << 16)
-        return moves
+        moves = (bb << 8) & ~allPieces
+        if (bb & RANK_2) and moves: #fixing pawn jumping over pieces on double-push
+            moves |= (bb << 16) & ~allPieces
     else:
-        moves = (bb >> 8)
-        if (bb & RANK_7 != 0):
-            moves |= (bb >> 16)
-        return moves 
+        moves = (bb >> 8) & ~allPieces
+        if (bb & RANK_7) and moves:
+            moves |= (bb >> 16) & ~allPieces
+    return moves & FULL
 
 def pawnAttacks(sq, whiteToMove, enemyPieces):
     bb = 1 << sq
@@ -221,10 +219,10 @@ def pawnAttacks(sq, whiteToMove, enemyPieces):
     return attacks & enemyPieces
 
 def pawnActions(sq, whiteToMove, ownPieces, enemyPieces):
-    moves   = pawnMoves(sq, whiteToMove)
-    attacks = pawnAttacks(sq, whiteToMove, enemyPieces)
     allPieces = ownPieces | enemyPieces
-    return (moves & ~ allPieces) | (attacks & ~ownPieces) #blocking pushing onto enemy pieces
+    moves = pawnMoves(sq, whiteToMove, allPieces)
+    attacks = pawnAttacks(sq, whiteToMove, enemyPieces)
+    return moves | (attacks & ~ownPieces)
         
 # def positiveRayAttacks(sq, enemyPieces, ownPieces, direction, fileMask=FULL):
 #     # we cast a ray in a positive direction and get a bb of attacks. & with all pieces to find blockers.

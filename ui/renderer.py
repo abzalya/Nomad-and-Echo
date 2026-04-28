@@ -91,6 +91,17 @@ def drawHighlights(screen, moves, square_size, board_start_x, board_start_y):
         p.draw.circle(s, (50, 50, 50, 130), (square_size // 2, square_size // 2), radius)
         screen.blit(s, (bx, by))
 
+def drawStatus(screen, status):
+    font = p.font.SysFont("Helvetica", 48, bold=True)
+    w, h = screen.get_size()
+    text = font.render(status, True, (220, 20, 20))
+    rect = text.get_rect(center=(w//2, h//2))
+    # semi-transparent backing
+    s = p.Surface((rect.width + 20, rect.height + 10), p.SRCALPHA)
+    s.fill((0, 0, 0, 150))
+    screen.blit(s, (rect.x - 10, rect.y - 5))
+    screen.blit(text, rect)
+
 def main():
     screen = p.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), p.RESIZABLE)
     p.display.set_caption("Chess")
@@ -103,6 +114,7 @@ def main():
     allLegalMoves = move_generator.legalMoves(gs)
     selectedSq = None
     movesFromSelected = []
+    gameStatus = ""
 
     while running:
         w, h = screen.get_size()
@@ -113,7 +125,7 @@ def main():
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
-            if e.type == p.MOUSEBUTTONDOWN:
+            if e.type == p.MOUSEBUTTONDOWN and not gameStatus:
                 sq = screenToSquare(e.pos[0], e.pos[1], board_start_x, board_start_y, square_size)
                 if sq is None:
                     selectedSq = None
@@ -128,6 +140,21 @@ def main():
                         allLegalMoves = move_generator.legalMoves(gs)
                         selectedSq = None
                         movesFromSelected = []
+                        #####DEBUGGING PRINTING######
+                        print(f"Legal moves after move: {len(allLegalMoves)}")
+                        if len(allLegalMoves) <= 3:
+                            for m in allLegalMoves:
+                                print(f"  move: from={m.from_sq} to={m.to_sq} flags={m.flags}")
+                        #####DEBUGGING PRINTING######
+                        if not allLegalMoves: #due to reverse lookup inCheck function inverting colors. need to flip whiteToMove before calling.
+                            gs.whiteToMove = not gs.whiteToMove
+                            in_check = move_generator.inCheck(gs)
+                            gs.whiteToMove = not gs.whiteToMove
+                            gameStatus = "Checkmate" if in_check else "Stalemate"
+                            #####DEBUGGING PRINTING######
+                            print(f"Game ended: {gameStatus}")
+                            #####DEBUGGING PRINTING######
+
                     else:
                         # clicking a different piece: swap selection immediately
                         newMoves = [m for m in allLegalMoves if m.from_sq == sq]
@@ -140,6 +167,8 @@ def main():
 
         drawGameState(screen, gs)
         drawHighlights(screen, movesFromSelected, square_size, board_start_x, board_start_y)
+        if gameStatus:
+            drawStatus(screen, gameStatus)
         p.display.flip()
 
 if __name__ == "__main__":
