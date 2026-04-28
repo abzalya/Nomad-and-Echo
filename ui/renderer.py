@@ -81,14 +81,15 @@ def screenToSquare(mx, my, board_start_x, board_start_y, square_size):
     return None
 
 def drawHighlights(screen, moves, square_size, board_start_x, board_start_y):
+    radius = square_size // 6
     for m in moves:
         col = m.to_sq % 8
         row = 7 - m.to_sq // 8
-        x = board_start_x + col * square_size
-        y = board_start_y + row * square_size
+        bx = board_start_x + col * square_size
+        by = board_start_y + row * square_size
         s = p.Surface((square_size, square_size), p.SRCALPHA)
-        s.fill((0, 255, 0, 80))
-        screen.blit(s, (x, y))
+        p.draw.circle(s, (50, 50, 50, 130), (square_size // 2, square_size // 2), radius)
+        screen.blit(s, (bx, by))
 
 def main():
     screen = p.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), p.RESIZABLE)
@@ -125,8 +126,17 @@ def main():
                     if move:
                         move_generator.applyMove(gs, move)
                         allLegalMoves = move_generator.generateMoves(gs)
-                    selectedSq = None
-                    movesFromSelected = []
+                        selectedSq = None
+                        movesFromSelected = []
+                    else:
+                        # clicking a different piece: swap selection immediately
+                        newMoves = [m for m in allLegalMoves if m.from_sq == sq]
+                        if newMoves:
+                            selectedSq = sq
+                            movesFromSelected = newMoves
+                        else:
+                            selectedSq = None
+                            movesFromSelected = []
 
         drawGameState(screen, gs)
         drawHighlights(screen, movesFromSelected, square_size, board_start_x, board_start_y)

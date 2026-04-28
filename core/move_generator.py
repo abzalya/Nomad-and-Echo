@@ -52,17 +52,21 @@ def generateMoves(gs):
     for sq in iterateBits(gs.whitePawns if gs.whiteToMove else gs.blackPawns):
         bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces)
         for to_sq in iterateBits(bb):
-            allMoves.append(Move(sq, to_sq))
+            flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+            promo_piece = None
+            allMoves.append(Move(sq, to_sq, flag, promo_piece))
     
     for sq in iterateBits(gs.whiteKnights if gs.whiteToMove else gs.blackKnights):
         bb = knightMoves(sq, ownPieces)
         for to_sq in iterateBits(bb):
-            allMoves.append(Move(sq, to_sq))
+            flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+            allMoves.append(Move(sq, to_sq, flag))
     
     for sq in iterateBits(gs.whiteKing if gs.whiteToMove else gs.blackKing):
         bb = kingMoves(sq, ownPieces)
         for to_sq in iterateBits(bb):
-            allMoves.append(Move(sq, to_sq))
+            flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+            allMoves.append(Move(sq, to_sq, flag))
     
     return allMoves
 
@@ -70,18 +74,18 @@ def applyMove(gs, move):
     from_bb = 1 << move.from_sq
     to_bb = 1 << move.to_sq
 
-    for attr in PIECE_BITBOARDS:
-        bb = getattr(gs, attr)
-        if bb & from_bb:
-            setattr(gs, attr, (bb & ~from_bb) | to_bb)
-            break
-
     if move.flags & MoveFlag.CAPTURE:
         for attr in PIECE_BITBOARDS:
             bb = getattr(gs, attr)
             if bb & to_bb:
-                setattr(gs, attr, bb & ~to_bb)
+                setattr(gs, attr, bb & ~to_bb) #clears the "to" square
                 break
+
+    for attr in PIECE_BITBOARDS:
+        bb = getattr(gs, attr)
+        if bb & from_bb:
+            setattr(gs, attr, (bb & ~from_bb) | to_bb) #clears the "from" square and sets "to" square
+            break
 
     gs.whiteToMove = not gs.whiteToMove
 
