@@ -51,9 +51,14 @@ def generateMoves(gs):
         enemyPieces = whitePieces
     
     for sq in iterateBits(gs.whitePawns if gs.whiteToMove else gs.blackPawns):
-        bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces)
+        bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces, gs.epSquare)
         for to_sq in iterateBits(bb):
-            flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+            if to_sq == gs.epSquare:
+                flag = MoveFlag.EN_PASSANT
+            elif (1 << to_sq) & enemyPieces:
+                flag = MoveFlag.CAPTURE
+            else:
+                flag = MoveFlag.NORMAL
             promo_piece = None
             allMoves.append(Move(sq, to_sq, flag, promo_piece))
     
@@ -113,7 +118,7 @@ def inCheck(gs): #reverse lookup approach
         enemyQueens = gs.blackQueens
 
     for sq in iterateBits(ownKing):
-        checks  = pawnAttacks(sq, not gs.whiteToMove, enemyPawns)
+        checks  = pawnAttacks(sq, not gs.whiteToMove, enemyPawns, -1)
         checks |= knightAttacks(sq) & enemyKnights
         checks |= bishopAttacks(sq, enemyPieces, ownPieces) & (enemyBishops | enemyQueens)
         checks |= rookAttacks(sq, enemyPieces, ownPieces) & (enemyRooks | enemyQueens)
@@ -134,10 +139,29 @@ def applyMove(gs, move):
                 setattr(gs, attr, bb & ~to_bb) #clears the "to" square
                 break
 
+    if move.flags & MoveFlag.EN_PASSANT:
+        for attr in PIECE_BITBOARDS:
+            bb = getattr(gs, attr)
+            #we need to clear the position of the double pushed pawn
+            #to square is always on rank rank 6 or rank 3
+            #the position of the double push pawn is always on rank 4 or 5
+            #look in both directions and then clear with masks
+            en_bb = (to_bb << 8)
+            en_bb |= (to_bb >> 8)
+            en_bb &= ~RANK_2
+            en_bb &= ~RANK_7
+            if bb & en_bb:
+                setattr(gs, attr, bb & ~en_bb) #clears the double push square
+                break
+
     for attr in PIECE_BITBOARDS:
         bb = getattr(gs, attr)
         if bb & from_bb:
             setattr(gs, attr, (bb & ~from_bb) | to_bb) #clears the "from" square and sets "to" square
+            if attr in ("whitePawns", "blackPawns") and abs(move.to_sq - move.from_sq) == 16:
+                gs.epSquare = (move.from_sq + move.to_sq) // 2
+            else:
+                gs.epSquare = -1
             break
 
     gs.whiteToMove = not gs.whiteToMove
@@ -208,20 +232,23 @@ def pawnMoves(sq, whiteToMove, allPieces):
             moves |= (bb >> 16) & ~allPieces
     return moves & FULL
 
-def pawnAttacks(sq, whiteToMove, enemyPieces):
+def pawnAttacks(sq, whiteToMove, enemyPieces, epSquare):
     bb = 1 << sq
+    ep_bb = 0
     if whiteToMove:
         attacks  = (bb << 7) & NOT_H_FILE
         attacks |= (bb << 9) & NOT_A_FILE
     else:
         attacks  = (bb >> 7) & NOT_A_FILE
         attacks |= (bb >> 9) & NOT_H_FILE
-    return attacks & enemyPieces
+    if epSquare != -1:
+            ep_bb = (1 << epSquare)
+    return attacks & (enemyPieces | ep_bb)
 
-def pawnActions(sq, whiteToMove, ownPieces, enemyPieces):
+def pawnActions(sq, whiteToMove, ownPieces, enemyPieces, epSquare):
     allPieces = ownPieces | enemyPieces
     moves = pawnMoves(sq, whiteToMove, allPieces)
-    attacks = pawnAttacks(sq, whiteToMove, enemyPieces)
+    attacks = pawnAttacks(sq, whiteToMove, enemyPieces, epSquare)
     return moves | (attacks & ~ownPieces)
         
 # def positiveRayAttacks(sq, enemyPieces, ownPieces, direction, fileMask=FULL):

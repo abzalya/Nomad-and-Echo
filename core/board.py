@@ -14,7 +14,6 @@ class gameState:
         self.blackKing    = 0b0001000000000000000000000000000000000000000000000000000000000000
         #so some bit wise ops for this are &, |, <<8 is move one up 
         #LSB is a1, MSB is h8
-
-
         self.whiteToMove = True
         self.moveLog = []
+        self.epSquare = -1 #en passant square that was jumped over
