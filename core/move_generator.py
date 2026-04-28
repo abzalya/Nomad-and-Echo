@@ -68,6 +68,26 @@ def generateMoves(gs):
             flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
             allMoves.append(Move(sq, to_sq, flag))
     
+    for sq in iterateBits(gs.whiteBishops if gs.whiteToMove else gs.blackBishops):
+        bb = bishopAttacks(sq, enemyPieces, ownPieces)
+        for to_sq in iterateBits(bb):
+            flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+            allMoves.append(Move(sq, to_sq, flag))
+    
+    for sq in iterateBits(gs.whiteRooks if gs.whiteToMove else gs.blackRooks):
+        bb = rookAttacks(sq, enemyPieces, ownPieces)
+        for to_sq in iterateBits(bb):
+            flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+            allMoves.append(Move(sq, to_sq, flag))
+    
+    for sq in iterateBits(gs.whiteQueens if gs.whiteToMove else gs.blackQueens):
+        bb = queenAttacks(sq, enemyPieces, ownPieces)
+        for to_sq in iterateBits(bb):
+            flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+            allMoves.append(Move(sq, to_sq, flag))
+    
+
+
     return allMoves
 
 def applyMove(gs, move):
@@ -100,7 +120,7 @@ def selectedPiece(sq, gs):
             return piece
     return None    
 
-
+FULL = 0xFFFFFFFFFFFFFFFF
 NOT_A_FILE = 0xFEFEFEFEFEFEFEFE
 NOT_H_FILE = 0x7F7F7F7F7F7F7F7F
 NOT_AB_FILE = 0xFCFCFCFCFCFCFCFC
@@ -154,7 +174,7 @@ def pawnMoves(sq, whiteToMove):
         moves = (bb >> 8)
         if (bb & RANK_7 != 0):
             moves |= (bb >> 16)
-        return moves
+        return moves 
 
 def pawnAttacks(sq, whiteToMove, enemyPieces):
     bb = 1 << sq
@@ -169,68 +189,86 @@ def pawnAttacks(sq, whiteToMove, enemyPieces):
 def pawnActions(sq, whiteToMove, ownPieces, enemyPieces):
     moves   = pawnMoves(sq, whiteToMove)
     attacks = pawnAttacks(sq, whiteToMove, enemyPieces)
-    return (moves | attacks) & ~ownPieces
+    allPieces = ownPieces | enemyPieces
+    return (moves & ~ allPieces) | (attacks & ~ownPieces) #blocking pushing onto enemy pieces
         
+def positiveRayAttacks(sq, enemyPieces, ownPieces, direction, fileMask=FULL):
+    # we cast a ray in a positive direction and get a bb of attacks. & with all pieces to find blockers.
+    # anding with the blockers mask returns all moves negative of the blocker. 
+    allPieces = ownPieces | enemyPieces
+    bb = 1 << sq
+    attacks = 0
+    for i in range (1,8):
+        attacks |= (bb << (direction * i)) & fileMask & FULL
+    blockers = attacks & allPieces
+    if blockers:
+        lsbOfBlockers = blockers & -blockers
+        lsbMask = (lsbOfBlockers << 1) - 1 # fills all lower bits of lsb with 1
+        attacks &= lsbMask
+    #add breaks on first block detection?
+    return attacks & ~ownPieces
 
+def negativeRayAttacks(sq, enemyPieces, ownPieces, direction, fileMask=FULL):
+    allPieces = ownPieces | enemyPieces
+    bb = 1 << sq
+    attacks = 0
+    for i in range (1,8):
+        attacks |= (bb >> (direction * i)) & fileMask & FULL
+    blockers = attacks & allPieces
+    if blockers:
+        msbOfBlockers = 1 << (blockers.bit_length() -1)
+        msbMask = msbOfBlockers - 1
+        attacks &= ~msbMask #~on mask required here
+    return attacks & ~ownPieces 
 
-def verticalRayAttacks(sq):
-    #apply a ray on all the squares (empty board)
-    #& with bitboards of all pieces
-    #find lsb index using iterate bits ?
-    pass
+#Directions
+#positive
+#N, <<8, none
+#NE, <<9, not a
+#E, <<1, not a
+#NW, <<7, not h
+#negative
+#S, >>8, none
+#SE, >>7, not a
+#W, >>1, not h
+#SW, >>9, not h
+
+def rookAttacks(sq, enemyPieces, ownPieces):
+    attacks = positiveRayAttacks(sq, enemyPieces, ownPieces, 8)
+    attacks |= positiveRayAttacks(sq, enemyPieces, ownPieces, 1, NOT_A_FILE)
+    attacks |= negativeRayAttacks(sq, enemyPieces, ownPieces, 8)
+    attacks |= negativeRayAttacks(sq, enemyPieces, ownPieces, 1, NOT_H_FILE)
+    return attacks
+
+def bishopAttacks(sq, enemyPieces, ownPieces):
+    attacks = positiveRayAttacks(sq, enemyPieces, ownPieces, 9, NOT_A_FILE)
+    attacks |= positiveRayAttacks(sq, enemyPieces, ownPieces, 7, NOT_H_FILE)
+    attacks |= negativeRayAttacks(sq, enemyPieces, ownPieces, 7, NOT_A_FILE)
+    attacks |= negativeRayAttacks(sq, enemyPieces, ownPieces, 9, NOT_H_FILE)
+    return attacks
+
+def queenAttacks(sq, enemyPieces, ownPieces):
+    attacks = rookAttacks(sq, enemyPieces, ownPieces)
+    attacks |= bishopAttacks(sq, enemyPieces, ownPieces)
+    return attacks
 
 
 #Notes
-#global colour check in my head is essentially
-#white turn to move & (selectedsquare & whitepieces) for white
-#!whiteturntomove & (selectedsquare & blackpieces) for black
-
-#Knights
-#8 moves, mask the files that are out of the board
-#And with NOT its colour to get legal moves (without the check check)
 
 #pawns
-#if whiteturntomove & (selectedsquare & whitepieces) this should check if we clicked white piece and together with white to move
-#check if white move and white piece 
-#offset is positive to move up. if selectedsquare is rank 2 then allow 1 or 2 moves
-#pawn attacks & selected square & blackpieces then legal capture
-#this is not including enpassant
+#enpassant
+#2 push can jump over stuff right now
 
 #king
-#all 8 directions, mask edges
 #needs check and needs castling
-
+#The check detection for castling also needs to verify the king doesn't pass through an attacked square, not just land on one.
+    
 #rays
 #create a hardcoded bitmap of the rays going out from selected square
 # & with not colour of piece to leave only squares we can get to
 #how to dissallow squares beyond the pieces and only first capture ?
 
-#Knights — correct. Mask A-file for -17, -10, +6, +15 and B-file for -10, +6 (same side). H-file and G-file for the other side. Then & ~own_pieces.
-
-# Pawns — correct logic. One thing to add: the double push should check that the intermediate square is also empty, not just the destination.
-
-# King — correct. The check detection for castling also needs to verify the king doesn't pass through an attacked square, not just land on one.
-
-# Rays — this is the one to think about more carefully. The standard bitboard approach is:
-
-
 # cast ray in a direction
 # & with all occupied pieces → finds the first blocker
 # everything beyond the blocker gets masked off
 # then & ~own_pieces to allow capturing the blocker if it's an enemy
-
-# --- OVERALL APPROACH ---
-# At the start of each turn, generate ALL legal moves for ALL pieces into a flat list:
-#   all_legal_moves = [Move(from_sq, to_sq, flags), ...]
-# Each Move stores the origin square, destination, and any special flags.
-# No two moves will ever share the same (from_sq, to_sq) pair.
-#
-# When a square is clicked:
-#   legal_from_here = [m for m in all_legal_moves if m.from_sq == clicked_sq]
-#   highlight all m.to_sq in that list
-#
-# When a destination is clicked:
-#   find Move(from_sq=first_click, to_sq=second_click) in the list → apply it
-#
-# This list is also used to detect checkmate (empty = checkmate/stalemate)
-# and by the engine to search through candidate moves.
