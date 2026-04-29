@@ -4,6 +4,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core import board
 from core import move_generator
+from core.move import MoveFlag
 
 p.init()
 
@@ -91,6 +92,51 @@ def drawHighlights(screen, moves, square_size, board_start_x, board_start_y):
         p.draw.circle(s, (50, 50, 50, 130), (square_size // 2, square_size // 2), radius)
         screen.blit(s, (bx, by))
 
+PROMO_ATTR_TO_KEY = {
+    "whiteQueens": "wQ", "whiteRooks": "wR", "whiteBishops": "wB", "whiteKnights": "wN",
+    "blackQueens": "bQ", "blackRooks": "bR", "blackBishops": "bB", "blackKnights": "bN",
+}
+
+def drawPromotionPicker(screen, pendingPromotions, whiteToMove):
+    w, h = screen.get_size()
+    square_size = min(w, h) // 8
+    board_start_x = (w - square_size * 8) // 2
+    board_start_y = (h - square_size * 8) // 2
+    offset = (square_size - int(square_size * 0.9)) // 2
+
+    to_sq = pendingPromotions[0].to_sq
+    col = to_sq % 8
+    base_row = 7 - to_sq // 8  # 0 for white (rank 8 top), 7 for black (rank 1 bottom)
+
+    background = screen.copy()
+
+    while True:
+        screen.blit(background, (0, 0))
+        overlay = p.Surface((w, h), p.SRCALPHA)
+        overlay.fill((0, 0, 0, 120))
+        screen.blit(overlay, (0, 0))
+
+        rects = []
+        for i, m in enumerate(pendingPromotions):
+            picker_row = base_row + i if whiteToMove else base_row - i
+            bx = board_start_x + col * square_size
+            by = board_start_y + picker_row * square_size
+            rect = p.Rect(bx, by, square_size, square_size)
+            rects.append((rect, m))
+            p.draw.rect(screen, (235, 235, 210), rect)
+            p.draw.rect(screen, (80, 80, 80), rect, 2)
+            screen.blit(IMAGES[PROMO_ATTR_TO_KEY[m.promo_piece]], (bx + offset, by + offset))
+
+        p.display.flip()
+
+        for e in p.event.get():
+            if e.type == p.QUIT:
+                return None
+            if e.type == p.MOUSEBUTTONDOWN:
+                for rect, m in rects:
+                    if rect.collidepoint(e.pos):
+                        return m
+
 def drawStatus(screen, status):
     font = p.font.SysFont("Helvetica", 48, bold=True)
     w, h = screen.get_size()
@@ -115,6 +161,7 @@ def main():
     selectedSq = None
     movesFromSelected = []
     gameStatus = ""
+    pendingPromotions = []
 
     while running:
         w, h = screen.get_size()
@@ -136,24 +183,34 @@ def main():
                 else:
                     move = next((m for m in movesFromSelected if m.to_sq == sq), None)
                     if move:
-                        move_generator.applyMove(gs, move)
-                        allLegalMoves = move_generator.legalMoves(gs)
-                        selectedSq = None
-                        movesFromSelected = []
-                        #####DEBUGGING PRINTING######
-                        print(f"Legal moves after move: {len(allLegalMoves)}")
-                        if len(allLegalMoves) <= 3:
-                            for m in allLegalMoves:
-                                print(f"  move: from={m.from_sq} to={m.to_sq} flags={m.flags}")
-                        #####DEBUGGING PRINTING######
-                        if not allLegalMoves: #due to reverse lookup inCheck function inverting colors. need to flip whiteToMove before calling.
-                            gs.whiteToMove = not gs.whiteToMove
-                            in_check = move_generator.inCheck(gs)
-                            gs.whiteToMove = not gs.whiteToMove
-                            gameStatus = "Checkmate" if in_check else "Stalemate"
+                        if move.flags & MoveFlag.PROMOTION:
+                            pendingPromotions = [m for m in movesFromSelected if m.to_sq == sq]
+                            selectedSq = None
+                            movesFromSelected = []
+                            chosenPromotion = drawPromotionPicker(screen, pendingPromotions, gs.whiteToMove)
+                            if chosenPromotion:
+                                move_generator.applyMove(gs, chosenPromotion)
+                                allLegalMoves = move_generator.legalMoves(gs)
+                                pendingPromotions = []
+                        else:
+                            move_generator.applyMove(gs, move)
+                            allLegalMoves = move_generator.legalMoves(gs)
+                            selectedSq = None
+                            movesFromSelected = []
                             #####DEBUGGING PRINTING######
-                            print(f"Game ended: {gameStatus}")
+                            print(f"Legal moves after move: {len(allLegalMoves)}")
+                            if len(allLegalMoves) <= 3:
+                                for m in allLegalMoves:
+                                    print(f"  move: from={m.from_sq} to={m.to_sq} flags={m.flags}")
                             #####DEBUGGING PRINTING######
+                            if not allLegalMoves: #due to reverse lookup inCheck function inverting colors. need to flip whiteToMove before calling.
+                                gs.whiteToMove = not gs.whiteToMove
+                                in_check = move_generator.inCheck(gs)
+                                gs.whiteToMove = not gs.whiteToMove
+                                gameStatus = "Checkmate" if in_check else "Stalemate"
+                                #####DEBUGGING PRINTING######
+                                print(f"Game ended: {gameStatus}")
+                                #####DEBUGGING PRINTING######
 
                     else:
                         # clicking a different piece: swap selection immediately
