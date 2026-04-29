@@ -60,7 +60,17 @@ def generateMoves(gs):
             else:
                 flag = MoveFlag.NORMAL
             promo_piece = None
-            allMoves.append(Move(sq, to_sq, flag, promo_piece))
+
+            if ((1 << to_sq) & RANK_18):
+                flag |= MoveFlag.PROMOTION #IntFlag allows & for multiple flags. 
+                if gs.whiteToMove:
+                    promotions = ["whiteQueens", "whiteRooks", "whiteBishops", "whiteKnights"]
+                else:
+                    promotions = ["blackQueens", "blackRooks", "blackBishops", "blackKnights"]
+                for promotion in promotions:
+                    allMoves.append(Move(sq, to_sq, flag, promotion))
+            else:    
+                allMoves.append(Move(sq, to_sq, flag, promo_piece))
     
     for sq in iterateBits(gs.whiteKnights if gs.whiteToMove else gs.blackKnights):
         bb = knightMoves(sq, ownPieces)
@@ -154,6 +164,15 @@ def applyMove(gs, move):
                 setattr(gs, attr, bb & ~en_bb) #clears the double push square
                 break
 
+    if move.flags & MoveFlag.PROMOTION:
+        if gs.whiteToMove:
+            gs.whitePawns &= ~from_bb #remove pawn
+        else:
+            gs.blackPawns &= ~from_bb
+        bb = getattr(gs, move.promo_piece)
+        setattr(gs, move.promo_piece, bb | to_bb) #set the promotion piece on to_sq
+        #currently autopromoting to queen? how to do selection ?
+
     for attr in PIECE_BITBOARDS:
         bb = getattr(gs, attr)
         if bb & from_bb:
@@ -184,6 +203,7 @@ NOT_AB_FILE = 0xFCFCFCFCFCFCFCFC
 NOT_GH_FILE = 0x3F3F3F3F3F3F3F3F
 RANK_2 = 0x000000000000FF00
 RANK_7 = 0x00FF000000000000
+RANK_18 = 0xFF000000000000FF
 
 def knightAttacks(sq):
     bb = 1 << sq
@@ -251,36 +271,7 @@ def pawnActions(sq, whiteToMove, ownPieces, enemyPieces, epSquare):
     attacks = pawnAttacks(sq, whiteToMove, enemyPieces, epSquare)
     return moves | (attacks & ~ownPieces)
         
-# def positiveRayAttacks(sq, enemyPieces, ownPieces, direction, fileMask=FULL):
-#     # we cast a ray in a positive direction and get a bb of attacks. & with all pieces to find blockers.
-#     # anding with the blockers mask returns all moves negative of the blocker. 
-#     allPieces = ownPieces | enemyPieces
-#     bb = 1 << sq
-#     attacks = 0
-#     for i in range (1,8):
-#         attacks |= (bb << (direction * i)) & fileMask & FULL
-#     blockers = attacks & allPieces
-#     if blockers:
-#         lsbOfBlockers = blockers & -blockers
-#         lsbMask = (lsbOfBlockers << 1) - 1 # fills all lower bits of lsb with 1
-#         attacks &= lsbMask
-#     #add breaks on first block detection?
-#     return attacks & ~ownPieces
 
-# def negativeRayAttacks(sq, enemyPieces, ownPieces, direction, fileMask=FULL):
-#     allPieces = ownPieces | enemyPieces
-#     bb = 1 << sq
-#     attacks = 0
-#     for i in range (1,8):
-#         attacks |= (bb >> (direction * i)) & fileMask & FULL
-#     blockers = attacks & allPieces
-#     if blockers:
-#         msbOfBlockers = 1 << (blockers.bit_length() -1)
-#         msbMask = msbOfBlockers - 1
-#         attacks &= ~msbMask #~on mask required here
-#     return attacks & ~ownPieces 
-
-#wrapping fix. 
 def positiveRayAttacks(sq, enemyPieces, ownPieces, direction, fileMask=FULL):
     #iterating on the attack squares. move 1 square in a direction and check. if blocker, break, if wrapped file, break, 
     #if empty the new start is the currect check sq. do again
