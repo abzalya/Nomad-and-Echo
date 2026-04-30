@@ -81,9 +81,17 @@ def generateMoves(gs):
     for sq in iterateBits(gs.whiteKing if gs.whiteToMove else gs.blackKing):
         bb = kingMoves(sq, ownPieces, allPieces, gs)
         for to_sq in iterateBits(bb):
-            flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+            if (1 << to_sq) & enemyPieces:
+                flag = MoveFlag.CAPTURE
+            else:
+                flag = MoveFlag.NORMAL
+            #if castling add the flag, dont overwrite normal
+            if (to_sq - sq) == 2:
+                flag |= MoveFlag.CASTLE_K
+            if (to_sq - sq) == -2:
+                flag |= MoveFlag.CASTLE_Q
             allMoves.append(Move(sq, to_sq, flag))
-    
+
     for sq in iterateBits(gs.whiteBishops if gs.whiteToMove else gs.blackBishops):
         bb = bishopAttacks(sq, enemyPieces, ownPieces)
         for to_sq in iterateBits(bb):
@@ -136,8 +144,6 @@ def inCheck(gs): #reverse lookup approach
             return True
     return False
 
-#idea is to. generate_moves, copy gs, apply move, do check, if in check, discard. if not, keep pass to a lower legal_moves list?
-
 def applyMove(gs, move):
     from_bb = 1 << move.from_sq
     to_bb = 1 << move.to_sq
@@ -148,13 +154,13 @@ def applyMove(gs, move):
             if bb & to_bb:
                 setattr(gs, attr, bb & ~to_bb) #clears the "to" square
                 #revoke castling rights if the rooks are captured
-                if to_bb == (1 << 0):
+                if gs.wQueenSideCastle and to_bb == (1 << 0):
                     gs.wQueenSideCastle = False
-                elif to_bb == (1 << 7):
+                elif gs.wKingSideCastle and to_bb == (1 << 7):
                     gs.wKingSideCastle = False
-                elif to_bb == (1 << 56):
+                elif gs.bQueenSideCastle and to_bb == (1 << 56):
                     gs.bQueenSideCastle = False
-                elif to_bb == (1 << 63):
+                elif gs.bKingSideCastle and to_bb == (1 << 63):
                     gs.bKingSideCastle = False
                 break
 
@@ -182,6 +188,31 @@ def applyMove(gs, move):
         setattr(gs, move.promo_piece, bb | to_bb) #set the promotion piece on to_sq
         gs.epSquare = -1
 
+    #because we added the flag, king movemnt is being handles as usual. this needs to only teleport the rook.
+    if move.flags & MoveFlag.CASTLE_K:
+        if gs.whiteToMove:
+            bb = getattr(gs, "whiteRooks")
+            rook_from = (1 << 7) #h1
+            rook_to = (1 << 5)   #f1
+            setattr(gs, "whiteRooks", (bb & ~rook_from) | rook_to)
+        else:
+            bb = getattr(gs, "blackRooks")
+            rook_from = (1 << 63) #h8
+            rook_to = (1 << 61)   #f8
+            setattr(gs, "blackRooks", (bb & ~rook_from) | rook_to)
+
+    if move.flags & MoveFlag.CASTLE_Q:
+        if gs.whiteToMove:
+            bb = getattr(gs, "whiteRooks")
+            rook_from = (1 << 0) #a1
+            rook_to = (1 << 3)   #d1
+            setattr(gs, "whiteRooks", (bb & ~rook_from) | rook_to)
+        else:
+            bb = getattr(gs, "blackRooks")
+            rook_from = (1 << 56) #a8
+            rook_to = (1 << 59)   #d8
+            setattr(gs, "blackRooks", (bb & ~rook_from) | rook_to)
+
     for attr in PIECE_BITBOARDS:
         bb = getattr(gs, attr)
         if bb & from_bb:
@@ -198,14 +229,14 @@ def applyMove(gs, move):
                 gs.bKingSideCastle = False
                 gs.bQueenSideCastle = False
             if attr == "whiteRooks":
-                if from_bb == (1 << 0):
+                if gs.wQueenSideCastle and from_bb == (1 << 0):
                     gs.wQueenSideCastle = False
-                elif from_bb == (1 << 7):
+                elif gs.wKingSideCastle and from_bb == (1 << 7):
                     gs.wKingSideCastle = False
             if attr == "blackRooks":
-                if from_bb == (1 << 56):
+                if gs.bQueenSideCastle and from_bb == (1 << 56):
                     gs.bQueenSideCastle = False
-                elif from_bb == (1 << 63):
+                elif gs.bKingSideCastle and from_bb == (1 << 63):
                     gs.bKingSideCastle = False
             break
 
