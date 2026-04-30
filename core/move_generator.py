@@ -123,6 +123,7 @@ def isSquareAttacked(sq, gs): #reverse lookup approach for any arbitrary square 
         enemyBishops = gs.blackBishops
         enemyRooks = gs.blackRooks
         enemyQueens = gs.blackQueens
+        enemyKing = gs.blackKing
     else:
         ownPieces = blackPieces
         enemyPieces = whitePieces
@@ -131,9 +132,10 @@ def isSquareAttacked(sq, gs): #reverse lookup approach for any arbitrary square 
         enemyBishops = gs.whiteBishops
         enemyRooks = gs.whiteRooks
         enemyQueens = gs.whiteQueens
-    
+        enemyKing = gs.whiteKing
     attacks  = pawnAttacks(sq, gs.whiteToMove, enemyPawns, -1)
     attacks |= knightAttacks(sq) & enemyKnights
+    attacks |= kingAttacks(sq) & enemyKing
     attacks |= bishopAttacks(sq, enemyPieces, ownPieces) & (enemyBishops | enemyQueens)
     attacks |= rookAttacks(sq, enemyPieces, ownPieces) & (enemyRooks | enemyQueens)
     return bool(attacks)
@@ -243,7 +245,7 @@ def legalMoves(gs):
         gs_copy = copy.copy(gs)
         applyMove(gs_copy, move)
         gs_copy.whiteToMove = not gs_copy.whiteToMove
-        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+        ownKing = gs_copy.whiteKing if gs_copy.whiteToMove else gs_copy.blackKing
         sq = ownKing.bit_length() -1
         if not isSquareAttacked(sq, gs_copy):
             allLegalMoves.append(move)
@@ -298,14 +300,18 @@ def kingMoves(sq, ownPieces, allPieces, gs):
     castleQueenSideSquares = ((bb >> 1) | (bb >> 2) | (bb >> 3))
     if gs.whiteToMove:
         if gs.wKingSideCastle and not (castleKingSideSquares & allPieces):
-            attacks |= (bb << 2)
+            if not isSquareAttacked(sq, gs) and not isSquareAttacked(sq+1, gs) and not isSquareAttacked(sq+2, gs):
+                attacks |= (bb << 2)
         if gs.wQueenSideCastle and not (castleQueenSideSquares & allPieces):
-            attacks |= (bb >> 2)
+            if not isSquareAttacked(sq, gs) and not isSquareAttacked(sq-1, gs) and not isSquareAttacked(sq-2, gs):
+                attacks |= (bb >> 2)
     else:
         if gs.bKingSideCastle and not (castleKingSideSquares & allPieces):
-            attacks |= (bb << 2)
+            if not isSquareAttacked(sq, gs) and not isSquareAttacked(sq+1, gs) and not isSquareAttacked(sq+2, gs):
+                attacks |= (bb << 2)
         if gs.bQueenSideCastle and not (castleQueenSideSquares & allPieces):
-            attacks |= (bb >> 2)
+            if not isSquareAttacked(sq, gs) and not isSquareAttacked(sq-1, gs) and not isSquareAttacked(sq-2, gs):
+                attacks |= (bb >> 2)
     return attacks & ~ownPieces
 
 def pawnMoves(sq, whiteToMove, allPieces):
