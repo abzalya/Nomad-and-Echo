@@ -423,8 +423,8 @@ def insufficientMaterial(gs):
         return False
     wMinorPieces = gs.whiteKnights | gs.whiteBishops
     bMinorPieces =  gs.blackKnights | gs.blackBishops
-    wCount = wMinorPieces.count("1")
-    bCount = bMinorPieces.count("1")
+    wCount = bin(wMinorPieces).count("1")
+    bCount = bin(bMinorPieces).count("1")
     if wCount <= 1 and bCount <= 1:
         if gs.whiteBishops and gs.blackBishops:
             LIGHT_SQUARES = 0x55AA55AA55AA55AA
