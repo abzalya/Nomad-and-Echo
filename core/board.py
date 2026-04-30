@@ -17,3 +17,8 @@ class gameState:
         self.whiteToMove = True
         self.moveLog = []
         self.epSquare = -1 #en passant square that was jumped over
+        #castling rights check
+        self.wKingSideCastle = True
+        self.wQueenSideCastle = True
+        self.bKingSideCastle = True
+        self.bQueenSideCastle = True

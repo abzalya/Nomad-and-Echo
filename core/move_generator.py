@@ -79,7 +79,7 @@ def generateMoves(gs):
             allMoves.append(Move(sq, to_sq, flag))
     
     for sq in iterateBits(gs.whiteKing if gs.whiteToMove else gs.blackKing):
-        bb = kingMoves(sq, ownPieces)
+        bb = kingMoves(sq, ownPieces, allPieces, gs)
         for to_sq in iterateBits(bb):
             flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
             allMoves.append(Move(sq, to_sq, flag))
@@ -147,6 +147,15 @@ def applyMove(gs, move):
             bb = getattr(gs, attr)
             if bb & to_bb:
                 setattr(gs, attr, bb & ~to_bb) #clears the "to" square
+                #revoke castling rights if the rooks are captured
+                if to_bb == (1 << 0):
+                    gs.wQueenSideCastle = False
+                elif to_bb == (1 << 7):
+                    gs.wKingSideCastle = False
+                elif to_bb == (1 << 56):
+                    gs.bQueenSideCastle = False
+                elif to_bb == (1 << 63):
+                    gs.bKingSideCastle = False
                 break
 
     if move.flags & MoveFlag.EN_PASSANT:
@@ -171,7 +180,7 @@ def applyMove(gs, move):
             gs.blackPawns &= ~from_bb
         bb = getattr(gs, move.promo_piece)
         setattr(gs, move.promo_piece, bb | to_bb) #set the promotion piece on to_sq
-        #currently autopromoting to queen? how to do selection ?
+        gs.epSquare = -1
 
     for attr in PIECE_BITBOARDS:
         bb = getattr(gs, attr)
@@ -181,6 +190,23 @@ def applyMove(gs, move):
                 gs.epSquare = (move.from_sq + move.to_sq) // 2
             else:
                 gs.epSquare = -1
+            #revoke castling rights if pieces move from starting squares
+            if attr == "whiteKing":
+                gs.wKingSideCastle = False
+                gs.wQueenSideCastle = False
+            if attr == "blackKing":
+                gs.bKingSideCastle = False
+                gs.bQueenSideCastle = False
+            if attr == "whiteRooks":
+                if from_bb == (1 << 0):
+                    gs.wQueenSideCastle = False
+                elif from_bb == (1 << 7):
+                    gs.wKingSideCastle = False
+            if attr == "blackRooks":
+                if from_bb == (1 << 56):
+                    gs.bQueenSideCastle = False
+                elif from_bb == (1 << 63):
+                    gs.bKingSideCastle = False
             break
 
     gs.whiteToMove = not gs.whiteToMove
@@ -236,8 +262,22 @@ def kingAttacks(sq):
     attacks |= ((bb >> 9) & NOT_A_FILE) #bot left
     return attacks & FULL #there was a legal move that was moving the king off the board preventing checkmate. apply the FULL Mask to fix. 
 
-def kingMoves(sq, ownPieces):
+def kingMoves(sq, ownPieces, allPieces, gs):
     attacks = kingAttacks(sq)
+    #i think castling should go here
+    bb = 1 << sq
+    castleKingSideSquares = ((bb << 1) | (bb << 2))
+    castleQueenSideSquares = ((bb >> 1) | (bb >> 2) | (bb >> 3))
+    if gs.whiteToMove:
+        if gs.wKingSideCastle and not (castleKingSideSquares & allPieces):
+            attacks |= (bb << 2)
+        if gs.wQueenSideCastle and not (castleQueenSideSquares & allPieces):
+            attacks |= (bb >> 2)
+    else:
+        if gs.bKingSideCastle and not (castleKingSideSquares & allPieces):
+            attacks |= (bb << 2)
+        if gs.bQueenSideCastle and not (castleQueenSideSquares & allPieces):
+            attacks |= (bb >> 2)
     return attacks & ~ownPieces
 
 def pawnMoves(sq, whiteToMove, allPieces):

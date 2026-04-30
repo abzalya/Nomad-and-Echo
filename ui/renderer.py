@@ -197,20 +197,11 @@ def main():
                             allLegalMoves = move_generator.legalMoves(gs)
                             selectedSq = None
                             movesFromSelected = []
-                            #####DEBUGGING PRINTING######
-                            print(f"Legal moves after move: {len(allLegalMoves)}")
-                            if len(allLegalMoves) <= 3:
-                                for m in allLegalMoves:
-                                    print(f"  move: from={m.from_sq} to={m.to_sq} flags={m.flags}")
-                            #####DEBUGGING PRINTING######
                             if not allLegalMoves: #due to reverse lookup inCheck function inverting colors. need to flip whiteToMove before calling.
                                 gs.whiteToMove = not gs.whiteToMove
                                 in_check = move_generator.inCheck(gs)
                                 gs.whiteToMove = not gs.whiteToMove
                                 gameStatus = "Checkmate" if in_check else "Stalemate"
-                                #####DEBUGGING PRINTING######
-                                print(f"Game ended: {gameStatus}")
-                                #####DEBUGGING PRINTING######
 
                     else:
                         # clicking a different piece: swap selection immediately
