@@ -202,6 +202,13 @@ def main():
                                 sq = ownKing.bit_length() - 1
                                 in_check = move_generator.isSquareAttacked(sq, gs)
                                 gameStatus = "Checkmate" if in_check else "Stalemate"
+                                #export this as a function to move_generator ?
+                            fiftyMoveRule = move_generator.fiftyMoveRule(gs)
+                            insufficientMaterial = move_generator.insufficientMaterial(gs)
+                            if fiftyMoveRule:
+                                gameStatus = "Draw by 50-Move Rule"
+                            if insufficientMaterial:
+                                gameStatus = "Draw - Insufficient Material"
 
                     else:
                         # clicking a different piece: swap selection immediately

@@ -22,3 +22,5 @@ class gameState:
         self.wQueenSideCastle = True
         self.bKingSideCastle = True
         self.bQueenSideCastle = True
+        #50 move rule counter
+        self.moveClock = 0
