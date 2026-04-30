@@ -112,21 +112,10 @@ def generateMoves(gs):
     
     return allMoves
 
-def inCheck(gs): #reverse lookup approach
+def isSquareAttacked(sq, gs): #reverse lookup approach for any arbitrary square on the board
     whitePieces = gs.whitePawns | gs.whiteRooks | gs.whiteKnights | gs.whiteBishops | gs.whiteQueens | gs.whiteKing
     blackPieces = gs.blackPawns | gs.blackRooks | gs.blackKnights | gs.blackBishops | gs.blackQueens | gs.blackKing
-    #inverse the colours. we apply move first and then check.
     if gs.whiteToMove:
-        ownKing = gs.blackKing
-        ownPieces = blackPieces
-        enemyPieces = whitePieces
-        enemyPawns = gs.whitePawns
-        enemyKnights = gs.whiteKnights
-        enemyBishops = gs.whiteBishops
-        enemyRooks = gs.whiteRooks
-        enemyQueens = gs.whiteQueens
-    else:
-        ownKing = gs.whiteKing
         ownPieces = whitePieces
         enemyPieces = blackPieces
         enemyPawns = gs.blackPawns
@@ -134,15 +123,20 @@ def inCheck(gs): #reverse lookup approach
         enemyBishops = gs.blackBishops
         enemyRooks = gs.blackRooks
         enemyQueens = gs.blackQueens
-
-    for sq in iterateBits(ownKing):
-        checks  = pawnAttacks(sq, not gs.whiteToMove, enemyPawns, -1)
-        checks |= knightAttacks(sq) & enemyKnights
-        checks |= bishopAttacks(sq, enemyPieces, ownPieces) & (enemyBishops | enemyQueens)
-        checks |= rookAttacks(sq, enemyPieces, ownPieces) & (enemyRooks | enemyQueens)
-        if checks:
-            return True
-    return False
+    else:
+        ownPieces = blackPieces
+        enemyPieces = whitePieces
+        enemyPawns = gs.whitePawns
+        enemyKnights = gs.whiteKnights
+        enemyBishops = gs.whiteBishops
+        enemyRooks = gs.whiteRooks
+        enemyQueens = gs.whiteQueens
+    
+    attacks  = pawnAttacks(sq, gs.whiteToMove, enemyPawns, -1)
+    attacks |= knightAttacks(sq) & enemyKnights
+    attacks |= bishopAttacks(sq, enemyPieces, ownPieces) & (enemyBishops | enemyQueens)
+    attacks |= rookAttacks(sq, enemyPieces, ownPieces) & (enemyRooks | enemyQueens)
+    return bool(attacks)
 
 def applyMove(gs, move):
     from_bb = 1 << move.from_sq
@@ -248,7 +242,10 @@ def legalMoves(gs):
     for move in allMoves:
         gs_copy = copy.copy(gs)
         applyMove(gs_copy, move)
-        if not inCheck(gs_copy):
+        gs_copy.whiteToMove = not gs_copy.whiteToMove
+        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+        sq = ownKing.bit_length() -1
+        if not isSquareAttacked(sq, gs_copy):
             allLegalMoves.append(move)
     return allLegalMoves
 

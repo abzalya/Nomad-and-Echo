@@ -197,10 +197,10 @@ def main():
                             allLegalMoves = move_generator.legalMoves(gs)
                             selectedSq = None
                             movesFromSelected = []
-                            if not allLegalMoves: #due to reverse lookup inCheck function inverting colors. need to flip whiteToMove before calling.
-                                gs.whiteToMove = not gs.whiteToMove
-                                in_check = move_generator.inCheck(gs)
-                                gs.whiteToMove = not gs.whiteToMove
+                            if not allLegalMoves:
+                                ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+                                sq = ownKing.bit_length() - 1
+                                in_check = move_generator.isSquareAttacked(sq, gs)
                                 gameStatus = "Checkmate" if in_check else "Stalemate"
 
                     else:
