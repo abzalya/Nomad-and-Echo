@@ -181,52 +181,59 @@ def main():
                     selectedSq = sq
                     movesFromSelected = [m for m in allLegalMoves if m.from_sq == sq]
                 else:
-                    move = next((m for m in movesFromSelected if m.to_sq == sq), None)
-                    if move:
-                        if move.flags & MoveFlag.PROMOTION:
-                            pendingPromotions = [m for m in movesFromSelected if m.to_sq == sq]
-                            selectedSq = None
-                            movesFromSelected = []
-                            chosenPromotion = drawPromotionPicker(screen, pendingPromotions, gs.whiteToMove)
-                            if chosenPromotion:
-                                move_generator.applyMove(gs, chosenPromotion)
-                                #add zoobrist hash to history
+                    #deselect if same piece
+                    if sq == selectedSq:
+                        selectedSq = None
+                        movesFromSelected = []
+                    else:
+                        move = next((m for m in movesFromSelected if m.to_sq == sq), None)
+                        if move:
+                            if move.flags & MoveFlag.PROMOTION:
+                                pendingPromotions = [m for m in movesFromSelected if m.to_sq == sq]
+                                selectedSq = None
+                                movesFromSelected = []
+                                chosenPromotion = drawPromotionPicker(screen, pendingPromotions, gs.whiteToMove)
+                                if chosenPromotion:
+                                    move_generator.applyMove(gs, chosenPromotion)
+                                    gs.positionHistory[gs.zobristHash] = gs.positionHistory.get(gs.zobristHash, 0) + 1
+                                    allLegalMoves = move_generator.legalMoves(gs)
+                                    pendingPromotions = []
+                                    if not allLegalMoves:
+                                        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+                                        sq = ownKing.bit_length() - 1
+                                        in_check = move_generator.isSquareAttacked(sq, gs)
+                                        gameStatus = "Checkmate" if in_check else "Stalemate"
+                                    if move_generator.fiftyMoveRule(gs):
+                                        gameStatus = "Draw by 50-Move Rule"
+                                    if move_generator.insufficientMaterial(gs):
+                                        gameStatus = "Draw - Insufficient Material"
+                                    if move_generator.threefoldRepetition(gs):
+                                        gameStatus = "Draw by Threefold Repetition"
+                            else:
+                                move_generator.applyMove(gs, move)
                                 gs.positionHistory[gs.zobristHash] = gs.positionHistory.get(gs.zobristHash, 0) + 1
                                 allLegalMoves = move_generator.legalMoves(gs)
-                                pendingPromotions = []
+                                selectedSq = None
+                                movesFromSelected = []
+                                if not allLegalMoves:
+                                    ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+                                    sq = ownKing.bit_length() - 1
+                                    in_check = move_generator.isSquareAttacked(sq, gs)
+                                    gameStatus = "Checkmate" if in_check else "Stalemate"
+                                if move_generator.fiftyMoveRule(gs):
+                                    gameStatus = "Draw by 50-Move Rule"
+                                if move_generator.insufficientMaterial(gs):
+                                    gameStatus = "Draw - Insufficient Material"
+                                if move_generator.threefoldRepetition(gs):
+                                    gameStatus = "Draw by Threefold Repetition"
                         else:
-                            move_generator.applyMove(gs, move)
-                            #add zoobrist hash to history
-                            gs.positionHistory[gs.zobristHash] = gs.positionHistory.get(gs.zobristHash, 0) + 1
-                            allLegalMoves = move_generator.legalMoves(gs)
-                            selectedSq = None
-                            movesFromSelected = []
-                            if not allLegalMoves:
-                                ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-                                sq = ownKing.bit_length() - 1
-                                in_check = move_generator.isSquareAttacked(sq, gs)
-                                gameStatus = "Checkmate" if in_check else "Stalemate"
-                                #export this as a function to move_generator ?
-                            fiftyMoveRule = move_generator.fiftyMoveRule(gs)
-                            insufficientMaterial = move_generator.insufficientMaterial(gs)
-                            threefoldRepetition = move_generator.threefoldRepetition(gs)
-                            if fiftyMoveRule:
-                                gameStatus = "Draw by 50-Move Rule"
-                            if insufficientMaterial:
-                                gameStatus = "Draw - Insufficient Material"
-                            if threefoldRepetition:
-                                gameStatus = "Draw by Threefold Repetition"
-                            
-
-                    else:
-                        # clicking a different piece: swap selection immediately
-                        newMoves = [m for m in allLegalMoves if m.from_sq == sq]
-                        if newMoves:
-                            selectedSq = sq
-                            movesFromSelected = newMoves
-                        else:
-                            selectedSq = None
-                            movesFromSelected = []
+                            newMoves = [m for m in allLegalMoves if m.from_sq == sq]
+                            if newMoves:
+                                selectedSq = sq
+                                movesFromSelected = newMoves
+                            else:
+                                selectedSq = None
+                                movesFromSelected = []
 
         drawGameState(screen, gs)
         drawHighlights(screen, movesFromSelected, square_size, board_start_x, board_start_y)

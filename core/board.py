@@ -1,6 +1,6 @@
 from core import zobrist
 
-class gameState:
+class GameState:
     def __init__(self):
         self.whitePawns   = 0b0000000000000000000000000000000000000000000000001111111100000000
         self.whiteRooks   = 0b0000000000000000000000000000000000000000000000000000000010000001
