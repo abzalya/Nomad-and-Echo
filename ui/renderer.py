@@ -190,10 +190,14 @@ def main():
                             chosenPromotion = drawPromotionPicker(screen, pendingPromotions, gs.whiteToMove)
                             if chosenPromotion:
                                 move_generator.applyMove(gs, chosenPromotion)
+                                #add zoobrist hash to history
+                                gs.positionHistory[gs.zobristHash] = gs.positionHistory.get(gs.zobristHash, 0) + 1
                                 allLegalMoves = move_generator.legalMoves(gs)
                                 pendingPromotions = []
                         else:
                             move_generator.applyMove(gs, move)
+                            #add zoobrist hash to history
+                            gs.positionHistory[gs.zobristHash] = gs.positionHistory.get(gs.zobristHash, 0) + 1
                             allLegalMoves = move_generator.legalMoves(gs)
                             selectedSq = None
                             movesFromSelected = []
@@ -205,10 +209,14 @@ def main():
                                 #export this as a function to move_generator ?
                             fiftyMoveRule = move_generator.fiftyMoveRule(gs)
                             insufficientMaterial = move_generator.insufficientMaterial(gs)
+                            threefoldRepetition = move_generator.threefoldRepetition(gs)
                             if fiftyMoveRule:
                                 gameStatus = "Draw by 50-Move Rule"
                             if insufficientMaterial:
                                 gameStatus = "Draw - Insufficient Material"
+                            if threefoldRepetition:
+                                gameStatus = "Draw by Threefold Repetition"
+                            
 
                     else:
                         # clicking a different piece: swap selection immediately

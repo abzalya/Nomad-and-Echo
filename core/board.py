@@ -1,3 +1,5 @@
+from core import zobrist
+
 class gameState:
     def __init__(self):
         self.whitePawns   = 0b0000000000000000000000000000000000000000000000001111111100000000
@@ -24,3 +26,6 @@ class gameState:
         self.bQueenSideCastle = True
         #50 move rule counter
         self.moveClock = 0
+        #zobrist hash
+        self.positionHistory = {}
+        self.zobristHash = zobrist.computeHash(self)
