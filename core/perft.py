@@ -1,5 +1,6 @@
 import copy
-from core.move_generator import legalMoves, applyMove
+from core.move_generator import legalMoves
+from core.apply_move import applyMove
 
 #Counting total legal nodes at each depth from a starting position
 def perft(gs, depth):

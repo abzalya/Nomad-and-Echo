@@ -23,8 +23,8 @@ from core.perft import perft
 #15	        2,015,099,950,053,364,471,960
 
 gs = GameState()
-print(perft(gs,1))
-print(perft(gs,2))
-print(perft(gs,3))
-print(perft(gs,4))
-print(perft(gs,5))
+print("Depth 1 -", "PASS" if perft(gs, 1) == 20      else "FAIL")
+print("Depth 2 -", "PASS" if perft(gs, 2) == 400     else "FAIL")
+print("Depth 3 -", "PASS" if perft(gs, 3) == 8902    else "FAIL")
+print("Depth 4 -", "PASS" if perft(gs, 4) == 197281  else "FAIL")
+print("Depth 5 -", "PASS" if perft(gs, 5) == 4865609 else "FAIL")

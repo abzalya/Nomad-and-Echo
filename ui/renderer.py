@@ -2,50 +2,19 @@ import pygame as p
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from core import board
-from core import move_generator
+from core.game import Game
 from core.move import MoveFlag
+from core.bitboard import iterateBits
+from ui.config import SCREEN_WIDTH, SCREEN_HEIGHT, BLACK_SQUARE_COLOUR, WHITE_SQUARE_COLOUR
 
 p.init()
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 800
-BLACK_SQUARE_COLOUR = (181,136,99)
-WHITE_SQUARE_COLOUR = (240,217,181)
-OVERLAY_SQUARE_COLOUR = (230, 112, 112)
-
 IMAGES = {}
 
-def loadImages(square_size):
-    pieces = [key for key, _ in PIECE_BITBOARDS]
-    piece_size = int(square_size * 0.9)
-    for piece in pieces:
-        IMAGES[piece] = p.transform.scale(p.image.load("assets/pieces/" + piece + ".png"), (piece_size, piece_size))
-
-def drawGameState(screen, gs):
-    w, h = screen.get_size()
-    square_size = min(w, h) // 8
-    board_start_x = (w - square_size * 8) // 2
-    board_start_y = (h - square_size * 8) // 2
-    
-    drawBoard(square_size, board_start_x, board_start_y, screen)
-    drawPieces(square_size, board_start_x, board_start_y, screen, gs)
-
-def drawBoard(square_size, board_start_x, board_start_y, screen):
-    for i in range(8):
-        for j in range(8):
-            boardx = board_start_x + square_size * j
-            boardy = board_start_y + square_size * i
-            colour = WHITE_SQUARE_COLOUR if (i + j) % 2 == 0 else BLACK_SQUARE_COLOUR
-            p.draw.rect(screen, colour, (boardx, boardy, square_size, square_size))
-
-def iterateBits(bb):
-    while bb:
-        lsb = bb & -bb
-        yield lsb.bit_length() - 1
-        bb &= bb - 1
-
-PIECE_BITBOARDS = [
+# Maps the display key used for image filenames to the GameState attribute name.
+# Kept separate from core.bitboard.PIECE_BITBOARDS because the renderer needs
+# the short keys ("wp", "wR" ...) while the engine only needs the attribute names.
+PIECE_DISPLAY_MAP = [
     ("wp", "whitePawns"),
     ("wR", "whiteRooks"),
     ("wN", "whiteKnights"),
@@ -60,8 +29,31 @@ PIECE_BITBOARDS = [
     ("bK", "blackKing"),
 ]
 
+def loadImages(square_size):
+    pieces = [key for key, _ in PIECE_DISPLAY_MAP]
+    piece_size = int(square_size * 0.9)
+    for piece in pieces:
+        IMAGES[piece] = p.transform.scale(p.image.load("assets/pieces/" + piece + ".png"), (piece_size, piece_size))
+
+def drawGameState(screen, gs):
+    w, h = screen.get_size()
+    square_size = min(w, h) // 8
+    board_start_x = (w - square_size * 8) // 2
+    board_start_y = (h - square_size * 8) // 2
+
+    drawBoard(square_size, board_start_x, board_start_y, screen)
+    drawPieces(square_size, board_start_x, board_start_y, screen, gs)
+
+def drawBoard(square_size, board_start_x, board_start_y, screen):
+    for i in range(8):
+        for j in range(8):
+            boardx = board_start_x + square_size * j
+            boardy = board_start_y + square_size * i
+            colour = WHITE_SQUARE_COLOUR if (i + j) % 2 == 0 else BLACK_SQUARE_COLOUR
+            p.draw.rect(screen, colour, (boardx, boardy, square_size, square_size))
+
 def getPieceSquares(gs):
-    for key, attr in PIECE_BITBOARDS:
+    for key, attr in PIECE_DISPLAY_MAP:
         for sq in iterateBits(getattr(gs, attr)):
             yield (key, sq % 8, 7 - sq // 8)
 
@@ -72,7 +64,6 @@ def drawPieces(square_size, board_start_x, board_start_y, screen, gs):
         x = board_start_x + square_size * col + offset
         y = board_start_y + square_size * row + offset
         screen.blit(IMAGES[key], (x, y))
-
 
 def screenToSquare(mx, my, board_start_x, board_start_y, square_size):
     col = (mx - board_start_x) // square_size
@@ -152,15 +143,13 @@ def main():
     screen = p.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), p.RESIZABLE)
     p.display.set_caption("Chess")
 
-    gs = board.gameState()
+    game = Game()
     w, h = screen.get_size()
     loadImages(min(w, h) // 8)
     running = True
 
-    allLegalMoves = move_generator.legalMoves(gs)
     selectedSq = None
     movesFromSelected = []
-    gameStatus = ""
     pendingPromotions = []
 
     while running:
@@ -172,16 +161,16 @@ def main():
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
-            if e.type == p.MOUSEBUTTONDOWN and not gameStatus:
+            if e.type == p.MOUSEBUTTONDOWN and not game.status:
                 sq = screenToSquare(e.pos[0], e.pos[1], board_start_x, board_start_y, square_size)
                 if sq is None:
                     selectedSq = None
                     movesFromSelected = []
                 elif selectedSq is None:
                     selectedSq = sq
-                    movesFromSelected = [m for m in allLegalMoves if m.from_sq == sq]
+                    movesFromSelected = game.moves_from(sq)
                 else:
-                    #deselect if same piece
+                    # Clicking the already-selected square deselects it
                     if sq == selectedSq:
                         selectedSq = None
                         movesFromSelected = []
@@ -189,45 +178,21 @@ def main():
                         move = next((m for m in movesFromSelected if m.to_sq == sq), None)
                         if move:
                             if move.flags & MoveFlag.PROMOTION:
+                                # Show picker before applying so the player chooses the piece
                                 pendingPromotions = [m for m in movesFromSelected if m.to_sq == sq]
                                 selectedSq = None
                                 movesFromSelected = []
-                                chosenPromotion = drawPromotionPicker(screen, pendingPromotions, gs.whiteToMove)
+                                chosenPromotion = drawPromotionPicker(screen, pendingPromotions, game.gs.whiteToMove)
                                 if chosenPromotion:
-                                    move_generator.applyMove(gs, chosenPromotion)
-                                    gs.positionHistory[gs.zobristHash] = gs.positionHistory.get(gs.zobristHash, 0) + 1
-                                    allLegalMoves = move_generator.legalMoves(gs)
+                                    game.apply(chosenPromotion)
                                     pendingPromotions = []
-                                    if not allLegalMoves:
-                                        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-                                        sq = ownKing.bit_length() - 1
-                                        in_check = move_generator.isSquareAttacked(sq, gs)
-                                        gameStatus = "Checkmate" if in_check else "Stalemate"
-                                    if move_generator.fiftyMoveRule(gs):
-                                        gameStatus = "Draw by 50-Move Rule"
-                                    if move_generator.insufficientMaterial(gs):
-                                        gameStatus = "Draw - Insufficient Material"
-                                    if move_generator.threefoldRepetition(gs):
-                                        gameStatus = "Draw by Threefold Repetition"
                             else:
-                                move_generator.applyMove(gs, move)
-                                gs.positionHistory[gs.zobristHash] = gs.positionHistory.get(gs.zobristHash, 0) + 1
-                                allLegalMoves = move_generator.legalMoves(gs)
+                                game.apply(move)
                                 selectedSq = None
                                 movesFromSelected = []
-                                if not allLegalMoves:
-                                    ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-                                    sq = ownKing.bit_length() - 1
-                                    in_check = move_generator.isSquareAttacked(sq, gs)
-                                    gameStatus = "Checkmate" if in_check else "Stalemate"
-                                if move_generator.fiftyMoveRule(gs):
-                                    gameStatus = "Draw by 50-Move Rule"
-                                if move_generator.insufficientMaterial(gs):
-                                    gameStatus = "Draw - Insufficient Material"
-                                if move_generator.threefoldRepetition(gs):
-                                    gameStatus = "Draw by Threefold Repetition"
                         else:
-                            newMoves = [m for m in allLegalMoves if m.from_sq == sq]
+                            # Clicked a different piece — switch selection
+                            newMoves = game.moves_from(sq)
                             if newMoves:
                                 selectedSq = sq
                                 movesFromSelected = newMoves
@@ -235,10 +200,10 @@ def main():
                                 selectedSq = None
                                 movesFromSelected = []
 
-        drawGameState(screen, gs)
+        drawGameState(screen, game.gs)
         drawHighlights(screen, movesFromSelected, square_size, board_start_x, board_start_y)
-        if gameStatus:
-            drawStatus(screen, gameStatus)
+        if game.status:
+            drawStatus(screen, game.status)
         p.display.flip()
 
 if __name__ == "__main__":
