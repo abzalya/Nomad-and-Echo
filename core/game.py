@@ -4,7 +4,6 @@ from core.apply_move import applyMove, undoMove
 from core.attacks import isSquareAttacked
 from core.draw_conditions import fiftyMoveRule, insufficientMaterial, threefoldRepetition
 from core.move_log import move_to_str, is_check_checkmate_str
-from engine.eval import evaluate
 from engine.search import best_move
 
 class Game:
@@ -27,15 +26,8 @@ class Game:
         self.legal_moves = legalMoves(self.gs)
         self._update_status()
 
-        #moveLog check/checkmate str detection
         log_entry += is_check_checkmate_str(self.gs, self.status)
         self.gs.moveLog.append(log_entry)
-        #testing moveLog as its not implemented yet in pygame
-        print(f"{len(self.gs.moveLog)}. {log_entry}")
-
-        #statis evaluation test
-        eval = evaluate(self.gs)
-        print(eval)
 
     def undo(self):
         if not self.gs.history:
