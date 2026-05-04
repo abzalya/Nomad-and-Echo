@@ -3,6 +3,7 @@ from core.move_generator import legalMoves
 from core.apply_move import applyMove, undoMove
 from core.attacks import isSquareAttacked
 from core.draw_conditions import fiftyMoveRule, insufficientMaterial, threefoldRepetition
+from core.move_log import move_to_str, is_check_checkmate_str
 
 class Game:
     #new class owns the board state, the current legal move list, and the game outcome.
@@ -12,12 +13,21 @@ class Game:
         self.status = None
 
     def apply(self, move):
+        #moveLog strings for all legal_moves
+        log_entry = move_to_str(self.gs, move, self.legal_moves)
+        
         applyMove(self.gs, move)
         self.gs.positionHistory[self.gs.zobristHash] = (
             self.gs.positionHistory.get(self.gs.zobristHash, 0) + 1
         )
         self.legal_moves = legalMoves(self.gs)
         self._update_status()
+
+        #moveLog check/checkmate str detection
+        log_entry += is_check_checkmate_str(self.gs, self.status)
+        self.gs.moveLog.append(log_entry)
+        #testing moveLog as its not implemented yet in pygame
+        print(f"{len(self.gs.moveLog)}. {log_entry}")
 
     def undo(self):
         if not self.gs.history:
@@ -29,6 +39,8 @@ class Game:
         self.legal_moves = legalMoves(self.gs)
         self.status = None
         self._update_status()
+        #pop moveLog entry
+        self.gs.moveLog.pop()
         
     def moves_from(self, sq):
         return [m for m in self.legal_moves if m.from_sq == sq]
