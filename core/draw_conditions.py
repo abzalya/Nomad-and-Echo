@@ -14,7 +14,7 @@ def insufficientMaterial(gs):
     return False
 
 def fiftyMoveRule(gs):
-    if gs.moveClock >= 100:
+    if gs.halfMoveCounter >= 100:
         return True
     return False
 

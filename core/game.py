@@ -1,6 +1,6 @@
 from core.board import GameState
 from core.move_generator import legalMoves
-from core.apply_move import applyMove
+from core.apply_move import applyMove, undoMove
 from core.attacks import isSquareAttacked
 from core.draw_conditions import fiftyMoveRule, insufficientMaterial, threefoldRepetition
 
@@ -19,6 +19,17 @@ class Game:
         self.legal_moves = legalMoves(self.gs)
         self._update_status()
 
+    def undo(self):
+        if not self.gs.history:
+            return
+        undoMove(self.gs)
+        self.gs.positionHistory[self.gs.zobristHash] = (
+            self.gs.positionHistory.get(self.gs.zobristHash, 0) - 1
+        )
+        self.legal_moves = legalMoves(self.gs)
+        self.status = None
+        self._update_status()
+        
     def moves_from(self, sq):
         return [m for m in self.legal_moves if m.from_sq == sq]
 

@@ -25,7 +25,9 @@ class GameState:
         self.bKingSideCastle = True
         self.bQueenSideCastle = True
         #50 move rule counter
-        self.moveClock = 0
+        self.halfMoveCounter = 0
         #zobrist hash
         self.positionHistory = {}
         self.zobristHash = zobrist.computeHash(self)
+        #undo move history
+        self.history = []
