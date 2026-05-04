@@ -28,3 +28,17 @@ def negamax(gs, alpha, beta, depth):
         if alpha >= beta:
             return beta
     return alpha
+
+def best_move(gs, depth):
+    moves = legalMoves(gs)
+    best = None
+    alpha = -float("inf")
+    beta = float("inf")
+    for move in moves:
+        applyMove(gs, move)
+        score = -negamax(gs, -beta, -alpha, depth - 1)
+        undoMove(gs)
+        if score > alpha:
+            alpha = score
+            best = move
+    return best

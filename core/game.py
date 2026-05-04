@@ -5,6 +5,7 @@ from core.attacks import isSquareAttacked
 from core.draw_conditions import fiftyMoveRule, insufficientMaterial, threefoldRepetition
 from core.move_log import move_to_str, is_check_checkmate_str
 from engine.eval import evaluate
+from engine.search import best_move
 
 class Game:
     #new class owns the board state, the current legal move list, and the game outcome.
@@ -12,6 +13,8 @@ class Game:
         self.gs = GameState()
         self.legal_moves = legalMoves(self.gs)
         self.status = None
+        #human turn setup. todo: allow choosing at start
+        self.human_color = "white"
 
     def apply(self, move):
         #moveLog strings for all legal_moves
@@ -63,3 +66,14 @@ class Game:
             self.status = "Draw - Insufficient Material"
         elif threefoldRepetition(self.gs):
             self.status = "Draw by Threefold Repetition"
+
+    #engine turn setup
+    def is_engine_turn(self):
+        if self.human_color == "white":
+            return not self.gs.whiteToMove
+        return self.gs.whiteToMove
+    
+    def engine_move(self, depth=3):
+        move = best_move(self.gs, depth)
+        if move:
+            self.apply(move)

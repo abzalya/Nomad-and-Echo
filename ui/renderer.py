@@ -158,47 +158,53 @@ def main():
         board_start_x = (w - square_size * 8) // 2
         board_start_y = (h - square_size * 8) // 2
 
+        #engine turn
+        if game.is_engine_turn() and not game.status:
+            game.engine_move()
+
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
-            if e.type == p.MOUSEBUTTONDOWN and not game.status:
-                sq = screenToSquare(e.pos[0], e.pos[1], board_start_x, board_start_y, square_size)
-                if sq is None:
-                    selectedSq = None
-                    movesFromSelected = []
-                elif selectedSq is None:
-                    selectedSq = sq
-                    movesFromSelected = game.moves_from(sq)
-                else:
-                    # Clicking the already-selected square deselects it
-                    if sq == selectedSq:
+            #allow input only on human turn
+            if not game.is_engine_turn() and not game.status:
+                if e.type == p.MOUSEBUTTONDOWN:
+                    sq = screenToSquare(e.pos[0], e.pos[1], board_start_x, board_start_y, square_size)
+                    if sq is None:
                         selectedSq = None
                         movesFromSelected = []
+                    elif selectedSq is None:
+                        selectedSq = sq
+                        movesFromSelected = game.moves_from(sq)
                     else:
-                        move = next((m for m in movesFromSelected if m.to_sq == sq), None)
-                        if move:
-                            if move.flags & MoveFlag.PROMOTION:
-                                # Show picker before applying so the player chooses the piece
-                                pendingPromotions = [m for m in movesFromSelected if m.to_sq == sq]
-                                selectedSq = None
-                                movesFromSelected = []
-                                chosenPromotion = drawPromotionPicker(screen, pendingPromotions, game.gs.whiteToMove)
-                                if chosenPromotion:
-                                    game.apply(chosenPromotion)
-                                    pendingPromotions = []
-                            else:
-                                game.apply(move)
-                                selectedSq = None
-                                movesFromSelected = []
+                        # Clicking the already-selected square deselects it
+                        if sq == selectedSq:
+                            selectedSq = None
+                            movesFromSelected = []
                         else:
-                            # Clicked a different piece — switch selection
-                            newMoves = game.moves_from(sq)
-                            if newMoves:
-                                selectedSq = sq
-                                movesFromSelected = newMoves
+                            move = next((m for m in movesFromSelected if m.to_sq == sq), None)
+                            if move:
+                                if move.flags & MoveFlag.PROMOTION:
+                                    # Show picker before applying so the player chooses the piece
+                                    pendingPromotions = [m for m in movesFromSelected if m.to_sq == sq]
+                                    selectedSq = None
+                                    movesFromSelected = []
+                                    chosenPromotion = drawPromotionPicker(screen, pendingPromotions, game.gs.whiteToMove)
+                                    if chosenPromotion:
+                                        game.apply(chosenPromotion)
+                                        pendingPromotions = []
+                                else:
+                                    game.apply(move)
+                                    selectedSq = None
+                                    movesFromSelected = []
                             else:
-                                selectedSq = None
-                                movesFromSelected = []
+                                # Clicked a different piece — switch selection
+                                newMoves = game.moves_from(sq)
+                                if newMoves:
+                                    selectedSq = sq
+                                    movesFromSelected = newMoves
+                                else:
+                                    selectedSq = None
+                                    movesFromSelected = []
 
         drawGameState(screen, game.gs)
         drawHighlights(screen, movesFromSelected, square_size, board_start_x, board_start_y)
