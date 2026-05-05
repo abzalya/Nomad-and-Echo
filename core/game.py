@@ -4,7 +4,7 @@ from core.apply_move import applyMove, undoMove
 from core.attacks import isSquareAttacked
 from core.draw_conditions import fiftyMoveRule, insufficientMaterial, threefoldRepetition
 from core.move_log import move_to_str, is_check_checkmate_str
-from engine.search import best_move
+from engine.search import best_move, _Info
 
 class Game:
     #new class owns the board state, the current legal move list, and the game outcome.
@@ -66,6 +66,6 @@ class Game:
         return self.gs.whiteToMove
     
     def engine_move(self, depth=3):
-        move = best_move(self.gs, depth)
+        move = best_move(self.gs, depth, _Info(None))
         if move:
             self.apply(move)

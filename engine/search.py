@@ -78,9 +78,8 @@ def quiescence(gs, alpha, beta, info, depth=0):
 
 
 
-def best_move(gs, depth, time_limit=None):
-    info = _Info(time_limit)
-    moves = legalMoves(gs)
+def best_move(gs, depth, info):
+    moves = movesOrdered(legalMoves(gs), gs)
     best = None
     alpha = -float("inf")
     beta = float("inf")
@@ -100,3 +99,16 @@ def best_move(gs, depth, time_limit=None):
     eval = int(alpha) if alpha != -float("inf") else 0
     print(f"info depth {depth} score cp {eval} nodes {info.nodes} nps {nps} time {int(elapsed * 1000)}")
     return best
+
+MAX_DEPTH = 32
+
+def iterative_deepening(gs, time_limit=None):
+    info = _Info(time_limit)
+    best = None
+    for depth in range(1, MAX_DEPTH + 1):
+        candidate = best_move(gs, depth, info)
+        if info.stop and best is not None:
+            break
+        best = candidate #only returns best move of full depth X
+    return best
+#we can use shallow results for better move ordering surely

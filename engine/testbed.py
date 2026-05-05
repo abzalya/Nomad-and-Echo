@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from core.game import Game
-from engine.search import best_move
+from engine.search import best_move, _Info
 from engine.uci import uci_to_move, move_to_uci
 
 OPERA_GAME = (
@@ -25,7 +25,7 @@ def run():
             print(f"ERROR move {i+1}: illegal uci '{uci}'")
             break
 
-        engine_move = best_move(game.gs, DEPTH)
+        engine_move = best_move(game.gs, DEPTH, _Info(None))
         engine_uci  = move_to_uci(engine_move) if engine_move else "none"
 
         # best_move already printed the info line above this

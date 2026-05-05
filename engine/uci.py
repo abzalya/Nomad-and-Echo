@@ -1,7 +1,7 @@
 import sys
 from core.game import Game
 from core.move import MoveFlag
-from engine.search import best_move
+from engine.search import best_move, iterative_deepening, _Info
 
 FILES = "abcdefgh"
 
@@ -113,7 +113,10 @@ def uci_loop():
             elif "infinite" in parts:
                 search_depth = _LARGE_DEPTH  # runs until 'stop' (not yet supported)
 
-            move = best_move(game.gs, search_depth, time_limit)
+            if time_limit is not None:
+                move = iterative_deepening(game.gs, time_limit)
+            else:
+                move = best_move(game.gs, search_depth, _Info(None))
             print(f"bestmove {move_to_uci(move) if move else '0000'}")
 
         elif line == "quit":
