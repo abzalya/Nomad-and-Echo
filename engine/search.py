@@ -1,5 +1,6 @@
 import time
 from engine.eval import evaluate
+from engine.move_order import movesOrdered
 from core.move_generator import legalMoves, captureMovesOnly
 from core.apply_move import applyMove, undoMove
 from core.attacks import isSquareAttacked
@@ -26,9 +27,9 @@ def negamax(gs, alpha, beta, depth, info):
         return 0
 
     if depth == 0:
-        return quiescence(gs, alpha, beta, info)
+        return quiescence(gs, alpha, beta, info, depth=0)
 
-    moves = legalMoves(gs)
+    moves = movesOrdered(legalMoves(gs),gs)
     if not moves:
         ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
         sq = ownKing.bit_length() - 1
@@ -49,7 +50,7 @@ def negamax(gs, alpha, beta, depth, info):
     return alpha
 
 #search position for captures until quite. Should stop blunders in the middle of exchanges on the horizon
-def quiescence(gs, alpha, beta, info):
+def quiescence(gs, alpha, beta, info, depth=0):
     info.nodes += 1
     info.check()
     if info.stop:
@@ -57,11 +58,17 @@ def quiescence(gs, alpha, beta, info):
 
     quiet_score = evaluate(gs)
     quiet_score = quiet_score if gs.whiteToMove else -quiet_score
+    
+    #quiescence depth limit. it kept blowing up my search
+    if depth >= 8:
+        return quiet_score
+    
     if quiet_score >= beta: return beta
     alpha = max(alpha, quiet_score)
-    for move in captureMovesOnly(gs):
+    moves = movesOrdered(captureMovesOnly(gs), gs)
+    for move in moves:
         applyMove(gs, move)
-        score = -quiescence(gs, -beta, -alpha, info)
+        score = -quiescence(gs, -beta, -alpha, info, depth + 1)
         undoMove(gs)
         alpha = max(alpha, score)
         if alpha >= beta: return beta
