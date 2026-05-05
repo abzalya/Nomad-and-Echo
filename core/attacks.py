@@ -25,10 +25,10 @@ def kingAttacks(sq):
     attacks |= (bb >> 8)
     attacks |= ((bb << 1) & NOT_A_FILE)
     attacks |= ((bb >> 1) & NOT_H_FILE)
-    attacks |= ((bb << 7) & NOT_A_FILE) #top left
-    attacks |= ((bb << 9) & NOT_H_FILE) #top right
-    attacks |= ((bb >> 7) & NOT_H_FILE) #bot right
-    attacks |= ((bb >> 9) & NOT_A_FILE) #bot left
+    attacks |= ((bb << 7) & NOT_H_FILE) #top left
+    attacks |= ((bb << 9) & NOT_A_FILE) #top right
+    attacks |= ((bb >> 7) & NOT_A_FILE) #bot right
+    attacks |= ((bb >> 9) & NOT_H_FILE) #bot left
     return attacks & FULL #there was a legal move that was moving the king off the board preventing checkmate. apply the FULL Mask to fix.
 
 def kingMoves(sq, ownPieces, allPieces, gs):
