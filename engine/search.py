@@ -59,7 +59,7 @@ def negamax(gs, alpha, beta, depth, info):
         score = -negamax(gs, -beta, -alpha, depth - 1, info)
         undoMove(gs)
         if info.stop:
-            return alpha
+            return 0 #return 0 not alpha, leaking infinity
         if score > alpha:
             alpha = score
             best = move
@@ -103,8 +103,8 @@ def quiescence(gs, alpha, beta, info, depth=0):
 def best_move(gs, depth, info, last_best=None):
     moves = movesOrdered(legalMoves(gs), gs, last_best)
     best = None
-    alpha = -float("inf")
-    beta = float("inf")
+    alpha = -10_000_000 #completely stop infinity from appearing large int values
+    beta  =  10_000_000
     for move in moves:
         applyMove(gs, move)
         score = -negamax(gs, -beta, -alpha, depth - 1, info)

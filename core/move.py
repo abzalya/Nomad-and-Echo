@@ -14,3 +14,9 @@ class Move:
         self.to_sq = to_sq
         self.flags = flags
         self.promo_piece = promo_piece
+
+    def __eq__(self, other):
+        return (isinstance(other, Move)
+                and self.from_sq == other.from_sq
+                and self.to_sq == other.to_sq
+                and self.promo_piece == other.promo_piece)
