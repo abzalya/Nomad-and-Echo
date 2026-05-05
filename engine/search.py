@@ -16,8 +16,8 @@ class _Info:
         self.stop = False
     
     def check(self):
-        #check counter every 1024 nodes
-        if self.limit and (self.nodes & 1023) == 0:
+        #check counter every 128 nodes. the time management was super off for python
+        if self.limit and (self.nodes & 127) == 0:
             if time.perf_counter() - self.start >= self.limit: #limit is set externally. if exceeded,
                 self.stop = True #pull abort flag to True
 
