@@ -19,9 +19,23 @@
 - end screen with the game restart button
 
 
-#ENGINE
-1. position evaluation.
-- piece costs
-- extra points for positions of knights and kings all pieces really
-
-2. minimax + alpha-beta
+#ENGINE priorities:
+- search
+    - [1] null move pruning
+    - [2] check extensions
+    - [3] futility pruning
+    - [4] late move reduction
+    - [5] aspiration windows
+    - [6] repetition detection
+- evaluation:
+    - [1] pawn structure - doubled/isolated/passed pawns
+    - [2] king safety - open files near king, pawn shield
+    - [3] tapered eval
+    - [4] piece coordination - bishop pair, rook on open file, rook on 7th
+    - [5] mobility - count legal moves as a bonus, rewards active pieces
+    - [6] endgame knowledge
+- move ordering
+    - [1] static exchange eval (SEE)
+    - [2] killer heuristic
+    - [3] history heuristic
+    - [4] full pipeline - hash, capture (SEE), killer, history, quiet (feeds LMR)

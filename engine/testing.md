@@ -11,7 +11,16 @@
 | Tag | Description | ELO |
 |-----|-------------|-----|
 | Nomad-v0.1 | Material + PST eval, negamax with alpha-beta | N/A |
+| Nomad-v0.2 | + Iterative deepening, time management, quiescence search, MVV-LVA move ordering. | 1 W / 99 L (98 on time) |
+| Nomad-v0.3 | + Transposition table via Zobrist hashing. TT move ordering silently broken | 0 W / 100 L (all on time) |
+| Nomad-v0.4 | Fix: time check granularity 1024 → 128 nodes. Fix: TT move ordering now works. | 0 W / 99 L / 1 D (62 on time, 37 checkmates) |
 
+## VS
+
+| Matchup | Result | Notes |
+|---------|--------|-------|
+| v0.1 vs v0.2 | v0.2 wins 100-0 | v0.1 ignores clock, times out every game |
+| v0.2 vs v0.3 | v0.3 wins 55-45 | Marginal, LOS 15.9% — not significant. Both still drain clock |
 
 ## Leightweigh Testing game played in pygame with debug printing of depth, NPS and time
 
