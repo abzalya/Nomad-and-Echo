@@ -1,6 +1,7 @@
 import time
 from engine.eval import evaluate
 from engine.move_order import movesOrdered
+from engine.tt import tt_get, tt_store, EXACT, LOWER, UPPER
 from core.move_generator import legalMoves, captureMovesOnly
 from core.apply_move import applyMove, undoMove
 from core.attacks import isSquareAttacked
@@ -21,15 +22,30 @@ class _Info:
                 self.stop = True #pull abort flag to True
 
 def negamax(gs, alpha, beta, depth, info):
-    info.nodes += 1 #increment nodes counter
+    info.nodes += 1
     info.check()
     if info.stop:
         return 0
 
+    original_alpha = alpha
+
+    tt_move = None #best move from this position that was stored. pass into movesOrdered
+    tt_entry = tt_get(gs.zobristHash, depth)
+    if tt_entry:
+        _, tt_score, _, tt_flag, tt_move = tt_entry
+        if tt_flag == EXACT: #get exact score return early
+            return tt_score
+        if tt_flag == LOWER: #instantly tighten window
+            alpha = max(alpha, tt_score)
+        if tt_flag == UPPER:
+            beta = min(beta, tt_score)
+        if alpha >= beta:
+            return tt_score
+
     if depth == 0:
         return quiescence(gs, alpha, beta, info, depth=0)
 
-    moves = movesOrdered(legalMoves(gs),gs)
+    moves = movesOrdered(legalMoves(gs), gs, tt_move)
     if not moves:
         ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
         sq = ownKing.bit_length() - 1
@@ -37,16 +53,22 @@ def negamax(gs, alpha, beta, depth, info):
             return -100000
         return 0
 
+    best = None
     for move in moves:
         applyMove(gs, move)
         score = -negamax(gs, -beta, -alpha, depth - 1, info)
         undoMove(gs)
         if info.stop:
-            return alpha #return best move so far
+            return alpha
         if score > alpha:
             alpha = score
+            best = move
         if alpha >= beta:
+            tt_store(gs.zobristHash, beta, depth, LOWER, best)
             return beta
+
+    flag = EXACT if alpha > original_alpha else UPPER
+    tt_store(gs.zobristHash, alpha, depth, flag, best)
     return alpha
 
 #search position for captures until quite. Should stop blunders in the middle of exchanges on the horizon
@@ -78,8 +100,8 @@ def quiescence(gs, alpha, beta, info, depth=0):
 
 
 
-def best_move(gs, depth, info):
-    moves = movesOrdered(legalMoves(gs), gs)
+def best_move(gs, depth, info, last_best=None):
+    moves = movesOrdered(legalMoves(gs), gs, last_best)
     best = None
     alpha = -float("inf")
     beta = float("inf")
@@ -102,13 +124,13 @@ def best_move(gs, depth, info):
 
 MAX_DEPTH = 32
 
-def iterative_deepening(gs, time_limit=None):
+def iterative_deepening(gs, time_limit=None, max_depth=MAX_DEPTH):
     info = _Info(time_limit)
-    best = None
-    for depth in range(1, MAX_DEPTH + 1):
-        candidate = best_move(gs, depth, info)
-        if info.stop and best is not None:
+    last_best = None
+    for depth in range(1, max_depth + 1):
+        candidate = best_move(gs, depth, info, last_best)
+        if info.stop and last_best is not None:
             break
-        best = candidate #only returns best move of full depth X
-    return best
+        last_best = candidate #only returns best move of full depth X
+    return last_best
 #we can use shallow results for better move ordering surely

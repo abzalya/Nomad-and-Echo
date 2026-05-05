@@ -21,6 +21,11 @@ def _mvvlva(move, gs):
     #victim - attacker scoring
     return _pieceValueOnSq(move.to_sq, gs) * 10 - _pieceValueOnSq(move.from_sq, gs) #times 10 to sort. 
 
-def movesOrdered(moves, gs):
+def movesOrdered(moves, gs, known_best=None):
     moves.sort(key=lambda m: _mvvlva(m, gs), reverse=True)
+    #last best move from depth -1 should be first in line
+    #remove from list and insert at front
+    if known_best is not None and known_best in moves:
+        moves.remove(known_best)
+        moves.insert(0, known_best)
     return moves
