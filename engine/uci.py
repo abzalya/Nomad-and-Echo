@@ -34,15 +34,27 @@ def move_to_uci(move):
     uci = sq_to_uci(move.from_sq) + sq_to_uci(move.to_sq)
     if move.flags & MoveFlag.PROMOTION:
         letter = move.promo_piece.replace("white", "").replace("black", "").lower()[0]
-        # bishops → b, queens → q, rooks → r, knights → n
         if move.promo_piece.endswith("Knights"):
             letter = "n"
         uci += letter
     return uci
 
+def _get(parts, name, default=None):
+    if name in parts:
+        return int(parts[parts.index(name) + 1])
+    return default
+
+def _allocate_time(remaining_ms, inc_ms, movestogo=None):
+    mtg = movestogo if movestogo else 30
+    t   = remaining_ms / mtg + inc_ms * 0.8
+    t   = min(t, remaining_ms * 0.8)
+    return t / 1000  # seconds
+
+_LARGE_DEPTH = 64  # sentinel for time-limited searches
+
 def uci_loop():
     sys.stdin.reconfigure(encoding='utf-8-sig')
-    game = Game()
+    game  = Game()
     depth = 3
 
     for line in sys.stdin:
@@ -59,32 +71,50 @@ def uci_loop():
             print("readyok")
 
         elif line == "ucinewgame":
-            game = Game()
+            game  = Game()
+            depth = 3
 
         elif line.startswith("position"):
-            game = Game()
+            game  = Game()
             parts = line.split()
-            move_idx = None
             if "moves" in parts:
-                move_idx = parts.index("moves")
-                moves_list = parts[move_idx + 1:]
+                moves_list = parts[parts.index("moves") + 1:]
             else:
                 moves_list = []
-            # only startpos supported for now (no FEN parsing)
+            # only startpos supported (no FEN parsing yet)
             for uci in moves_list:
                 move = uci_to_move(uci, game.legal_moves, game.gs.whiteToMove)
                 if move:
                     game.apply(move)
 
         elif line.startswith("go"):
-            parts = line.split()
+            parts      = line.split()
+            time_limit = None
+            search_depth = depth
+
             if "depth" in parts:
-                depth = int(parts[parts.index("depth") + 1])
-            move = best_move(game.gs, depth)
-            if move:
-                print(f"bestmove {move_to_uci(move)}")
-            else:
-                print("bestmove 0000")
+                search_depth = _get(parts, "depth")
+
+            elif "movetime" in parts:
+                time_limit   = _get(parts, "movetime") / 1000  # ms → s
+                search_depth = _LARGE_DEPTH
+
+            elif "wtime" in parts or "btime" in parts:
+                wtime = _get(parts, "wtime", 0)
+                btime = _get(parts, "btime", 0)
+                winc  = _get(parts, "winc",  0)
+                binc  = _get(parts, "binc",  0)
+                mtg   = _get(parts, "movestogo")
+                remaining = wtime if game.gs.whiteToMove else btime
+                inc       = winc  if game.gs.whiteToMove else binc
+                time_limit   = _allocate_time(remaining, inc, mtg)
+                search_depth = _LARGE_DEPTH
+
+            elif "infinite" in parts:
+                search_depth = _LARGE_DEPTH  # runs until 'stop' (not yet supported)
+
+            move = best_move(game.gs, search_depth, time_limit)
+            print(f"bestmove {move_to_uci(move) if move else '0000'}")
 
         elif line == "quit":
             break
