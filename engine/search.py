@@ -1,6 +1,6 @@
 import time
 from engine.eval import evaluate
-from core.move_generator import legalMoves
+from core.move_generator import legalMoves, captureMovesOnly
 from core.apply_move import applyMove, undoMove
 from core.attacks import isSquareAttacked
 
@@ -26,11 +26,9 @@ def negamax(gs, alpha, beta, depth, info):
         return 0
 
     if depth == 0:
-        score = evaluate(gs)
-        return score if gs.whiteToMove else -score
+        return quiescence(gs, alpha, beta, info)
 
     moves = legalMoves(gs)
-    #checkmate, stalemate
     if not moves:
         ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
         sq = ownKing.bit_length() - 1
@@ -50,8 +48,29 @@ def negamax(gs, alpha, beta, depth, info):
             return beta
     return alpha
 
-#time limit abortion introduced to negamax search. 
-#add to best_move as the main return function
+#search position for captures until quite. Should stop blunders in the middle of exchanges on the horizon
+def quiescence(gs, alpha, beta, info):
+    info.nodes += 1
+    info.check()
+    if info.stop:
+        return 0
+
+    quiet_score = evaluate(gs)
+    quiet_score = quiet_score if gs.whiteToMove else -quiet_score
+    if quiet_score >= beta: return beta
+    alpha = max(alpha, quiet_score)
+    for move in captureMovesOnly(gs):
+        applyMove(gs, move)
+        score = -quiescence(gs, -beta, -alpha, info)
+        undoMove(gs)
+        alpha = max(alpha, score)
+        if alpha >= beta: return beta
+    return alpha
+#currently, we are generating all legal moves and then filtering for captures using captureMovesOnly. 
+#as an optimisation it could be worth making a capture only generator down the line. I wonder how much an improvement it would be time wise. 
+
+
+
 def best_move(gs, depth, time_limit=None):
     info = _Info(time_limit)
     moves = legalMoves(gs)

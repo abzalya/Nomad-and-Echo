@@ -92,3 +92,11 @@ def legalMoves(gs):
         if not isSquareAttacked(sq, gs_copy):
             allLegalMoves.append(move)
     return allLegalMoves
+
+def captureMovesOnly(gs):
+    allLegalMoves = legalMoves(gs)
+    allCaptureMoves = []
+    for move in allLegalMoves:
+        if move.flags & MoveFlag.CAPTURE:
+            allCaptureMoves.append(move)
+    return allCaptureMoves
