@@ -1,3 +1,3 @@
 @echo off
 cd /d "%~dp0"
-venv\Scripts\python.exe -u -m engine.uci
+pypy3 engine/uci.py
