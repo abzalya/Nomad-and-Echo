@@ -1,4 +1,6 @@
 import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from core.game import Game
 from core.move import MoveFlag
 from engine.search import best_move, iterative_deepening, _Info

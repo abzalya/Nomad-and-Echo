@@ -14,6 +14,7 @@
 | Nomad-v0.2 | + Iterative deepening, time management, quiescence search, MVV-LVA move ordering. | 1 W / 99 L (98 on time) |
 | Nomad-v0.3 | + Transposition table via Zobrist hashing. TT move ordering silently broken | 0 W / 100 L (all on time) |
 | Nomad-v0.4 | Fix: time check granularity 1024 → 128 nodes. Fix: TT move ordering now works. | 0 W / 99 L / 1 D (62 on time, 37 checkmates) |
+| Nomad-v0.5(wip) | using pypy as interpreter | 67 W / 28 L / 5 D (zero time forfeits) |
 
 ## VS
 
@@ -29,6 +30,8 @@
 | Nomad-v0.1 | 3 | ~10k -> ~1.5k | NPS degrading as the position has more legal moves|
 | Nomad-v0.4 | 3 |  ~1,662 | |
 | Nomad-v0.5(wip) | 3 | ~3150  | apply-undo instead of copy |
+| Nomad-v0.5(wip) | 3 | ~8090 | pypy3 as interpreter |
+
 
 Game: engine = black
 e2e4 e7e5 g1f3 d7d6 d2d4 c8g4 d4e5 g4f3 d1f3 d6e5

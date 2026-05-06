@@ -1,3 +1,3 @@
 @echo off
 cd /d "%~dp0"
-pypy3 engine/uci.py
+C:\PyPy\pypy3.10-v7.3.19-win64\pypy3.exe engine/uci.py
