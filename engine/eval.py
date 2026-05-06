@@ -68,5 +68,5 @@ def _position_eval(gs, total_material):
 def evaluate(gs):
     material_score, total_material = _material_eval(gs)
     position_score = _position_eval(gs, total_material)
-    return (material_score + position_score)/100
+    return material_score + position_score
 

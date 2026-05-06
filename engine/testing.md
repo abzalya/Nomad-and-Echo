@@ -27,6 +27,8 @@
 | Tag | Depth | NPS | Notes |
 |-----|-------|-----| ----- | 
 | Nomad-v0.1 | 3 | ~10k -> ~1.5k | NPS degrading as the position has more legal moves|
+| Nomad-v0.4 | 3 |  ~1,662 | |
+| Nomad-v0.5(wip) | 3 | ~3150  | apply-undo instead of copy |
 
 Game: engine = black
 e2e4 e7e5 g1f3 d7d6 d2d4 c8g4 d4e5 g4f3 d1f3 d6e5

@@ -2,8 +2,7 @@
 from core.move import Move, MoveFlag
 from core.bitboard import iterateBits, RANK_18
 from core.attacks import pawnActions, knightMoves, kingMoves, bishopAttacks, rookAttacks, queenAttacks, isSquareAttacked
-from core.apply_move import applyMove
-import copy
+from core.apply_move import applyMove, undoMove
 
 def generateMoves(gs):
     allMoves = []
@@ -82,15 +81,15 @@ def generateMoves(gs):
 
 def legalMoves(gs):
     allLegalMoves = []
-    allMoves = generateMoves(gs)
-    for move in allMoves:
-        gs_copy = copy.deepcopy(gs)
-        applyMove(gs_copy, move)
-        gs_copy.whiteToMove = not gs_copy.whiteToMove
-        ownKing = gs_copy.whiteKing if gs_copy.whiteToMove else gs_copy.blackKing
-        sq = ownKing.bit_length() -1
-        if not isSquareAttacked(sq, gs_copy):
+    for move in generateMoves(gs):
+        applyMove(gs, move)
+        gs.whiteToMove = not gs.whiteToMove  # flip back to check own king
+        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+        sq = ownKing.bit_length() - 1
+        if not isSquareAttacked(sq, gs):
             allLegalMoves.append(move)
+        gs.whiteToMove = not gs.whiteToMove  # restore before undo
+        undoMove(gs)
     return allLegalMoves
 
 def captureMovesOnly(gs):

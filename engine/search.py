@@ -2,7 +2,8 @@ import time
 from engine.eval import evaluate
 from engine.move_order import movesOrdered
 from engine.tt import tt_get, tt_store, EXACT, LOWER, UPPER
-from core.move_generator import legalMoves, captureMovesOnly
+from core.move_generator import legalMoves
+from core.move import MoveFlag
 from core.apply_move import applyMove, undoMove
 from core.attacks import isSquareAttacked
 
@@ -25,6 +26,9 @@ def negamax(gs, alpha, beta, depth, info):
     info.nodes += 1
     info.check()
     if info.stop:
+        return 0
+
+    if gs.positionHistory.get(gs.zobristHash, 0) >= 2:
         return 0
 
     original_alpha = alpha
@@ -78,16 +82,24 @@ def quiescence(gs, alpha, beta, info, depth=0):
     if info.stop:
         return 0
 
+    #checkmate/stalemate detection
+    all_legal = legalMoves(gs)
+    if not all_legal:
+        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+        sq = ownKing.bit_length() - 1
+        return -100000 if isSquareAttacked(sq, gs) else 0
+
     quiet_score = evaluate(gs)
     quiet_score = quiet_score if gs.whiteToMove else -quiet_score
-    
+
     #quiescence depth limit. it kept blowing up my search
     if depth >= 8:
         return quiet_score
-    
+
     if quiet_score >= beta: return beta
     alpha = max(alpha, quiet_score)
-    moves = movesOrdered(captureMovesOnly(gs), gs)
+    captures = [m for m in all_legal if m.flags & MoveFlag.CAPTURE]
+    moves = movesOrdered(captures, gs)
     for move in moves:
         applyMove(gs, move)
         score = -quiescence(gs, -beta, -alpha, info, depth + 1)

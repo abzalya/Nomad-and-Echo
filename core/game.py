@@ -69,3 +69,4 @@ class Game:
         move = best_move(self.gs, depth, _Info(None))
         if move:
             self.apply(move)
+            print(f"Engine plays: {self.gs.moveLog[-1]}")

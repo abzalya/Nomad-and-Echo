@@ -160,6 +160,7 @@ def main():
 
         #engine turn
         if game.is_engine_turn() and not game.status:
+            print("Engine thinking...")
             game.engine_move()
 
         for e in p.event.get():
