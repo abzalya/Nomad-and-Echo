@@ -28,8 +28,11 @@ def negamax(gs, alpha, beta, depth, info):
     if info.stop:
         return 0
 
-    if gs.positionHistory.get(gs.zobristHash, 0) >= 3:
+    count = gs.positionHistory.get(gs.zobristHash, 0)
+    if count >= 3:
         return 0
+    if count >= 2:
+        return -15
 
     original_alpha = alpha
 

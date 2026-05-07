@@ -36,9 +36,9 @@
     - [5] mobility - count legal moves as a bonus, rewards active pieces
     - [6] endgame knowledge
 - move ordering
-    - [1] static exchange eval (SEE)
-    - [2] killer heuristic
-    - [3] history heuristic
+    - [1] killer heuristic
+    - [2] history heuristic
+    - [3] static exchange eval (SEE)
     - [4] full pipeline - hash, capture (SEE), killer, history, quiet (feeds LMR)
 
 
