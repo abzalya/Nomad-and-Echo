@@ -42,6 +42,5 @@
 
 
 - speed thoughts
-    - PyPy — drop-in replacement for CPython, typically 5–10× faster, zero code changes
-    - Rewrite hot paths in C via ctypes/cffi — move gen + attack tables are the bottleneck
+    - Rewrite hot paths in C pybind11, almost 1 to 1 apart from syntax (if bottlenecking hard)
     - Bitboard attack tables — precomputed magic bitboards for slider attacks instead of ray tracing per call

@@ -12,12 +12,11 @@ def knightAttacks(sq):
     attacks |= ((bb >>  6) & NOT_AB_FILE)
     return attacks
 
-def knightMoves(sq, ownPieces):
-    attacks = knightAttacks(sq)
-    return attacks & ~ownPieces
+KNIGHT_ATTACKS = [knightAttacks(sq) for sq in range(64)]
 
-#In practice people precompute all 64 results once at startup into a lookup table so you're never recalculating:
-#KNIGHT_ATTACKS = [knight_attacks(sq) for sq in range(64)]
+def knightMoves(sq, ownPieces):
+    attacks = KNIGHT_ATTACKS[sq]
+    return attacks & ~ownPieces
 
 def kingAttacks(sq):
     bb = 1 << sq
@@ -31,8 +30,10 @@ def kingAttacks(sq):
     attacks |= ((bb >> 9) & NOT_H_FILE) #bot left
     return attacks & FULL #there was a legal move that was moving the king off the board preventing checkmate. apply the FULL Mask to fix.
 
+KING_ATTACKS = [kingAttacks(sq) for sq in range(64)]
+
 def kingMoves(sq, ownPieces, allPieces, gs):
-    attacks = kingAttacks(sq)
+    attacks = KING_ATTACKS[sq]
     #i think castling should go here
     bb = 1 << sq
     castleKingSideSquares = ((bb << 1) | (bb << 2))
@@ -84,10 +85,9 @@ def pawnActions(sq, whiteToMove, ownPieces, enemyPieces, epSquare):
     attacks = pawnAttacks(sq, whiteToMove, enemyPieces, epSquare)
     return moves | (attacks & ~ownPieces)
 
-def positiveRayAttacks(sq, enemyPieces, ownPieces, direction, fileMask=FULL):
+def positiveRayAttacks(sq, allPieces, ownPieces, direction, fileMask=FULL):
     #iterating on the attack squares. move 1 square in a direction and check. if blocker, break, if wrapped file, break,
     #if empty the new start is the currect check sq. do again
-    allPieces = ownPieces | enemyPieces
     bb = 1 << sq
     attacks = 0
     for i in range (7):
@@ -102,8 +102,7 @@ def positiveRayAttacks(sq, enemyPieces, ownPieces, direction, fileMask=FULL):
             bb = attacked_sq
     return attacks & ~ownPieces
 
-def negativeRayAttacks(sq, enemyPieces, ownPieces, direction, fileMask=FULL):
-    allPieces = ownPieces | enemyPieces
+def negativeRayAttacks(sq, allPieces, ownPieces, direction, fileMask=FULL):
     bb = 1 << sq
     attacks = 0
     for i in range (7):
@@ -118,35 +117,23 @@ def negativeRayAttacks(sq, enemyPieces, ownPieces, direction, fileMask=FULL):
             bb = attacked_sq
     return attacks & ~ownPieces
 
-#Directions
-#positive
-#N, <<8, none
-#NE, <<9, not a
-#E, <<1, not a
-#NW, <<7, not h
-#negative
-#S, >>8, none
-#SE, >>7, not a
-#W, >>1, not h
-#SW, >>9, not h
-
-def rookAttacks(sq, enemyPieces, ownPieces):
-    attacks = positiveRayAttacks(sq, enemyPieces, ownPieces, 8)
-    attacks |= positiveRayAttacks(sq, enemyPieces, ownPieces, 1, NOT_A_FILE)
-    attacks |= negativeRayAttacks(sq, enemyPieces, ownPieces, 8)
-    attacks |= negativeRayAttacks(sq, enemyPieces, ownPieces, 1, NOT_H_FILE)
+def rookAttacks(sq, allPieces, ownPieces):
+    attacks = positiveRayAttacks(sq, allPieces, ownPieces, 8)
+    attacks |= positiveRayAttacks(sq, allPieces, ownPieces, 1, NOT_A_FILE)
+    attacks |= negativeRayAttacks(sq, allPieces, ownPieces, 8)
+    attacks |= negativeRayAttacks(sq, allPieces, ownPieces, 1, NOT_H_FILE)
     return attacks
 
-def bishopAttacks(sq, enemyPieces, ownPieces):
-    attacks = positiveRayAttacks(sq, enemyPieces, ownPieces, 9, NOT_A_FILE)
-    attacks |= positiveRayAttacks(sq, enemyPieces, ownPieces, 7, NOT_H_FILE)
-    attacks |= negativeRayAttacks(sq, enemyPieces, ownPieces, 7, NOT_A_FILE)
-    attacks |= negativeRayAttacks(sq, enemyPieces, ownPieces, 9, NOT_H_FILE)
+def bishopAttacks(sq, allPieces, ownPieces):
+    attacks = positiveRayAttacks(sq, allPieces, ownPieces, 9, NOT_A_FILE)
+    attacks |= positiveRayAttacks(sq, allPieces, ownPieces, 7, NOT_H_FILE)
+    attacks |= negativeRayAttacks(sq, allPieces, ownPieces, 7, NOT_A_FILE)
+    attacks |= negativeRayAttacks(sq, allPieces, ownPieces, 9, NOT_H_FILE)
     return attacks
 
-def queenAttacks(sq, enemyPieces, ownPieces):
-    attacks = rookAttacks(sq, enemyPieces, ownPieces)
-    attacks |= bishopAttacks(sq, enemyPieces, ownPieces)
+def queenAttacks(sq, allPieces, ownPieces):
+    attacks = rookAttacks(sq, allPieces, ownPieces)
+    attacks |= bishopAttacks(sq, allPieces, ownPieces)
     return attacks
 
 def isSquareAttacked(sq, gs): #reverse lookup approach for any arbitrary square on the board
@@ -170,9 +157,11 @@ def isSquareAttacked(sq, gs): #reverse lookup approach for any arbitrary square 
         enemyRooks = gs.whiteRooks
         enemyQueens = gs.whiteQueens
         enemyKing = gs.whiteKing
-    attacks  = pawnAttacks(sq, gs.whiteToMove, enemyPawns, -1)
-    attacks |= knightAttacks(sq) & enemyKnights
-    attacks |= kingAttacks(sq) & enemyKing
-    attacks |= bishopAttacks(sq, enemyPieces, ownPieces) & (enemyBishops | enemyQueens)
-    attacks |= rookAttacks(sq, enemyPieces, ownPieces) & (enemyRooks | enemyQueens)
-    return bool(attacks)
+    allPieces = ownPieces | enemyPieces
+    #shortcut: cheap checks first, return early if any attack found
+    if pawnAttacks(sq, gs.whiteToMove, enemyPawns, -1): return True
+    if KNIGHT_ATTACKS[sq] & enemyKnights: return True
+    if KING_ATTACKS[sq] & enemyKing: return True
+    if bishopAttacks(sq, allPieces, ownPieces) & (enemyBishops | enemyQueens): return True
+    if rookAttacks(sq, allPieces, ownPieces) & (enemyRooks | enemyQueens): return True
+    return False

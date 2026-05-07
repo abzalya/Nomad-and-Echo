@@ -60,19 +60,19 @@ def generateMoves(gs):
             allMoves.append(Move(sq, to_sq, flag))
 
     for sq in iterateBits(gs.whiteBishops if gs.whiteToMove else gs.blackBishops):
-        bb = bishopAttacks(sq, enemyPieces, ownPieces)
+        bb = bishopAttacks(sq, allPieces, ownPieces)
         for to_sq in iterateBits(bb):
             flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
             allMoves.append(Move(sq, to_sq, flag))
 
     for sq in iterateBits(gs.whiteRooks if gs.whiteToMove else gs.blackRooks):
-        bb = rookAttacks(sq, enemyPieces, ownPieces)
+        bb = rookAttacks(sq, allPieces, ownPieces)
         for to_sq in iterateBits(bb):
             flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
             allMoves.append(Move(sq, to_sq, flag))
 
     for sq in iterateBits(gs.whiteQueens if gs.whiteToMove else gs.blackQueens):
-        bb = queenAttacks(sq, enemyPieces, ownPieces)
+        bb = queenAttacks(sq, allPieces, ownPieces)
         for to_sq in iterateBits(bb):
             flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
             allMoves.append(Move(sq, to_sq, flag))
