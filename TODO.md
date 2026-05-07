@@ -29,9 +29,10 @@
     - [6] repetition detection
 - evaluation:
     - [X] pawn structure - doubled/isolated/passed pawns
-    - [2] king safety - open files near king, pawn shield
+    - [x] king safety - open files near king, pawn shield
     - [3] tapered eval
-    - [4] piece coordination - bishop pair, rook on open file, rook on 7th
+    - [x] piece coordination - bishop pair, rook on open file, rook on 7th
+        - connected rooks is expensive calculation. left out for now
     - [5] mobility - count legal moves as a bonus, rewards active pieces
     - [6] endgame knowledge
 - move ordering

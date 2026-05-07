@@ -4,7 +4,7 @@ from core.bitboard import iterateBits
 from engine.psts import (PAWN_PST, KNIGHT_PST, BISHOP_PST, ROOK_PST,
                           QUEEN_PST, KING_MG_PST, KING_EG_PST)
 from engine.pawn_eval_masks import FILE_MASKS, ADJACENT_FILES_MASKS, PASSED_MASKS
-from core.attacks import PAWN_ATTACKS
+from core.attacks import PAWN_ATTACKS, KING_ATTACKS, EXTENDED_KING_ZONE
 #stockfish type material
 WHITE_PIECES = [
     ("whitePawns", 100), ("whiteRooks", 500), ("whiteKnights", 320),
@@ -55,7 +55,7 @@ def _position_eval(gs, total_material):
     black_king_sq = next(iterateBits(gs.blackKing))
     score += (phase * KING_MG_PST[white_king_sq] + (1 - phase) * KING_EG_PST[white_king_sq])
     score -= (phase * KING_MG_PST[black_king_sq ^ 56] + (1 - phase) * KING_EG_PST[black_king_sq ^ 56])
-    return score
+    return score, phase
 
 #Pawn related penalty/bonuses
 DOUBLED_PENALTY  = 20
@@ -115,11 +115,101 @@ def _pawn_islands(bb):
         prev = bit
     return islands
 
+OPEN_FILE_BONUS = 25
+ROOK_ON_SEVENTH_BONUS = 20
+CONNECTED_ROOKS_BONUS = 15
 
-#how would i do pawn structures, king safety, rook seeing the open file
+def _rook_eval(gs):
+    score = 0
+    wr = gs.whiteRooks
+    br = gs.blackRooks
+    wp = gs.whitePawns
+    bp = gs.blackPawns
+    for sq in iterateBits(wr):
+        file = sq % 8
+        rank = sq // 8
+        if (FILE_MASKS[file] & wp) == 0: #no own pawns = semi-open
+            score += OPEN_FILE_BONUS
+            if (FILE_MASKS[file] & bp) == 0: #if no pawns and no enemy pawns = open
+                score += OPEN_FILE_BONUS
+        if rank == 6:
+            score += ROOK_ON_SEVENTH_BONUS
+    for sq in iterateBits(br):
+        file = sq % 8
+        rank = sq // 8
+        if (FILE_MASKS[file] & bp) == 0:
+            score -= OPEN_FILE_BONUS
+            if (FILE_MASKS[file] & wp) == 0:
+                score -= OPEN_FILE_BONUS
+        if rank == 1: 
+            score -= ROOK_ON_SEVENTH_BONUS
+    #need to do connected when attack generation is cheaper
+    return score
+
+PAWN_SHIELD_BONUS = 15
+DEFENDER_PIECES_BONUS = 5
+OPEN_FILE_NEAR_KING_PENALTY = 20
+CLOSE_ENEMY_PENALTY = 15 
+
+def _king_eval(gs, phase):
+    score = 0
+    wk = gs.whiteKing
+    bk = gs.blackKing
+    wp = gs.whitePawns
+    bp = gs.blackPawns
+    whitePieces = gs.whiteRooks | gs.whiteKnights | gs.whiteBishops | gs.whiteQueens 
+    blackPieces = gs.blackRooks | gs.blackKnights | gs.blackBishops | gs.blackQueens 
+    for sq in iterateBits(wk):
+        num_of_pawn_shield = (KING_ATTACKS[sq] & wp).bit_count()
+        if num_of_pawn_shield:
+            score += int(PAWN_SHIELD_BONUS * num_of_pawn_shield * phase)
+        num_of_defenders = (KING_ATTACKS[sq] & whitePieces).bit_count()
+        if num_of_defenders:
+            score += int(DEFENDER_PIECES_BONUS * num_of_defenders * phase)
+        num_of_attackers = (EXTENDED_KING_ZONE[sq] & blackPieces).bit_count()
+        if num_of_attackers:
+            score -= int(CLOSE_ENEMY_PENALTY * num_of_attackers * phase)
+        file = sq % 8
+        for f in range(max(0, file-1), min(8, file+2)):
+            if (FILE_MASKS[f] & wp) == 0:
+                score -= int(OPEN_FILE_NEAR_KING_PENALTY * phase)
+    for sq in iterateBits(bk):
+        num_of_pawn_shield = (KING_ATTACKS[sq] & bp).bit_count()
+        if num_of_pawn_shield:
+            score -= int(PAWN_SHIELD_BONUS * num_of_pawn_shield * phase)
+        num_of_defenders = (KING_ATTACKS[sq] & blackPieces).bit_count()
+        if num_of_defenders:
+            score -= int(DEFENDER_PIECES_BONUS * num_of_defenders * phase)
+        num_of_attackers = (EXTENDED_KING_ZONE[sq] & whitePieces).bit_count()
+        if num_of_attackers:
+            score += int(CLOSE_ENEMY_PENALTY * num_of_attackers * phase)
+        file = sq % 8
+        for f in range(max(0, file-1), min(8, file+2)):
+            if (FILE_MASKS[f] & bp) == 0:
+                score += int(OPEN_FILE_NEAR_KING_PENALTY * phase)
+    return score
+
+BISHOP_PAIR_BONUS = 30
+
+def _bishop_eval(gs):
+    score = 0
+    wb = gs.whiteBishops
+    bb = gs.blackBishops
+    if wb.bit_count() > 1:
+        score += BISHOP_PAIR_BONUS
+    if bb.bit_count() > 1:
+        score -= BISHOP_PAIR_BONUS
+    return score
+
+TEMPO_BONUS = 10
+
 def evaluate(gs):
     material_score, total_material = _material_eval(gs)
-    position_score = _position_eval(gs, total_material)
+    position_score, phase = _position_eval(gs, total_material)
     pawn_score = _pawn_eval(gs)
-    return material_score + position_score + pawn_score
+    rook_score = _rook_eval(gs)
+    king_score = _king_eval(gs, phase)
+    bishop_score = _bishop_eval(gs)
+    tempo = TEMPO_BONUS if gs.whiteToMove else -TEMPO_BONUS
+    return material_score + position_score + pawn_score + rook_score + king_score + bishop_score + tempo
 

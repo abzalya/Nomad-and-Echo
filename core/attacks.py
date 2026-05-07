@@ -32,6 +32,21 @@ def kingAttacks(sq):
 
 KING_ATTACKS = [kingAttacks(sq) for sq in range(64)]
 
+#for king evaluation
+def _extended_king_zone(sq):
+    zone = KING_ATTACKS[sq] | (1 << sq)
+    result  = (zone << 8)
+    result |= (zone >> 8)
+    result |= ((zone << 1) & NOT_A_FILE)
+    result |= ((zone >> 1) & NOT_H_FILE)
+    result |= ((zone << 7) & NOT_H_FILE)
+    result |= ((zone << 9) & NOT_A_FILE)
+    result |= ((zone >> 7) & NOT_A_FILE)
+    result |= ((zone >> 9) & NOT_H_FILE)
+    return (result | zone) & FULL
+
+EXTENDED_KING_ZONE = [_extended_king_zone(sq) for sq in range(64)]
+
 def kingMoves(sq, ownPieces, allPieces, gs):
     attacks = KING_ATTACKS[sq]
     #i think castling should go here
