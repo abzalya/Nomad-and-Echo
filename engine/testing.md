@@ -30,7 +30,8 @@
 | Nomad-v0.1 | 3 | ~10k -> ~1.5k | NPS degrading as the position has more legal moves|
 | Nomad-v0.4 | 3 |  ~1,662 | |
 | Nomad-v0.5(wip) | 3 | ~3150  | apply-undo instead of copy |
-| Nomad-v0.5(wip) | 3 | ~8090 | pypy3 as interpreter |
+| Nomad-v0.5 | 3 | ~8090 | pypy3 as interpreter |
+| Nomad-v0.6(wip) | 3 | ~37924 | pseudo-legal moves and lazy legality |
 
 
 Game: engine = black

@@ -2,7 +2,7 @@ import time
 from engine.eval import evaluate
 from engine.move_order import movesOrdered
 from engine.tt import tt_get, tt_store, EXACT, LOWER, UPPER
-from core.move_generator import legalMoves
+from core.move_generator import generateMoves
 from core.move import MoveFlag
 from core.apply_move import applyMove, undoMove
 from core.attacks import isSquareAttacked
@@ -49,21 +49,29 @@ def negamax(gs, alpha, beta, depth, info):
     if depth == 0:
         return quiescence(gs, alpha, beta, info, depth=0)
 
-    moves = movesOrdered(legalMoves(gs), gs, tt_move)
-    if not moves:
-        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-        sq = ownKing.bit_length() - 1
-        if isSquareAttacked(sq, gs):
-            return -100000
-        return 0
+    moves = movesOrdered(generateMoves(gs), gs, tt_move)
 
     best = None
+    legal_move_found = False
     for move in moves:
         applyMove(gs, move)
+
+        #lazy legality check
+        gs.whiteToMove = not gs.whiteToMove
+        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+        sq = ownKing.bit_length() - 1
+        illegal = isSquareAttacked(sq, gs)
+        gs.whiteToMove = not gs.whiteToMove
+
+        if illegal:
+            undoMove(gs)
+            continue
+
+        legal_move_found = True
         score = -negamax(gs, -beta, -alpha, depth - 1, info)
         undoMove(gs)
         if info.stop:
-            return 0 #return 0 not alpha, leaking infinity
+            return 0
         if score > alpha:
             alpha = score
             best = move
@@ -71,54 +79,83 @@ def negamax(gs, alpha, beta, depth, info):
             tt_store(gs.zobristHash, beta, depth, LOWER, best)
             return beta
 
+    if not legal_move_found:
+        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+        sq = ownKing.bit_length() - 1
+        return -100000 if isSquareAttacked(sq, gs) else 0
+
     flag = EXACT if alpha > original_alpha else UPPER
     tt_store(gs.zobristHash, alpha, depth, flag, best)
     return alpha
 
-#search position for captures until quite. Should stop blunders in the middle of exchanges on the horizon
+#search position for captures until quiet. Should stop blunders in the middle of exchanges on the horizon
 def quiescence(gs, alpha, beta, info, depth=0):
     info.nodes += 1
     info.check()
     if info.stop:
         return 0
 
-    #checkmate/stalemate detection
-    all_legal = legalMoves(gs)
-    if not all_legal:
-        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-        sq = ownKing.bit_length() - 1
-        return -100000 if isSquareAttacked(sq, gs) else 0
+    ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+    in_check = isSquareAttacked(ownKing.bit_length() - 1, gs)
 
-    quiet_score = evaluate(gs)
-    quiet_score = quiet_score if gs.whiteToMove else -quiet_score
+    if not in_check:
+        quiet_score = evaluate(gs)
+        quiet_score = quiet_score if gs.whiteToMove else -quiet_score
 
-    #quiescence depth limit. it kept blowing up my search
-    if depth >= 8:
-        return quiet_score
+        #quiescence depth limit. it kept blowing up my search
+        if depth >= 8:
+            return quiet_score
 
-    if quiet_score >= beta: return beta
-    alpha = max(alpha, quiet_score)
-    captures = [m for m in all_legal if m.flags & MoveFlag.CAPTURE]
-    moves = movesOrdered(captures, gs)
-    for move in moves:
+        if quiet_score >= beta: return beta
+        alpha = max(alpha, quiet_score)
+
+    all_pseudo = generateMoves(gs)
+    # in check: must search all moves for evasions; otherwise captures only
+    candidates = all_pseudo if in_check else [m for m in all_pseudo if m.flags & MoveFlag.CAPTURE]
+
+    legal_move_found = False
+    for move in movesOrdered(candidates, gs):
         applyMove(gs, move)
+        gs.whiteToMove = not gs.whiteToMove
+        moverKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+        illegal = isSquareAttacked(moverKing.bit_length() - 1, gs)
+        gs.whiteToMove = not gs.whiteToMove
+
+        if illegal:
+            undoMove(gs)
+            continue
+
+        legal_move_found = True
         score = -quiescence(gs, -beta, -alpha, info, depth + 1)
         undoMove(gs)
         alpha = max(alpha, score)
         if alpha >= beta: return beta
+
+    if in_check and not legal_move_found:
+        return -100000
+
     return alpha
-#currently, we are generating all legal moves and then filtering for captures using captureMovesOnly. 
 #as an optimisation it could be worth making a capture only generator down the line. I wonder how much an improvement it would be time wise. 
 
 
 
 def best_move(gs, depth, info, last_best=None):
-    moves = movesOrdered(legalMoves(gs), gs, last_best)
+    moves = movesOrdered(generateMoves(gs), gs, last_best)
     best = None
     alpha = -10_000_000 #completely stop infinity from appearing large int values
     beta  =  10_000_000
     for move in moves:
         applyMove(gs, move)
+        #lazy legality check
+        gs.whiteToMove = not gs.whiteToMove
+        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+        sq = ownKing.bit_length() - 1
+        illegal = isSquareAttacked(sq, gs)
+        gs.whiteToMove = not gs.whiteToMove
+
+        if illegal:
+            undoMove(gs)
+            continue
         score = -negamax(gs, -beta, -alpha, depth - 1, info)
         undoMove(gs)
         if info.stop and best is not None:
@@ -145,4 +182,3 @@ def iterative_deepening(gs, time_limit=None, max_depth=MAX_DEPTH):
             break
         last_best = candidate #only returns best move of full depth X
     return last_best
-#we can use shallow results for better move ordering surely
