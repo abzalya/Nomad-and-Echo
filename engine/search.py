@@ -28,7 +28,7 @@ def negamax(gs, alpha, beta, depth, info):
     if info.stop:
         return 0
 
-    if gs.positionHistory.get(gs.zobristHash, 0) >= 2:
+    if gs.positionHistory.get(gs.zobristHash, 0) >= 3:
         return 0
 
     original_alpha = alpha
@@ -158,8 +158,7 @@ def best_move(gs, depth, info, last_best=None):
             continue
         score = -negamax(gs, -beta, -alpha, depth - 1, info)
         undoMove(gs)
-        if info.stop and best is not None:
-            #keep best move found so far
+        if info.stop:
             break
         if score > alpha:
             alpha = score
