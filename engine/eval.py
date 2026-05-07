@@ -201,6 +201,54 @@ def _bishop_eval(gs):
         score -= BISHOP_PAIR_BONUS
     return score
 
+MOPUP_EDGE_BONUS    = 20
+MOPUP_APPROACH      = 10
+MOPUP_CUTOFF_BONUS  = 15
+
+def _mopup_eval(gs):
+    score = 0
+    black_only_king = (gs.blackPawns | gs.blackRooks | gs.blackKnights | gs.blackBishops | gs.blackQueens) == 0
+    white_only_king = (gs.whitePawns | gs.whiteRooks | gs.whiteKnights | gs.whiteBishops | gs.whiteQueens) == 0
+
+    if black_only_king:
+        bk_sq = gs.blackKing.bit_length() - 1
+        wk_sq = gs.whiteKing.bit_length() - 1
+        bk_rank, bk_file = bk_sq // 8, bk_sq % 8
+        wk_rank, wk_file = wk_sq // 8, wk_sq % 8
+        # reward enemy king near edge/corner
+        edge = (3 - min(bk_rank, 7 - bk_rank)) + (3 - min(bk_file, 7 - bk_file))
+        score += edge * MOPUP_EDGE_BONUS
+        # reward own king approaching enemy king
+        dist = abs(wk_rank - bk_rank) + abs(wk_file - bk_file)
+        score += (14 - dist) * MOPUP_APPROACH
+        # rook cut-off: reward rooks that are trapping the enemy king toward an edge
+        for sq in iterateBits(gs.whiteRooks):
+            rook_rank = sq // 8
+            rook_file = sq % 8
+            if rook_rank != bk_rank:
+                score += max(0, 3 - abs(rook_rank - bk_rank)) * MOPUP_CUTOFF_BONUS
+            if rook_file != bk_file:
+                score += max(0, 3 - abs(rook_file - bk_file)) * MOPUP_CUTOFF_BONUS
+
+    if white_only_king:
+        wk_sq = gs.whiteKing.bit_length() - 1
+        bk_sq = gs.blackKing.bit_length() - 1
+        wk_rank, wk_file = wk_sq // 8, wk_sq % 8
+        bk_rank, bk_file = bk_sq // 8, bk_sq % 8
+        edge = (3 - min(wk_rank, 7 - wk_rank)) + (3 - min(wk_file, 7 - wk_file))
+        score -= edge * MOPUP_EDGE_BONUS
+        dist = abs(bk_rank - wk_rank) + abs(bk_file - wk_file)
+        score -= (14 - dist) * MOPUP_APPROACH
+        for sq in iterateBits(gs.blackRooks):
+            rook_rank = sq // 8
+            rook_file = sq % 8
+            if rook_rank != wk_rank:
+                score -= max(0, 3 - abs(rook_rank - wk_rank)) * MOPUP_CUTOFF_BONUS
+            if rook_file != wk_file:
+                score -= max(0, 3 - abs(rook_file - wk_file)) * MOPUP_CUTOFF_BONUS
+
+    return score
+
 TEMPO_BONUS = 10
 
 def evaluate(gs):
@@ -210,6 +258,7 @@ def evaluate(gs):
     rook_score = _rook_eval(gs)
     king_score = _king_eval(gs, phase)
     bishop_score = _bishop_eval(gs)
+    mopup_score = _mopup_eval(gs)
     tempo = TEMPO_BONUS if gs.whiteToMove else -TEMPO_BONUS
-    return material_score + position_score + pawn_score + rook_score + king_score + bishop_score + tempo
+    return material_score + position_score + pawn_score + rook_score + king_score + bishop_score + mopup_score + tempo
 
