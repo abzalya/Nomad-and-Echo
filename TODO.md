@@ -28,7 +28,7 @@
     - [5] aspiration windows
     - [6] repetition detection
 - evaluation:
-    - [1] pawn structure - doubled/isolated/passed pawns
+    - [X] pawn structure - doubled/isolated/passed pawns
     - [2] king safety - open files near king, pawn shield
     - [3] tapered eval
     - [4] piece coordination - bishop pair, rook on open file, rook on 7th

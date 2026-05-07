@@ -14,7 +14,8 @@
 | Nomad-v0.2 | + Iterative deepening, time management, quiescence search, MVV-LVA move ordering. | 1 W / 99 L (98 on time) |
 | Nomad-v0.3 | + Transposition table via Zobrist hashing. TT move ordering silently broken | 0 W / 100 L (all on time) |
 | Nomad-v0.4 | Fix: time check granularity 1024 → 128 nodes. Fix: TT move ordering now works. | 0 W / 99 L / 1 D (62 on time, 37 checkmates) |
-| Nomad-v0.5(wip) | using pypy as interpreter | 67 W / 28 L / 5 D (zero time forfeits) |
+| Nomad-v0.5 | using pypy as interpreter | 67 W / 28 L / 5 D (zero time forfeits) |
+| Nomad-v0.6 | pseudo-legal + lazy legality + some move_gen optimizations | 82 W / 10 L / 8 D |
 
 ## VS
 
