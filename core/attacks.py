@@ -66,18 +66,24 @@ def pawnMoves(sq, whiteToMove, allPieces):
             moves |= (bb >> 16) & ~allPieces
     return moves & FULL
 
-def pawnAttacks(sq, whiteToMove, enemyPieces, epSquare):
+def _pawnAttacks(sq, white):
     bb = 1 << sq
-    ep_bb = 0
-    if whiteToMove:
+    if white:
         attacks  = (bb << 7) & NOT_H_FILE
         attacks |= (bb << 9) & NOT_A_FILE
     else:
         attacks  = (bb >> 7) & NOT_A_FILE
         attacks |= (bb >> 9) & NOT_H_FILE
-    if epSquare != -1:
-            ep_bb = (1 << epSquare)
-    return attacks & (enemyPieces | ep_bb)
+    return attacks
+
+PAWN_ATTACKS = [
+    [_pawnAttacks(sq, True)  for sq in range(64)],  # 0 = white
+    [_pawnAttacks(sq, False) for sq in range(64)],  # 1 = black
+]
+
+def pawnAttacks(sq, whiteToMove, enemyPieces, epSquare):
+    ep_bb = (1 << epSquare) if epSquare != -1 else 0
+    return PAWN_ATTACKS[0 if whiteToMove else 1][sq] & (enemyPieces | ep_bb)
 
 def pawnActions(sq, whiteToMove, ownPieces, enemyPieces, epSquare):
     allPieces = ownPieces | enemyPieces
@@ -159,7 +165,7 @@ def isSquareAttacked(sq, gs): #reverse lookup approach for any arbitrary square 
         enemyKing = gs.whiteKing
     allPieces = ownPieces | enemyPieces
     #shortcut: cheap checks first, return early if any attack found
-    if pawnAttacks(sq, gs.whiteToMove, enemyPawns, -1): return True
+    if PAWN_ATTACKS[0 if gs.whiteToMove else 1][sq] & enemyPawns: return True
     if KNIGHT_ATTACKS[sq] & enemyKnights: return True
     if KING_ATTACKS[sq] & enemyKing: return True
     if bishopAttacks(sq, allPieces, ownPieces) & (enemyBishops | enemyQueens): return True
