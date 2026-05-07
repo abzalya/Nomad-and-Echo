@@ -82,7 +82,7 @@ def negamax(gs, alpha, beta, depth, info):
     if not legal_move_found:
         ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
         sq = ownKing.bit_length() - 1
-        return -100000 if isSquareAttacked(sq, gs) else 0
+        return -(100000 - depth) if isSquareAttacked(sq, gs) else 0
 
     flag = EXACT if alpha > original_alpha else UPPER
     tt_store(gs.zobristHash, alpha, depth, flag, best)
@@ -132,7 +132,7 @@ def quiescence(gs, alpha, beta, info, depth=0):
         if alpha >= beta: return beta
 
     if in_check and not legal_move_found:
-        return -100000
+        return -(100000 - depth)
 
     return alpha
 #as an optimisation it could be worth making a capture only generator down the line. I wonder how much an improvement it would be time wise. 
