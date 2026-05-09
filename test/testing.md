@@ -23,7 +23,8 @@
 |---------|--------|-------|
 | v0.1 vs v0.2 | v0.2 wins 100-0 | v0.1 ignores clock, times out every game |
 | v0.2 vs v0.3 | v0.3 wins 55-45 | Marginal, LOS 15.9% — not significant. Both still drain clock |
-| v0.6 vs v0.7 | current wins 53.5–46.5 | 12 W / 5 L / 83 D.  High draw rate (83%) from 3-fold repetition. |
+| v0.6 vs v0.7 | current wins 53.5–46.5 | 12 W / 5 L / 83 D. High draw rate (83%) from 3-fold repetition. |
+| v0.7 vs current | current wins 60.5–39.5 | 47 W / 26 L / 27 D. Elo +74.1 ±59.6, LOS 99.3%. |
 
 ## Leightweigh Testing game played in pygame with debug printing of depth, NPS and time
 

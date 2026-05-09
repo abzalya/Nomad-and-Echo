@@ -1,6 +1,5 @@
-from enum import IntFlag
-
-class MoveFlag(IntFlag):
+#Plain int constants
+class MoveFlag:
     NORMAL     = 0
     CAPTURE    = 1
     EN_PASSANT = 2

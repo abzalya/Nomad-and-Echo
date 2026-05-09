@@ -1,29 +1,56 @@
 from core.move import MoveFlag
-from core.bitboard import iterateBits, PIECE_BITBOARDS, RANK_2, RANK_7
-from core.zobrist import PIECE_INDEX, ZOBRIST_EP, ZOBRIST_CASTLING, ZOBRIST_PIECES, ZOBRIST_SIDE
+from core.bitboard import iterateBits, RANK_2, RANK_7
+from core.zobrist import ZOBRIST_EP, ZOBRIST_CASTLING, ZOBRIST_PIECES, ZOBRIST_SIDE
+
+#Piece-index constants matching the order used in ZOBRIST_PIECES.
+_WP, _WR, _WN, _WB, _WQ, _WK = 0, 1, 2, 3, 4, 5
+_BP, _BR, _BN, _BB, _BQ, _BK = 6, 7, 8, 9, 10, 11
+
+#Castling rook squares as bitboards
+_A1 = 1 << 0
+_H1 = 1 << 7
+_A8 = 1 << 56
+_H8 = 1 << 63
 
 def applyMove(gs, move):
-    #to undo move we need to save the irreversible stuff
+    from_bb = 1 << move.from_sq
+    to_bb   = 1 << move.to_sq
+    flags   = move.flags
+
     captured_attr = None
-    captured_sq = None
-    if move.flags & MoveFlag.CAPTURE:
-        to_bb = 1 << move.to_sq
-        for attr in PIECE_BITBOARDS:
-            if getattr(gs,attr) & to_bb:
-                captured_attr = attr
-                captured_sq = move.to_sq
-                break
-    if move.flags & MoveFlag.EN_PASSANT:
-        to_bb = 1 << move.to_sq
+    captured_sq   = None
+
+    #1. Detect captured piece (regular capture)
+    if flags & MoveFlag.CAPTURE:
+        if gs.whiteToMove:
+            #capturing a black piece
+            if   gs.blackPawns   & to_bb: captured_attr = "blackPawns"
+            elif gs.blackRooks   & to_bb: captured_attr = "blackRooks"
+            elif gs.blackKnights & to_bb: captured_attr = "blackKnights"
+            elif gs.blackBishops & to_bb: captured_attr = "blackBishops"
+            elif gs.blackQueens  & to_bb: captured_attr = "blackQueens"
+            elif gs.blackKing    & to_bb: captured_attr = "blackKing"
+        else:
+            if   gs.whitePawns   & to_bb: captured_attr = "whitePawns"
+            elif gs.whiteRooks   & to_bb: captured_attr = "whiteRooks"
+            elif gs.whiteKnights & to_bb: captured_attr = "whiteKnights"
+            elif gs.whiteBishops & to_bb: captured_attr = "whiteBishops"
+            elif gs.whiteQueens  & to_bb: captured_attr = "whiteQueens"
+            elif gs.whiteKing    & to_bb: captured_attr = "whiteKing"
+        captured_sq = move.to_sq
+
+    #2. Detect captured piece (en passant — always a pawn)
+    if flags & MoveFlag.EN_PASSANT:
         en_bb = (to_bb << 8) | (to_bb >> 8)
         en_bb &= ~RANK_2 & ~RANK_7
-        for attr in PIECE_BITBOARDS:
-            bb = getattr(gs, attr)
-            if bb & en_bb:
-                captured_attr = attr
-                captured_sq = next(iterateBits(bb & en_bb))
-                break
-    
+        if gs.whiteToMove:
+            captured_attr = "blackPawns"
+            captured_sq = next(iterateBits(gs.blackPawns & en_bb))
+        else:
+            captured_attr = "whitePawns"
+            captured_sq = next(iterateBits(gs.whitePawns & en_bb))
+
+    #3. Save history
     gs.history.append((
         move, captured_attr, captured_sq, gs.epSquare, gs.zobristHash,
         gs.wKingSideCastle, gs.wQueenSideCastle,
@@ -31,197 +58,287 @@ def applyMove(gs, move):
         gs.halfMoveCounter,
     ))
 
-    #first we xor out the old epSquare before updating
+    #4. XOR out old ep / castling
     if gs.epSquare != -1:
         gs.zobristHash ^= ZOBRIST_EP[gs.epSquare % 8]
-    #same with castling rights
-    for index, castle_right in enumerate([gs.wKingSideCastle, gs.wQueenSideCastle, gs.bKingSideCastle, gs.bQueenSideCastle]):
-        if castle_right:
-            gs.zobristHash ^= ZOBRIST_CASTLING[index]
+    if gs.wKingSideCastle:  gs.zobristHash ^= ZOBRIST_CASTLING[0]
+    if gs.wQueenSideCastle: gs.zobristHash ^= ZOBRIST_CASTLING[1]
+    if gs.bKingSideCastle:  gs.zobristHash ^= ZOBRIST_CASTLING[2]
+    if gs.bQueenSideCastle: gs.zobristHash ^= ZOBRIST_CASTLING[3]
 
-    from_bb = 1 << move.from_sq
-    to_bb = 1 << move.to_sq
+    #5. Process regular capture (clear captured piece + revoke castling rights for rook captures)
+    if flags & MoveFlag.CAPTURE:
+        if   captured_attr == "blackPawns":
+            gs.zobristHash ^= ZOBRIST_PIECES[_BP][move.to_sq]
+            gs.blackPawns &= ~to_bb
+        elif captured_attr == "blackRooks":
+            gs.zobristHash ^= ZOBRIST_PIECES[_BR][move.to_sq]
+            gs.blackRooks &= ~to_bb
+            if gs.bQueenSideCastle and to_bb == _A8:
+                gs.bQueenSideCastle = False
+            elif gs.bKingSideCastle and to_bb == _H8:
+                gs.bKingSideCastle = False
+        elif captured_attr == "blackKnights":
+            gs.zobristHash ^= ZOBRIST_PIECES[_BN][move.to_sq]
+            gs.blackKnights &= ~to_bb
+        elif captured_attr == "blackBishops":
+            gs.zobristHash ^= ZOBRIST_PIECES[_BB][move.to_sq]
+            gs.blackBishops &= ~to_bb
+        elif captured_attr == "blackQueens":
+            gs.zobristHash ^= ZOBRIST_PIECES[_BQ][move.to_sq]
+            gs.blackQueens &= ~to_bb
+        elif captured_attr == "blackKing":
+            gs.zobristHash ^= ZOBRIST_PIECES[_BK][move.to_sq]
+            gs.blackKing &= ~to_bb
+        elif captured_attr == "whitePawns":
+            gs.zobristHash ^= ZOBRIST_PIECES[_WP][move.to_sq]
+            gs.whitePawns &= ~to_bb
+        elif captured_attr == "whiteRooks":
+            gs.zobristHash ^= ZOBRIST_PIECES[_WR][move.to_sq]
+            gs.whiteRooks &= ~to_bb
+            if gs.wQueenSideCastle and to_bb == _A1:
+                gs.wQueenSideCastle = False
+            elif gs.wKingSideCastle and to_bb == _H1:
+                gs.wKingSideCastle = False
+        elif captured_attr == "whiteKnights":
+            gs.zobristHash ^= ZOBRIST_PIECES[_WN][move.to_sq]
+            gs.whiteKnights &= ~to_bb
+        elif captured_attr == "whiteBishops":
+            gs.zobristHash ^= ZOBRIST_PIECES[_WB][move.to_sq]
+            gs.whiteBishops &= ~to_bb
+        elif captured_attr == "whiteQueens":
+            gs.zobristHash ^= ZOBRIST_PIECES[_WQ][move.to_sq]
+            gs.whiteQueens &= ~to_bb
+        elif captured_attr == "whiteKing":
+            gs.zobristHash ^= ZOBRIST_PIECES[_WK][move.to_sq]
+            gs.whiteKing &= ~to_bb
 
-    if move.flags & MoveFlag.CAPTURE:
-        for attr, i in PIECE_INDEX.items():
-            bb = getattr(gs, attr)
-            if bb & to_bb:
-                #xor out captured piece
-                gs.zobristHash ^= ZOBRIST_PIECES[i][move.to_sq]
-                setattr(gs, attr, bb & ~to_bb) #clears the "to" square
-                #revoke castling rights if the rooks are captured
-                if gs.wQueenSideCastle and to_bb == (1 << 0):
-                    gs.wQueenSideCastle = False
-                elif gs.wKingSideCastle and to_bb == (1 << 7):
-                    gs.wKingSideCastle = False
-                elif gs.bQueenSideCastle and to_bb == (1 << 56):
-                    gs.bQueenSideCastle = False
-                elif gs.bKingSideCastle and to_bb == (1 << 63):
-                    gs.bKingSideCastle = False
-                break
-
-    if move.flags & MoveFlag.EN_PASSANT:
-        for attr, i in PIECE_INDEX.items():
-            bb = getattr(gs, attr)
-            #we need to clear the position of the double pushed pawn
-            #to square is always on rank rank 6 or rank 3
-            #the position of the double push pawn is always on rank 4 or 5
-            #look in both directions and then clear with masks
-            en_bb = (to_bb << 8) | (to_bb >> 8)
-            en_bb &= ~RANK_2 & ~RANK_7
-            if bb & en_bb:
-                #xor out captured pawn
-                #needs square
-                captured_pawn_bb = bb & en_bb
-                captured_pawn_sq = next(iterateBits(captured_pawn_bb))
-                gs.zobristHash ^= ZOBRIST_PIECES[i][captured_pawn_sq]
-                setattr(gs, attr, bb & ~en_bb) #clears the double push square
-                break
-
-    if move.flags & MoveFlag.PROMOTION:
+    #6. Process en passant capture (clear captured pawn at captured_sq, not to_sq)
+    if flags & MoveFlag.EN_PASSANT:
+        captured_bit = 1 << captured_sq
         if gs.whiteToMove:
-            gs.whitePawns &= ~from_bb #remove pawn
-            pawn_attr = "whitePawns"
+            gs.zobristHash ^= ZOBRIST_PIECES[_BP][captured_sq]
+            gs.blackPawns &= ~captured_bit
+        else:
+            gs.zobristHash ^= ZOBRIST_PIECES[_WP][captured_sq]
+            gs.whitePawns &= ~captured_bit
+
+    #7. Promotion: clear pawn from from_sq, set promo piece on to_sq
+    if flags & MoveFlag.PROMOTION:
+        if gs.whiteToMove:
+            gs.whitePawns &= ~from_bb
+            gs.zobristHash ^= ZOBRIST_PIECES[_WP][move.from_sq]
         else:
             gs.blackPawns &= ~from_bb
-            pawn_attr = "blackPawns"
-        #xor out pawn xor in new piece
-        gs.zobristHash ^= ZOBRIST_PIECES[PIECE_INDEX[pawn_attr]][move.from_sq]
-        gs.zobristHash ^= ZOBRIST_PIECES[PIECE_INDEX[move.promo_piece]][move.to_sq]
-        bb = getattr(gs, move.promo_piece)
-        setattr(gs, move.promo_piece, bb | to_bb) #set the promotion piece on to_sq
+            gs.zobristHash ^= ZOBRIST_PIECES[_BP][move.from_sq]
+        promo = move.promo_piece
+        if   promo == "whiteQueens":
+            gs.whiteQueens |= to_bb
+            gs.zobristHash ^= ZOBRIST_PIECES[_WQ][move.to_sq]
+        elif promo == "whiteRooks":
+            gs.whiteRooks |= to_bb
+            gs.zobristHash ^= ZOBRIST_PIECES[_WR][move.to_sq]
+        elif promo == "whiteBishops":
+            gs.whiteBishops |= to_bb
+            gs.zobristHash ^= ZOBRIST_PIECES[_WB][move.to_sq]
+        elif promo == "whiteKnights":
+            gs.whiteKnights |= to_bb
+            gs.zobristHash ^= ZOBRIST_PIECES[_WN][move.to_sq]
+        elif promo == "blackQueens":
+            gs.blackQueens |= to_bb
+            gs.zobristHash ^= ZOBRIST_PIECES[_BQ][move.to_sq]
+        elif promo == "blackRooks":
+            gs.blackRooks |= to_bb
+            gs.zobristHash ^= ZOBRIST_PIECES[_BR][move.to_sq]
+        elif promo == "blackBishops":
+            gs.blackBishops |= to_bb
+            gs.zobristHash ^= ZOBRIST_PIECES[_BB][move.to_sq]
+        elif promo == "blackKnights":
+            gs.blackKnights |= to_bb
+            gs.zobristHash ^= ZOBRIST_PIECES[_BN][move.to_sq]
         gs.epSquare = -1
 
-    #because we added the flag, king movemnt is being handles as usual. this needs to only teleport the rook.
-    if move.flags & MoveFlag.CASTLE_K:
+    #8. Castling: move the rook (king is moved by main piece-move block below)
+    if flags & MoveFlag.CASTLE_K:
         if gs.whiteToMove:
-            rook_attr = "whiteRooks"
-            rook_index = PIECE_INDEX[rook_attr]
-            rook_from_sq, rook_to_sq = (7, 5)
-            bb = getattr(gs, "whiteRooks")
-            rook_from = (1 << 7) #h1
-            rook_to = (1 << 5)   #f1
-            setattr(gs, "whiteRooks", (bb & ~rook_from) | rook_to)
+            gs.whiteRooks = (gs.whiteRooks & ~_H1) | (1 << 5)
+            gs.zobristHash ^= ZOBRIST_PIECES[_WR][7]
+            gs.zobristHash ^= ZOBRIST_PIECES[_WR][5]
         else:
-            rook_attr = "blackRooks"
-            rook_index = PIECE_INDEX[rook_attr]
-            rook_from_sq, rook_to_sq = (63, 61)
-            bb = getattr(gs, "blackRooks")
-            rook_from = (1 << 63) #h8
-            rook_to = (1 << 61)   #f8
-            setattr(gs, "blackRooks", (bb & ~rook_from) | rook_to)
-        #xor out old rook xor in new rook
-        gs.zobristHash ^= ZOBRIST_PIECES[rook_index][rook_from_sq]
-        gs.zobristHash ^= ZOBRIST_PIECES[rook_index][rook_to_sq]
-
-    if move.flags & MoveFlag.CASTLE_Q:
+            gs.blackRooks = (gs.blackRooks & ~_H8) | (1 << 61)
+            gs.zobristHash ^= ZOBRIST_PIECES[_BR][63]
+            gs.zobristHash ^= ZOBRIST_PIECES[_BR][61]
+    if flags & MoveFlag.CASTLE_Q:
         if gs.whiteToMove:
-            rook_attr = "whiteRooks"
-            rook_index = PIECE_INDEX[rook_attr]
-            rook_from_sq, rook_to_sq = (0, 3)
-            bb = getattr(gs, "whiteRooks")
-            rook_from = (1 << 0) #a1
-            rook_to = (1 << 3)   #d1
-            setattr(gs, "whiteRooks", (bb & ~rook_from) | rook_to)
+            gs.whiteRooks = (gs.whiteRooks & ~_A1) | (1 << 3)
+            gs.zobristHash ^= ZOBRIST_PIECES[_WR][0]
+            gs.zobristHash ^= ZOBRIST_PIECES[_WR][3]
         else:
-            rook_attr = "blackRooks"
-            rook_index = PIECE_INDEX[rook_attr]
-            rook_from_sq, rook_to_sq = (56, 59)
-            bb = getattr(gs, "blackRooks")
-            rook_from = (1 << 56) #a8
-            rook_to = (1 << 59)   #d8
-            setattr(gs, "blackRooks", (bb & ~rook_from) | rook_to)
-        gs.zobristHash ^= ZOBRIST_PIECES[rook_index][rook_from_sq]
-        gs.zobristHash ^= ZOBRIST_PIECES[rook_index][rook_to_sq]
+            gs.blackRooks = (gs.blackRooks & ~_A8) | (1 << 59)
+            gs.zobristHash ^= ZOBRIST_PIECES[_BR][56]
+            gs.zobristHash ^= ZOBRIST_PIECES[_BR][59]
 
-    for attr in PIECE_BITBOARDS:
-        bb = getattr(gs, attr)
-        if bb & from_bb:
-            #xor out old, xor in new
-            gs.zobristHash ^= ZOBRIST_PIECES[PIECE_INDEX[attr]][move.from_sq]
-            gs.zobristHash ^= ZOBRIST_PIECES[PIECE_INDEX[attr]][move.to_sq]
-            setattr(gs, attr, (bb & ~from_bb) | to_bb) #clears the "from" square and sets "to" square
-            if attr in ("whitePawns", "blackPawns") and abs(move.to_sq - move.from_sq) == 16:
-                gs.epSquare = (move.from_sq + move.to_sq) // 2
-                gs.zobristHash ^= ZOBRIST_EP[gs.epSquare % 8]
-            else:
+    #9. Move the moving piece — skipped on promotion (pawn already cleared, promo piece placed)
+    is_pawn_move = False
+    if not (flags & MoveFlag.PROMOTION):
+        if gs.whiteToMove:
+            if gs.whitePawns & from_bb:
+                gs.zobristHash ^= ZOBRIST_PIECES[_WP][move.from_sq] ^ ZOBRIST_PIECES[_WP][move.to_sq]
+                gs.whitePawns = (gs.whitePawns & ~from_bb) | to_bb
+                is_pawn_move = True
+                if abs(move.to_sq - move.from_sq) == 16:
+                    gs.epSquare = (move.from_sq + move.to_sq) // 2
+                    gs.zobristHash ^= ZOBRIST_EP[gs.epSquare % 8]
+                else:
+                    gs.epSquare = -1
+            elif gs.whiteRooks & from_bb:
+                gs.zobristHash ^= ZOBRIST_PIECES[_WR][move.from_sq] ^ ZOBRIST_PIECES[_WR][move.to_sq]
+                gs.whiteRooks = (gs.whiteRooks & ~from_bb) | to_bb
                 gs.epSquare = -1
-            #revoke castling rights if pieces move from starting squares
-            if attr == "whiteKing":
+                if gs.wQueenSideCastle and from_bb == _A1:
+                    gs.wQueenSideCastle = False
+                elif gs.wKingSideCastle and from_bb == _H1:
+                    gs.wKingSideCastle = False
+            elif gs.whiteKnights & from_bb:
+                gs.zobristHash ^= ZOBRIST_PIECES[_WN][move.from_sq] ^ ZOBRIST_PIECES[_WN][move.to_sq]
+                gs.whiteKnights = (gs.whiteKnights & ~from_bb) | to_bb
+                gs.epSquare = -1
+            elif gs.whiteBishops & from_bb:
+                gs.zobristHash ^= ZOBRIST_PIECES[_WB][move.from_sq] ^ ZOBRIST_PIECES[_WB][move.to_sq]
+                gs.whiteBishops = (gs.whiteBishops & ~from_bb) | to_bb
+                gs.epSquare = -1
+            elif gs.whiteQueens & from_bb:
+                gs.zobristHash ^= ZOBRIST_PIECES[_WQ][move.from_sq] ^ ZOBRIST_PIECES[_WQ][move.to_sq]
+                gs.whiteQueens = (gs.whiteQueens & ~from_bb) | to_bb
+                gs.epSquare = -1
+            elif gs.whiteKing & from_bb:
+                gs.zobristHash ^= ZOBRIST_PIECES[_WK][move.from_sq] ^ ZOBRIST_PIECES[_WK][move.to_sq]
+                gs.whiteKing = (gs.whiteKing & ~from_bb) | to_bb
+                gs.epSquare = -1
                 gs.wKingSideCastle = False
                 gs.wQueenSideCastle = False
-            if attr == "blackKing":
+        else:
+            if gs.blackPawns & from_bb:
+                gs.zobristHash ^= ZOBRIST_PIECES[_BP][move.from_sq] ^ ZOBRIST_PIECES[_BP][move.to_sq]
+                gs.blackPawns = (gs.blackPawns & ~from_bb) | to_bb
+                is_pawn_move = True
+                if abs(move.to_sq - move.from_sq) == 16:
+                    gs.epSquare = (move.from_sq + move.to_sq) // 2
+                    gs.zobristHash ^= ZOBRIST_EP[gs.epSquare % 8]
+                else:
+                    gs.epSquare = -1
+            elif gs.blackRooks & from_bb:
+                gs.zobristHash ^= ZOBRIST_PIECES[_BR][move.from_sq] ^ ZOBRIST_PIECES[_BR][move.to_sq]
+                gs.blackRooks = (gs.blackRooks & ~from_bb) | to_bb
+                gs.epSquare = -1
+                if gs.bQueenSideCastle and from_bb == _A8:
+                    gs.bQueenSideCastle = False
+                elif gs.bKingSideCastle and from_bb == _H8:
+                    gs.bKingSideCastle = False
+            elif gs.blackKnights & from_bb:
+                gs.zobristHash ^= ZOBRIST_PIECES[_BN][move.from_sq] ^ ZOBRIST_PIECES[_BN][move.to_sq]
+                gs.blackKnights = (gs.blackKnights & ~from_bb) | to_bb
+                gs.epSquare = -1
+            elif gs.blackBishops & from_bb:
+                gs.zobristHash ^= ZOBRIST_PIECES[_BB][move.from_sq] ^ ZOBRIST_PIECES[_BB][move.to_sq]
+                gs.blackBishops = (gs.blackBishops & ~from_bb) | to_bb
+                gs.epSquare = -1
+            elif gs.blackQueens & from_bb:
+                gs.zobristHash ^= ZOBRIST_PIECES[_BQ][move.from_sq] ^ ZOBRIST_PIECES[_BQ][move.to_sq]
+                gs.blackQueens = (gs.blackQueens & ~from_bb) | to_bb
+                gs.epSquare = -1
+            elif gs.blackKing & from_bb:
+                gs.zobristHash ^= ZOBRIST_PIECES[_BK][move.from_sq] ^ ZOBRIST_PIECES[_BK][move.to_sq]
+                gs.blackKing = (gs.blackKing & ~from_bb) | to_bb
+                gs.epSquare = -1
                 gs.bKingSideCastle = False
                 gs.bQueenSideCastle = False
-            if attr == "whiteRooks":
-                if gs.wQueenSideCastle and from_bb == (1 << 0):
-                    gs.wQueenSideCastle = False
-                elif gs.wKingSideCastle and from_bb == (1 << 7):
-                    gs.wKingSideCastle = False
-            if attr == "blackRooks":
-                if gs.bQueenSideCastle and from_bb == (1 << 56):
-                    gs.bQueenSideCastle = False
-                elif gs.bKingSideCastle and from_bb == (1 << 63):
-                    gs.bKingSideCastle = False
-            break
 
-    #update zobrist with new castling rights
-    for index, castle_right in enumerate([gs.wKingSideCastle, gs.wQueenSideCastle, gs.bKingSideCastle, gs.bQueenSideCastle]):
-        if castle_right:
-            gs.zobristHash ^= ZOBRIST_CASTLING[index]
+    #10. XOR in new castling rights
+    if gs.wKingSideCastle:  gs.zobristHash ^= ZOBRIST_CASTLING[0]
+    if gs.wQueenSideCastle: gs.zobristHash ^= ZOBRIST_CASTLING[1]
+    if gs.bKingSideCastle:  gs.zobristHash ^= ZOBRIST_CASTLING[2]
+    if gs.bQueenSideCastle: gs.zobristHash ^= ZOBRIST_CASTLING[3]
 
-    #50 move rule counter incrementation
-    if move.flags & (MoveFlag.CAPTURE | MoveFlag.EN_PASSANT | MoveFlag.PROMOTION) or attr in ("whitePawns", "blackPawns"):
+    #11. 50-move counter
+    if flags & (MoveFlag.CAPTURE | MoveFlag.EN_PASSANT | MoveFlag.PROMOTION) or is_pawn_move:
         gs.halfMoveCounter = 0
     else:
         gs.halfMoveCounter += 1
 
+    #12. Flip side
     gs.whiteToMove = not gs.whiteToMove
-    #toggle zobrist side
     gs.zobristHash ^= ZOBRIST_SIDE
+
 
 def undoMove(gs):
     (move, captured_attr, captured_sq, ep, zhash, wk, wq, bk, bq, clock) = gs.history.pop()
     from_bb = 1 << move.from_sq
     to_bb   = 1 << move.to_sq
+    flags   = move.flags
 
-    # moving the piece back
-    if move.flags & MoveFlag.PROMOTION:
-        pawn_attr = "whitePawns" if not gs.whiteToMove else "blackPawns"
-        promoted_bb = getattr(gs, move.promo_piece)
-        setattr(gs, move.promo_piece, promoted_bb & ~to_bb)
-        pawn_bb = getattr(gs, pawn_attr)
-        setattr(gs, pawn_attr, pawn_bb | from_bb)
+    #Move the moving piece back from to_sq to from_sq.
+    if flags & MoveFlag.PROMOTION:
+        if not gs.whiteToMove: #white moved
+            gs.whitePawns |= from_bb
+            promo = move.promo_piece
+            if   promo == "whiteQueens":  gs.whiteQueens  &= ~to_bb
+            elif promo == "whiteRooks":   gs.whiteRooks   &= ~to_bb
+            elif promo == "whiteBishops": gs.whiteBishops &= ~to_bb
+            elif promo == "whiteKnights": gs.whiteKnights &= ~to_bb
+        else:
+            gs.blackPawns |= from_bb
+            promo = move.promo_piece
+            if   promo == "blackQueens":  gs.blackQueens  &= ~to_bb
+            elif promo == "blackRooks":   gs.blackRooks   &= ~to_bb
+            elif promo == "blackBishops": gs.blackBishops &= ~to_bb
+            elif promo == "blackKnights": gs.blackKnights &= ~to_bb
     else:
-        for attr in PIECE_BITBOARDS:
-            bb = getattr(gs, attr)
-            if bb & to_bb:
-                setattr(gs, attr, (bb & ~to_bb) | from_bb)
-                break
+        #Find moving piece on to_bb
+        if not gs.whiteToMove:
+            if   gs.whitePawns   & to_bb: gs.whitePawns   = (gs.whitePawns   & ~to_bb) | from_bb
+            elif gs.whiteRooks   & to_bb: gs.whiteRooks   = (gs.whiteRooks   & ~to_bb) | from_bb
+            elif gs.whiteKnights & to_bb: gs.whiteKnights = (gs.whiteKnights & ~to_bb) | from_bb
+            elif gs.whiteBishops & to_bb: gs.whiteBishops = (gs.whiteBishops & ~to_bb) | from_bb
+            elif gs.whiteQueens  & to_bb: gs.whiteQueens  = (gs.whiteQueens  & ~to_bb) | from_bb
+            elif gs.whiteKing    & to_bb: gs.whiteKing    = (gs.whiteKing    & ~to_bb) | from_bb
+        else:
+            if   gs.blackPawns   & to_bb: gs.blackPawns   = (gs.blackPawns   & ~to_bb) | from_bb
+            elif gs.blackRooks   & to_bb: gs.blackRooks   = (gs.blackRooks   & ~to_bb) | from_bb
+            elif gs.blackKnights & to_bb: gs.blackKnights = (gs.blackKnights & ~to_bb) | from_bb
+            elif gs.blackBishops & to_bb: gs.blackBishops = (gs.blackBishops & ~to_bb) | from_bb
+            elif gs.blackQueens  & to_bb: gs.blackQueens  = (gs.blackQueens  & ~to_bb) | from_bb
+            elif gs.blackKing    & to_bb: gs.blackKing    = (gs.blackKing    & ~to_bb) | from_bb
 
-    #bring back captured piece
+    #Restore captured piece
     if captured_attr is not None:
-        bb = getattr(gs, captured_attr)
-        setattr(gs, captured_attr, bb | (1 << captured_sq))
+        captured_bit = 1 << captured_sq
+        if   captured_attr == "blackPawns":   gs.blackPawns   |= captured_bit
+        elif captured_attr == "blackRooks":   gs.blackRooks   |= captured_bit
+        elif captured_attr == "blackKnights": gs.blackKnights |= captured_bit
+        elif captured_attr == "blackBishops": gs.blackBishops |= captured_bit
+        elif captured_attr == "blackQueens":  gs.blackQueens  |= captured_bit
+        elif captured_attr == "blackKing":    gs.blackKing    |= captured_bit
+        elif captured_attr == "whitePawns":   gs.whitePawns   |= captured_bit
+        elif captured_attr == "whiteRooks":   gs.whiteRooks   |= captured_bit
+        elif captured_attr == "whiteKnights": gs.whiteKnights |= captured_bit
+        elif captured_attr == "whiteBishops": gs.whiteBishops |= captured_bit
+        elif captured_attr == "whiteQueens":  gs.whiteQueens  |= captured_bit
+        elif captured_attr == "whiteKing":    gs.whiteKing    |= captured_bit
 
-    #bring rooks back from castled squares
-    if move.flags & MoveFlag.CASTLE_K:
-        if not gs.whiteToMove:  # white castled
-            bb = getattr(gs, "whiteRooks")
-            setattr(gs, "whiteRooks", (bb & ~(1 << 5)) | (1 << 7))   # f1 → h1
-        else:                   # black castled
-            bb = getattr(gs, "blackRooks")
-            setattr(gs, "blackRooks", (bb & ~(1 << 61)) | (1 << 63)) # f8 → h8
+    #Restore castled rooks
+    if flags & MoveFlag.CASTLE_K:
+        if not gs.whiteToMove:
+            gs.whiteRooks = (gs.whiteRooks & ~(1 << 5)) | _H1
+        else:
+            gs.blackRooks = (gs.blackRooks & ~(1 << 61)) | _H8
+    if flags & MoveFlag.CASTLE_Q:
+        if not gs.whiteToMove:
+            gs.whiteRooks = (gs.whiteRooks & ~(1 << 3)) | _A1
+        else:
+            gs.blackRooks = (gs.blackRooks & ~(1 << 59)) | _A8
 
-    if move.flags & MoveFlag.CASTLE_Q:
-        if not gs.whiteToMove:  # white castled
-            bb = getattr(gs, "whiteRooks")
-            setattr(gs, "whiteRooks", (bb & ~(1 << 3)) | (1 << 0))   # d1 → a1
-        else:                   # black castled
-            bb = getattr(gs, "blackRooks")
-            setattr(gs, "blackRooks", (bb & ~(1 << 59)) | (1 << 56)) # d8 → a8
-
-    # restore irreversible state
+    #Restore irreversible state
     gs.epSquare = ep
     gs.wKingSideCastle, gs.wQueenSideCastle = wk, wq
     gs.bKingSideCastle, gs.bQueenSideCastle = bk, bq

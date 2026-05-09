@@ -2,7 +2,7 @@ import time
 from engine.eval import evaluate
 from engine.move_order import movesOrdered
 from engine.tt import tt_get, tt_store, EXACT, LOWER, UPPER
-from core.move_generator import generateMoves
+from core.move_generator import generateMoves, generateQuiescence
 from core.move import MoveFlag
 from core.apply_move import applyMove, undoMove
 from core.attacks import isSquareAttacked
@@ -169,9 +169,8 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
         if quiet_score >= beta: return beta
         alpha = max(alpha, quiet_score)
 
-    all_pseudo = generateMoves(gs)
-    # in check: must search all moves for evasions; otherwise captures only
-    candidates = all_pseudo if in_check else [m for m in all_pseudo if m.flags & MoveFlag.CAPTURE]
+    # in check: must search all moves for evasions; otherwise tactical moves only (captures, EP, all promotions)
+    candidates = generateMoves(gs) if in_check else generateQuiescence(gs)
 
     legal_move_found = False
     for move in movesOrdered(candidates, gs):
@@ -195,8 +194,6 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
         return -(MATE_SCORE - ply)
 
     return alpha
-#as an optimisation it could be worth making a capture only generator down the line. I wonder how much an improvement it would be time wise. 
-
 
 
 def best_move(gs, depth, info, last_best=None):

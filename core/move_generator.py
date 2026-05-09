@@ -1,7 +1,7 @@
 # Move Generation
 from core.move import Move, MoveFlag
 from core.bitboard import iterateBits, RANK_18
-from core.attacks import pawnActions, knightMoves, kingMoves, bishopAttacks, rookAttacks, queenAttacks, isSquareAttacked
+from core.attacks import pawnActions, pawnAttacks, pawnMoves, knightMoves, kingMoves, bishopAttacks, rookAttacks, queenAttacks, isSquareAttacked
 from core.apply_move import applyMove, undoMove
 
 def generateMoves(gs):
@@ -29,7 +29,7 @@ def generateMoves(gs):
             promo_piece = None
 
             if ((1 << to_sq) & RANK_18):
-                flag |= MoveFlag.PROMOTION #IntFlag allows & for multiple flags.
+                flag |= MoveFlag.PROMOTION
                 if gs.whiteToMove:
                     promotions = ["whiteQueens", "whiteRooks", "whiteBishops", "whiteKnights"]
                 else:
@@ -52,7 +52,6 @@ def generateMoves(gs):
                 flag = MoveFlag.CAPTURE
             else:
                 flag = MoveFlag.NORMAL
-            #if castling add the flag, dont overwrite normal
             if (to_sq - sq) == 2:
                 flag |= MoveFlag.CASTLE_K
             if (to_sq - sq) == -2:
@@ -99,3 +98,74 @@ def captureMovesOnly(gs):
         if move.flags & MoveFlag.CAPTURE:
             allCaptureMoves.append(move)
     return allCaptureMoves
+
+#generating captures and promotion moves only specially for quiescence to eliminate all move overhead from that search
+def generateQuiescence(gs):
+    allMoves = []
+    whitePieces = gs.whitePawns | gs.whiteRooks | gs.whiteKnights | gs.whiteBishops | gs.whiteQueens | gs.whiteKing
+    blackPieces = gs.blackPawns | gs.blackRooks | gs.blackKnights | gs.blackBishops | gs.blackQueens | gs.blackKing
+    allPieces = whitePieces | blackPieces
+
+    if gs.whiteToMove:
+        ownPieces = whitePieces
+        enemyPieces = blackPieces
+        own_pawns   = gs.whitePawns
+        own_knights = gs.whiteKnights
+        own_bishops = gs.whiteBishops
+        own_rooks   = gs.whiteRooks
+        own_queens  = gs.whiteQueens
+        own_king    = gs.whiteKing
+        promo_pieces = ("whiteQueens", "whiteRooks", "whiteBishops", "whiteKnights")
+    else:
+        ownPieces = blackPieces
+        enemyPieces = whitePieces
+        own_pawns   = gs.blackPawns
+        own_knights = gs.blackKnights
+        own_bishops = gs.blackBishops
+        own_rooks   = gs.blackRooks
+        own_queens  = gs.blackQueens
+        own_king    = gs.blackKing
+        promo_pieces = ("blackQueens", "blackRooks", "blackBishops", "blackKnights")
+
+    ep_sq = gs.epSquare
+
+    #Pawns: captures + EP via pawnAttacks; quiet promotions via pawnMoves filtered to last rank
+    for sq in iterateBits(own_pawns):
+        cap_bb = pawnAttacks(sq, gs.whiteToMove, enemyPieces, ep_sq)
+        for to_sq in iterateBits(cap_bb):
+            if to_sq == ep_sq:
+                allMoves.append(Move(sq, to_sq, MoveFlag.EN_PASSANT))
+            elif (1 << to_sq) & RANK_18:
+                flag = MoveFlag.CAPTURE | MoveFlag.PROMOTION
+                for promo in promo_pieces:
+                    allMoves.append(Move(sq, to_sq, flag, promo))
+            else:
+                allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+        #quiet promotion with no capture
+        for to_sq in iterateBits(pawnMoves(sq, gs.whiteToMove, allPieces) & RANK_18):
+            for promo in promo_pieces:
+                allMoves.append(Move(sq, to_sq, MoveFlag.PROMOTION, promo))
+
+    #Other pieces: attack masked to enemy squares only
+    for sq in iterateBits(own_knights):
+        for to_sq in iterateBits(knightMoves(sq, ownPieces) & enemyPieces):
+            allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+
+    for sq in iterateBits(own_bishops):
+        for to_sq in iterateBits(bishopAttacks(sq, allPieces, ownPieces) & enemyPieces):
+            allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+
+    for sq in iterateBits(own_rooks):
+        for to_sq in iterateBits(rookAttacks(sq, allPieces, ownPieces) & enemyPieces):
+            allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+
+    for sq in iterateBits(own_queens):
+        for to_sq in iterateBits(queenAttacks(sq, allPieces, ownPieces) & enemyPieces):
+            allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+
+    #King captures only
+    for sq in iterateBits(own_king):
+        for to_sq in iterateBits(kingMoves(sq, ownPieces, allPieces, gs) & enemyPieces):
+            allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+
+    return allMoves

@@ -3,16 +3,14 @@ from core.move_generator import legalMoves, captureMovesOnly
 from core.apply_move import applyMove, undoMove
 from core.attacks import isSquareAttacked
 
-PIECE_VALUES = {
-    "Pawns": 100, "Knights": 320, "Bishops": 330,
-    "Rooks": 500, "Queens": 900
-}
-
 def _pieceValueOnSq(sq, gs):
     bit = 1 << sq
-    for name, val in PIECE_VALUES.items():
-        if getattr(gs, "white" + name) & bit or getattr(gs, "black" + name) & bit:
-            return val
+    #ordered by frequency: pawns most common, queens least
+    if (gs.whitePawns   | gs.blackPawns)   & bit: return 100
+    if (gs.whiteKnights | gs.blackKnights) & bit: return 320
+    if (gs.whiteBishops | gs.blackBishops) & bit: return 330
+    if (gs.whiteRooks   | gs.blackRooks)   & bit: return 500
+    if (gs.whiteQueens  | gs.blackQueens)  & bit: return 900
     return 0
 
 def _mvvlva(move, gs):

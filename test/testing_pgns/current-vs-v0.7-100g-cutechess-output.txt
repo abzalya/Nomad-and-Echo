@@ -1,0 +1,421 @@
+Started game 4 of 100 (Nomad v0.7 vs Nomad current)
+Started game 5 of 100 (Nomad current vs Nomad v0.7)
+Started game 1 of 100 (Nomad current vs Nomad v0.7)
+Started game 3 of 100 (Nomad current vs Nomad v0.7)
+Started game 2 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 1 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 0 - 0 - 1  [0.500] 1
+Started game 6 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 2 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 1 - 0 - 1  [0.750] 2
+Started game 7 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 5 (Nomad current vs Nomad v0.7): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 1 - 1 - 1  [0.500] 3
+Started game 8 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 3 (Nomad current vs Nomad v0.7): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 1 - 2 - 1  [0.375] 4
+Started game 9 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 6 (Nomad v0.7 vs Nomad current): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 1 - 2 - 2  [0.400] 5
+Started game 10 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 7 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 1 - 2 - 3  [0.417] 6
+Started game 11 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 4 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 2 - 2 - 3  [0.500] 7
+Started game 12 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 8 (Nomad v0.7 vs Nomad current): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 2 - 2 - 4  [0.500] 8
+Started game 13 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 9 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 2 - 2 - 5  [0.500] 9
+Started game 14 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 10 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 2 - 3 - 5  [0.450] 10
+Started game 15 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 12 (Nomad v0.7 vs Nomad current): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 2 - 3 - 6  [0.455] 11
+Started game 16 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 11 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 2 - 3 - 7  [0.458] 12
+Started game 17 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 13 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 2 - 3 - 8  [0.462] 13
+Started game 18 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 17 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 2 - 3 - 9  [0.464] 14
+Started game 19 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 15 (Nomad current vs Nomad v0.7): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 2 - 4 - 9  [0.433] 15
+Started game 20 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 19 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 2 - 4 - 10  [0.438] 16
+Started game 21 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 20 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 2 - 5 - 10  [0.412] 17
+Started game 22 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 21 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 2 - 5 - 11  [0.417] 18
+Started game 23 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 14 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 2 - 6 - 11  [0.395] 19
+Started game 24 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 16 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 2 - 7 - 11  [0.375] 20
+Started game 25 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 18 (Nomad v0.7 vs Nomad current): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 2 - 7 - 12  [0.381] 21
+Started game 26 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 24 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 3 - 7 - 12  [0.409] 22
+Started game 27 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 22 (Nomad v0.7 vs Nomad current): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 3 - 7 - 13  [0.413] 23
+Started game 28 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 25 (Nomad current vs Nomad v0.7): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 3 - 8 - 13  [0.396] 24
+Started game 29 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 23 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 4 - 8 - 13  [0.420] 25
+Started game 30 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 26 (Nomad v0.7 vs Nomad current): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 4 - 8 - 14  [0.423] 26
+Started game 31 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 27 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 4 - 8 - 15  [0.426] 27
+Started game 32 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 30 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 5 - 8 - 15  [0.446] 28
+Started game 33 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 29 (Nomad current vs Nomad v0.7): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 5 - 9 - 15  [0.431] 29
+Started game 34 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 28 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 6 - 9 - 15  [0.450] 30
+Started game 35 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 33 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 7 - 9 - 15  [0.468] 31
+Started game 36 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 31 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 7 - 9 - 16  [0.469] 32
+Started game 37 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 32 (Nomad v0.7 vs Nomad current): 1/2-1/2 {Draw by insufficient mating material}
+Score of Nomad current vs Nomad v0.7: 7 - 9 - 17  [0.470] 33
+Started game 38 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 34 (Nomad v0.7 vs Nomad current): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 7 - 9 - 18  [0.471] 34
+Started game 39 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 35 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 8 - 9 - 18  [0.486] 35
+Started game 40 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 38 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 8 - 10 - 18  [0.472] 36
+Started game 41 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 36 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 8 - 11 - 18  [0.459] 37
+Started game 42 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 37 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 8 - 11 - 19  [0.461] 38
+Started game 43 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 39 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 9 - 11 - 19  [0.474] 39
+Started game 44 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 40 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 9 - 12 - 19  [0.463] 40
+Started game 45 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 41 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 10 - 12 - 19  [0.476] 41
+Started game 46 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 43 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 11 - 12 - 19  [0.488] 42
+Started game 47 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 45 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 12 - 12 - 19  [0.500] 43
+Started game 48 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 44 (Nomad v0.7 vs Nomad current): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 12 - 12 - 20  [0.500] 44
+Started game 49 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 42 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 13 - 12 - 20  [0.511] 45
+Started game 50 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 47 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 14 - 12 - 20  [0.522] 46
+Started game 51 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 46 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 14 - 13 - 20  [0.511] 47
+Started game 52 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 49 (Nomad current vs Nomad v0.7): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 14 - 14 - 20  [0.500] 48
+Started game 53 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 48 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 14 - 15 - 20  [0.490] 49
+Started game 54 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 52 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 15 - 15 - 20  [0.500] 50
+Started game 55 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 51 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 16 - 15 - 20  [0.510] 51
+Started game 56 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 53 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 17 - 15 - 20  [0.519] 52
+Started game 57 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 54 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 18 - 15 - 20  [0.528] 53
+Started game 58 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 50 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 19 - 15 - 20  [0.537] 54
+Started game 59 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 56 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 20 - 15 - 20  [0.545] 55
+Started game 60 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 55 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 20 - 15 - 21  [0.545] 56
+Started game 61 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 58 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 20 - 16 - 21  [0.535] 57
+Started game 62 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 57 (Nomad current vs Nomad v0.7): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 20 - 17 - 21  [0.526] 58
+Started game 63 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 59 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 21 - 17 - 21  [0.534] 59
+Started game 64 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 60 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 22 - 17 - 21  [0.542] 60
+Started game 65 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 61 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 23 - 17 - 21  [0.549] 61
+Started game 66 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 64 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 24 - 17 - 21  [0.556] 62
+Started game 67 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 65 (Nomad current vs Nomad v0.7): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 24 - 18 - 21  [0.548] 63
+Started game 68 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 62 (Nomad v0.7 vs Nomad current): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 24 - 18 - 22  [0.547] 64
+Started game 69 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 63 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 25 - 18 - 22  [0.554] 65
+Started game 70 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 66 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 26 - 18 - 22  [0.561] 66
+Started game 71 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 69 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 27 - 18 - 22  [0.567] 67
+Started game 72 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 71 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 28 - 18 - 22  [0.574] 68
+Started game 73 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 68 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 28 - 19 - 22  [0.565] 69
+Started game 74 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 67 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 29 - 19 - 22  [0.571] 70
+Started game 75 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 70 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 30 - 19 - 22  [0.577] 71
+Started game 76 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 72 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 30 - 20 - 22  [0.569] 72
+Started game 77 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 73 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 31 - 20 - 22  [0.575] 73
+Started game 78 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 75 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 32 - 20 - 22  [0.581] 74
+Started game 79 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 74 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 33 - 20 - 22  [0.587] 75
+Started game 80 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 78 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 34 - 20 - 22  [0.592] 76
+Started game 81 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 76 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 35 - 20 - 22  [0.597] 77
+Started game 82 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 80 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 36 - 20 - 22  [0.603] 78
+Started game 83 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 81 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 37 - 20 - 22  [0.608] 79
+Started game 84 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 79 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 38 - 20 - 22  [0.613] 80
+Started game 85 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 77 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 38 - 20 - 23  [0.611] 81
+Started game 86 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 83 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 39 - 20 - 23  [0.616] 82
+Started game 87 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 86 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 40 - 20 - 23  [0.620] 83
+Started game 88 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 82 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 40 - 21 - 23  [0.613] 84
+Started game 89 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 84 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 41 - 21 - 23  [0.618] 85
+Started game 90 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 89 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 41 - 21 - 24  [0.616] 86
+Started game 91 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 85 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 41 - 21 - 25  [0.615] 87
+Started game 92 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 90 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 42 - 21 - 25  [0.619] 88
+Started game 93 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 88 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 43 - 21 - 25  [0.624] 89
+Started game 94 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 87 (Nomad current vs Nomad v0.7): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 43 - 22 - 25  [0.617] 90
+Started game 95 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 92 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 44 - 22 - 25  [0.621] 91
+Started game 96 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 93 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 45 - 22 - 25  [0.625] 92
+Started game 97 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 94 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 45 - 23 - 25  [0.618] 93
+Started game 98 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 96 (Nomad v0.7 vs Nomad current): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 46 - 23 - 25  [0.622] 94
+Started game 99 of 100 (Nomad current vs Nomad v0.7)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 95 (Nomad current vs Nomad v0.7): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 47 - 23 - 25  [0.626] 95
+Started game 100 of 100 (Nomad v0.7 vs Nomad current)
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 91 (Nomad current vs Nomad v0.7): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 47 - 24 - 25  [0.620] 96
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 97 (Nomad current vs Nomad v0.7): 0-1 {Black mates}
+Score of Nomad current vs Nomad v0.7: 47 - 25 - 25  [0.613] 97
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 99 (Nomad current vs Nomad v0.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 47 - 25 - 26  [0.612] 98
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 98 (Nomad v0.7 vs Nomad current): 1-0 {White mates}
+Score of Nomad current vs Nomad v0.7: 47 - 26 - 26  [0.606] 99
+Warning: Could not open PGN file testing_pgns/current-vs-v0.7-100g-40-30s-time-control.pgn
+Finished game 100 (Nomad v0.7 vs Nomad current): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Nomad current vs Nomad v0.7: 47 - 26 - 27  [0.605] 100
+...      Nomad current playing White: 23 - 11 - 16  [0.620] 50
+...      Nomad current playing Black: 24 - 15 - 11  [0.590] 50
+...      White vs Black: 38 - 35 - 27  [0.515] 100
+Elo difference: 74.1 +/- 59.6, LOS: 99.3 %, DrawRatio: 27.0 %
+SPRT: llr 0 (0.0%), lbound -inf, ubound inf
+
+Player: Nomad current
+   "Draw by 3-fold repetition": 26
+   "Draw by insufficient mating material": 1
+   "Loss: Black mates": 11
+   "Loss: White mates": 15
+   "Win: Black mates": 24
+   "Win: White mates": 23
+Player: Nomad v0.7
+   "Draw by 3-fold repetition": 26
+   "Draw by insufficient mating material": 1
+   "Loss: Black mates": 24
+   "Loss: White mates": 23
+   "Win: Black mates": 11
+   "Win: White mates": 15
+Finished match

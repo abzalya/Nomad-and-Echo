@@ -1,7 +1,9 @@
 import sys, os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(_HERE))
+sys.path.insert(0, _HERE)
 from core.board import GameState
-from testing.perft import perft
+from perft import perft
 
 #Compare my implementation against known values from ChessProgramming Wiki
 #depth  -   nodes

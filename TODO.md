@@ -47,9 +47,10 @@
     - Bitboard attack tables — precomputed magic bitboards for slider attacks instead of ray tracing per call
 
 - profile optimizations
-    - [1] Kill IntFlag. Replace MoveFlag with plain int constants
-    - [2] Stop string-building attribute names. Find every getattr(gs, "white" + x) / getattr(gs, attr) in a hot loop and unroll into direct access.
-    - [3] Capture-only move generator.
-    - [4] Killer moves + history heuristic
-    - [5] Magic bitboards for sliding piece attacks
-    - [6] Delta pruning + SEE in qsearch.
+    - [X] Kill IntFlag. Replace MoveFlag with plain int constants
+    - [X] Stop string-building attribute names. Find every getattr(gs, "white" + x) / getattr(gs, attr) in a hot loop and unroll into direct access.
+    - [X] Capture-only move generator.
+    - [4] Pin-mask legal generation. Cheaper than apply-undo legality check IMPLEMENT ASAP
+    - [5] Killer moves + history heuristic
+    - [6] Magic bitboards for sliding piece attacks
+    - [7] Delta pruning + SEE in qsearch.

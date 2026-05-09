@@ -5,48 +5,36 @@ from engine.psts import (PAWN_PST, KNIGHT_PST, BISHOP_PST, ROOK_PST,
                           QUEEN_PST, KING_MG_PST, KING_EG_PST)
 from engine.pawn_eval_masks import FILE_MASKS, ADJACENT_FILES_MASKS, PASSED_MASKS
 from core.attacks import PAWN_ATTACKS, KING_ATTACKS, EXTENDED_KING_ZONE
-#stockfish type material
-WHITE_PIECES = [
-    ("whitePawns", 100), ("whiteRooks", 500), ("whiteKnights", 320),
-    ("whiteBishops", 330), ("whiteQueens", 900)
-]
-BLACK_PIECES = [
-    ("blackPawns", 100), ("blackRooks", 500), ("blackKnights", 320),
-    ("blackBishops", 330), ("blackQueens", 900)
-]
-
-WHITE_PIECES_PSTS = [
-    ("whitePawns", PAWN_PST), ("whiteRooks", ROOK_PST), ("whiteKnights", KNIGHT_PST),
-    ("whiteBishops", BISHOP_PST), ("whiteQueens", QUEEN_PST)
-]
-BLACK_PIECES_PSTS = [
-    ("blackPawns", PAWN_PST), ("blackRooks", ROOK_PST), ("blackKnights", KNIGHT_PST),
-    ("blackBishops", BISHOP_PST), ("blackQueens", QUEEN_PST)
-]
 
 def _material_eval(gs):
-    score = 0
-    total_material = 0
-    for attr, value in WHITE_PIECES:
-        count = getattr(gs, attr).bit_count()
-        score += count * value
-        total_material += count * value
-    for attr, value in BLACK_PIECES:
-        count = getattr(gs, attr).bit_count()
-        score -= count * value
-        total_material += count * value
-    return score, total_material
+    wp = gs.whitePawns.bit_count()   * 100
+    wr = gs.whiteRooks.bit_count()   * 500
+    wn = gs.whiteKnights.bit_count() * 320
+    wb = gs.whiteBishops.bit_count() * 330
+    wq = gs.whiteQueens.bit_count()  * 900
+    bp = gs.blackPawns.bit_count()   * 100
+    br = gs.blackRooks.bit_count()   * 500
+    bn = gs.blackKnights.bit_count() * 320
+    bb = gs.blackBishops.bit_count() * 330
+    bq = gs.blackQueens.bit_count()  * 900
+    white_total = wp + wr + wn + wb + wq
+    black_total = bp + br + bn + bb + bq
+    return white_total - black_total, white_total + black_total
 
 #postiion of the piece using piece square tables
 def _position_eval(gs, total_material):
     score = 0
-    for attr, pst in WHITE_PIECES_PSTS:
-        for sq in iterateBits(getattr(gs, attr)):
-            score += pst[sq]
+    for sq in iterateBits(gs.whitePawns):   score += PAWN_PST[sq]
+    for sq in iterateBits(gs.whiteRooks):   score += ROOK_PST[sq]
+    for sq in iterateBits(gs.whiteKnights): score += KNIGHT_PST[sq]
+    for sq in iterateBits(gs.whiteBishops): score += BISHOP_PST[sq]
+    for sq in iterateBits(gs.whiteQueens):  score += QUEEN_PST[sq]
     #for black PST[sq ^ 56] to mirror the table vertically
-    for attr, pst in BLACK_PIECES_PSTS:
-        for sq in iterateBits(getattr(gs, attr)):
-            score -= pst[sq ^ 56]
+    for sq in iterateBits(gs.blackPawns):   score -= PAWN_PST[sq ^ 56]
+    for sq in iterateBits(gs.blackRooks):   score -= ROOK_PST[sq ^ 56]
+    for sq in iterateBits(gs.blackKnights): score -= KNIGHT_PST[sq ^ 56]
+    for sq in iterateBits(gs.blackBishops): score -= BISHOP_PST[sq ^ 56]
+    for sq in iterateBits(gs.blackQueens):  score -= QUEEN_PST[sq ^ 56]
     
     #mid/end game decision (tapered eval like stockfish)
     phase = min(total_material/2600, 1.0)
