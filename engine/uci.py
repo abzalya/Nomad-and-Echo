@@ -4,6 +4,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from core.game import Game
 from core.move import MoveFlag
 from engine.search import best_move, iterative_deepening, _Info
+from engine.tt import tt_clear
 
 FILES = "abcdefgh"
 
@@ -75,6 +76,7 @@ def uci_loop():
         elif line == "ucinewgame":
             game  = Game()
             depth = 3
+            tt_clear()
 
         elif line.startswith("position"):
             game  = Game()

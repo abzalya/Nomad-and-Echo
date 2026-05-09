@@ -17,3 +17,7 @@ def tt_get(zobrist_hash, depth):
 
 def tt_store(zobrist_hash, score, depth, flag, best_move):
     _TT[zobrist_hash % _SIZE] = (zobrist_hash, score, depth, flag, best_move)
+
+def tt_clear():
+    global _TT
+    _TT = [None] * _SIZE

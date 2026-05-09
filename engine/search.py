@@ -6,6 +6,30 @@ from core.move_generator import generateMoves
 from core.move import MoveFlag
 from core.apply_move import applyMove, undoMove
 from core.attacks import isSquareAttacked
+from core.zobrist import ZOBRIST_SIDE, ZOBRIST_EP
+
+MATE_SCORE     = 100000
+MATE_THRESHOLD = 90000
+
+def _score_to_tt(score, ply):
+    if score > MATE_THRESHOLD:  return score + ply
+    if score < -MATE_THRESHOLD: return score - ply
+    return score
+
+def _score_from_tt(score, ply):
+    if score > MATE_THRESHOLD:  return score - ply
+    if score < -MATE_THRESHOLD: return score + ply
+    return score
+
+def _uci_score(score):
+    #distinguish mating moves with M N
+    if score >= MATE_THRESHOLD:
+        plies = MATE_SCORE - score
+        return f"mate {(plies + 1) // 2}"
+    if score <= -MATE_THRESHOLD:
+        plies = MATE_SCORE + score
+        return f"mate -{(plies + 1) // 2}"
+    return f"cp {score}"
 
 class _Info:
     __slots__ = ("nodes", "start", "limit", "stop") #good optimisation for engines
@@ -22,7 +46,12 @@ class _Info:
             if time.perf_counter() - self.start >= self.limit: #limit is set externally. if exceeded,
                 self.stop = True #pull abort flag to True
 
-def negamax(gs, alpha, beta, depth, info):
+def _has_pieces(gs):
+    if gs.whiteToMove:
+        return (gs.whiteRooks | gs.whiteKnights | gs.whiteBishops | gs.whiteQueens) != 0
+    return (gs.blackRooks | gs.blackKnights | gs.blackBishops | gs.blackQueens) != 0
+
+def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     info.nodes += 1
     info.check()
     if info.stop:
@@ -40,6 +69,7 @@ def negamax(gs, alpha, beta, depth, info):
     tt_entry = tt_get(gs.zobristHash, depth)
     if tt_entry:
         _, tt_score, _, tt_flag, tt_move = tt_entry
+        tt_score = _score_from_tt(tt_score, ply)
         if tt_flag == EXACT: #get exact score return early
             return tt_score
         if tt_flag == LOWER: #instantly tighten window
@@ -50,7 +80,34 @@ def negamax(gs, alpha, beta, depth, info):
             return tt_score
 
     if depth == 0:
-        return quiescence(gs, alpha, beta, info, depth=0)
+        return quiescence(gs, alpha, beta, info, depth=0, ply=ply)
+
+    # Null move pruning — skip in check or zugzwang-prone positions
+    if allow_null and depth >= 3 and _has_pieces(gs):
+        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+        #guard check cheking as its a slower function
+        if not isSquareAttacked(ownKing.bit_length() - 1, gs):
+            R = 3 if depth >= 6 else 2
+            ep_save = gs.epSquare
+            if ep_save != -1:
+                gs.zobristHash ^= ZOBRIST_EP[ep_save % 8]
+            gs.epSquare = -1
+            #skip turn
+            gs.whiteToMove = not gs.whiteToMove
+            gs.zobristHash ^= ZOBRIST_SIDE
+            #negamax on skipped position with reduced depth
+            null_score = -negamax(gs, -beta, -beta + 1, depth - 1 - R, info, allow_null=False, ply=ply+1)
+            #undo skip
+            gs.whiteToMove = not gs.whiteToMove
+            gs.zobristHash ^= ZOBRIST_SIDE
+            gs.epSquare = ep_save
+            if ep_save != -1:
+                gs.zobristHash ^= ZOBRIST_EP[ep_save % 8]
+            if info.stop:
+                return 0
+            #if we skip our turn and opponent cant improve past beta, prune
+            if null_score >= beta and abs(null_score) < 90000:
+                return beta
 
     moves = movesOrdered(generateMoves(gs), gs, tt_move)
 
@@ -71,7 +128,7 @@ def negamax(gs, alpha, beta, depth, info):
             continue
 
         legal_move_found = True
-        score = -negamax(gs, -beta, -alpha, depth - 1, info)
+        score = -negamax(gs, -beta, -alpha, depth - 1, info, ply=ply+1)
         undoMove(gs)
         if info.stop:
             return 0
@@ -79,20 +136,20 @@ def negamax(gs, alpha, beta, depth, info):
             alpha = score
             best = move
         if alpha >= beta:
-            tt_store(gs.zobristHash, beta, depth, LOWER, best)
+            tt_store(gs.zobristHash, _score_to_tt(beta, ply), depth, LOWER, best)
             return beta
 
     if not legal_move_found:
         ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
         sq = ownKing.bit_length() - 1
-        return -(100000 - depth) if isSquareAttacked(sq, gs) else 0
+        return -(MATE_SCORE - ply) if isSquareAttacked(sq, gs) else 0
 
     flag = EXACT if alpha > original_alpha else UPPER
-    tt_store(gs.zobristHash, alpha, depth, flag, best)
+    tt_store(gs.zobristHash, _score_to_tt(alpha, ply), depth, flag, best)
     return alpha
 
 #search position for captures until quiet. Should stop blunders in the middle of exchanges on the horizon
-def quiescence(gs, alpha, beta, info, depth=0):
+def quiescence(gs, alpha, beta, info, depth=0, ply=0):
     info.nodes += 1
     info.check()
     if info.stop:
@@ -129,13 +186,13 @@ def quiescence(gs, alpha, beta, info, depth=0):
             continue
 
         legal_move_found = True
-        score = -quiescence(gs, -beta, -alpha, info, depth + 1)
+        score = -quiescence(gs, -beta, -alpha, info, depth + 1, ply=ply+1)
         undoMove(gs)
         alpha = max(alpha, score)
         if alpha >= beta: return beta
 
     if in_check and not legal_move_found:
-        return -(100000 - depth)
+        return -(MATE_SCORE - ply)
 
     return alpha
 #as an optimisation it could be worth making a capture only generator down the line. I wonder how much an improvement it would be time wise. 
@@ -159,7 +216,7 @@ def best_move(gs, depth, info, last_best=None):
         if illegal:
             undoMove(gs)
             continue
-        score = -negamax(gs, -beta, -alpha, depth - 1, info)
+        score = -negamax(gs, -beta, -alpha, depth - 1, info, ply=1)
         undoMove(gs)
         if info.stop:
             break
@@ -169,8 +226,9 @@ def best_move(gs, depth, info, last_best=None):
 
     elapsed = time.perf_counter() - info.start
     nps = int(info.nodes / elapsed) if elapsed > 0 else 0 #0 devision guard
-    eval = int(alpha) if alpha != -float("inf") else 0
-    print(f"info depth {depth} score cp {eval} nodes {info.nodes} nps {nps} time {int(elapsed * 1000)}")
+    if best is not None:
+        score_str = _uci_score(int(alpha))
+        print(f"info depth {depth} score {score_str} nodes {info.nodes} nps {nps} time {int(elapsed * 1000)}")
     return best
 
 MAX_DEPTH = 32
