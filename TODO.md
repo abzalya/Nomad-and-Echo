@@ -21,7 +21,7 @@
 
 #ENGINE priorities:
 - search
-    - [1] null move pruning
+    - [X] null move pruning
     - [2] check extensions
     - [3] futility pruning
     - [4] late move reduction
@@ -30,9 +30,9 @@
 - evaluation:
     - [X] pawn structure - doubled/isolated/passed pawns
     - [x] king safety - open files near king, pawn shield
-    - [3] tapered eval
     - [x] piece coordination - bishop pair, rook on open file, rook on 7th
         - connected rooks is expensive calculation. left out for now
+    - [4] tapered eval
     - [5] mobility - count legal moves as a bonus, rewards active pieces
     - [6] endgame knowledge
 - move ordering
@@ -45,3 +45,11 @@
 - speed thoughts
     - Rewrite hot paths in C pybind11, almost 1 to 1 apart from syntax (if bottlenecking hard)
     - Bitboard attack tables — precomputed magic bitboards for slider attacks instead of ray tracing per call
+
+- profile optimizations
+    - [1] Kill IntFlag. Replace MoveFlag with plain int constants
+    - [2] Stop string-building attribute names. Find every getattr(gs, "white" + x) / getattr(gs, attr) in a hot loop and unroll into direct access.
+    - [3] Capture-only move generator.
+    - [4] Killer moves + history heuristic
+    - [5] Magic bitboards for sliding piece attacks
+    - [6] Delta pruning + SEE in qsearch.

@@ -1,0 +1,150 @@
+starting profile...
+  searching opening position...
+info depth 1 score cp 90 nodes 346 nps 992 time 348
+info depth 2 score cp 136 nodes 12085 nps 1705 time 7085
+info depth 3 score cp 305 nodes 28281 nps 2912 time 9711
+info depth 4 score cp 285 nodes 37263 nps 3257 time 11438
+  searching startpos...
+info depth 1 score cp 40 nodes 40 nps 3600 time 11
+info depth 2 score cp 10 nodes 243 nps 2550 time 95
+info depth 3 score cp 40 nodes 3338 nps 6092 time 547
+info depth 4 score cp 10 nodes 29073 nps 8499 time 3420
+  done.
+================================================================================
+TOP 25 BY CUMULATIVE TIME (includes time spent in callees)
+================================================================================
+         27040025 function calls (26991695 primitive calls) in 15.092 seconds
+
+   Ordered by: cumulative time
+   List reduced from 100 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   15.092   15.092 C:\Users\cum\Documents\coding\01_master\chess-and-engine\_profile_run.py:27(workload)
+        2    0.000    0.000   14.860    7.430 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:238(iterative_deepening)
+        8    0.004    0.001   14.859    1.857 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:204(best_move)
+19733/284    0.353    0.000   14.828    0.052 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:56(negamax)
+46603/17722    0.561    0.000   13.158    0.001 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:154(quiescence)
+    23953    1.959    0.000    4.877    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\move_generator.py:7(generateMoves)
+   122785    0.926    0.000    2.626    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:160(isSquareAttacked)
+    41579    0.207    0.000    2.534    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:254(evaluate)
+    74591    1.330    0.000    2.024    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\apply_move.py:5(applyMove)
+   161173    0.372    0.000    1.817    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:141(rookAttacks)
+   163681    0.327    0.000    1.537    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:148(bishopAttacks)
+   649708    1.400    0.000    1.400    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:126(negativeRayAttacks)
+   649708    1.255    0.000    1.255    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:109(positiveRayAttacks)
+  1528987    0.945    0.000    1.163    0.000 C:\PyPy\pypy3.10-v7.3.19-win64\Lib\enum.py:992(__and__)
+  3789690    0.802    0.000    0.900    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\bitboard.py:1(iterateBits)
+    74567    0.533    0.000    0.872    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\apply_move.py:183(undoMove)
+    23927    0.026    0.000    0.779    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\move_order.py:24(movesOrdered)
+    15659    0.031    0.000    0.762    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:155(queenAttacks)
+    23929    0.194    0.000    0.751    0.000 {method 'sort' of 'list' objects}
+    41579    0.470    0.000    0.702    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:68(_pawn_eval)
+    41579    0.361    0.000    0.605    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:41(_position_eval)
+   205818    0.018    0.000    0.556    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\move_order.py:25(<lambda>)
+   205818    0.035    0.000    0.539    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\move_order.py:18(_mvvlva)
+    41579    0.420    0.000    0.472    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:154(_king_eval)
+  2749086    0.463    0.000    0.463    0.000 {built-in function getattr}
+
+
+
+================================================================================
+TOP 25 BY TOTTIME (time spent IN the function itself, exclusive)
+================================================================================
+         27040025 function calls (26991695 primitive calls) in 15.092 seconds
+
+   Ordered by: internal time
+   List reduced from 100 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+    23953    1.959    0.000    4.877    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\move_generator.py:7(generateMoves)
+   649708    1.400    0.000    1.400    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:126(negativeRayAttacks)
+    74591    1.330    0.000    2.024    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\apply_move.py:5(applyMove)
+   649708    1.255    0.000    1.255    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:109(positiveRayAttacks)
+  1528987    0.945    0.000    1.163    0.000 C:\PyPy\pypy3.10-v7.3.19-win64\Lib\enum.py:992(__and__)
+   122785    0.926    0.000    2.626    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:160(isSquareAttacked)
+  3789690    0.802    0.000    0.900    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\bitboard.py:1(iterateBits)
+46603/17722    0.561    0.000   13.158    0.001 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:154(quiescence)
+    74567    0.533    0.000    0.872    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\apply_move.py:183(undoMove)
+    41579    0.470    0.000    0.702    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:68(_pawn_eval)
+  2749086    0.463    0.000    0.463    0.000 {built-in function getattr}
+    41579    0.420    0.000    0.472    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:154(_king_eval)
+   161173    0.372    0.000    1.817    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:141(rookAttacks)
+    41579    0.361    0.000    0.605    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:41(_position_eval)
+19733/284    0.353    0.000   14.828    0.052 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:56(negamax)
+   163681    0.327    0.000    1.537    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:148(bishopAttacks)
+    88908    0.240    0.000    0.359    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\move_order.py:11(_pieceValueOnSq)
+    41579    0.207    0.000    2.534    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:254(evaluate)
+    23929    0.194    0.000    0.751    0.000 {method 'sort' of 'list' objects}
+    41579    0.186    0.000    0.248    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:122(_rook_eval)
+   145750    0.174    0.000    0.174    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:72(pawnMoves)
+  3356980    0.142    0.000    0.225    0.000 C:\PyPy\pypy3.10-v7.3.19-win64\Lib\enum.py:365(__call__)
+    83158    0.136    0.000    0.136    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:104(_pawn_islands)
+   145750    0.118    0.000    0.397    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:103(pawnActions)
+    41579    0.114    0.000    0.197    0.000 C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:27(_material_eval)
+
+
+
+================================================================================
+CALLERS OF HOTTEST FUNCTIONS
+================================================================================
+   Ordered by: internal time
+   List reduced from 100 to 15 due to restriction <15>
+
+Function                                                                                          was called by...
+                                                                                                      ncalls  tottime  cumtime
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\move_generator.py:7(generateMoves)  <-      26    0.004    0.021  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\move_generator.py:82(legalMoves)
+                                                                                                        1877    0.185    0.433  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:56(negamax)
+                                                                                                       22042    1.769    4.415  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:154(quiescence)
+                                                                                                           8    0.001    0.007  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:204(best_move)
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:126(negativeRayAttacks)  <-  322346    0.788    0.788  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:141(rookAttacks)
+                                                                                                      327362    0.612    0.612  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:148(bishopAttacks)
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\apply_move.py:5(applyMove)          <-      24    0.003    0.011  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\game.py:18(apply)
+                                                                                                         882    0.061    0.110  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\move_generator.py:82(legalMoves)
+                                                                                                       19647    0.210    0.342  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:56(negamax)
+                                                                                                       53754    1.050    1.554  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:154(quiescence)
+                                                                                                         284    0.006    0.009  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:204(best_move)
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:109(positiveRayAttacks)  <-  322346    0.657    0.657  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:141(rookAttacks)
+                                                                                                      327362    0.598    0.598  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:148(bishopAttacks)
+C:\PyPy\pypy3.10-v7.3.19-win64\Lib\enum.py:992(__and__)                                           <-  596728    0.389    0.484  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\apply_move.py:5(applyMove)
+                                                                                                      223701    0.165    0.196  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\apply_move.py:183(undoMove)
+                                                                                                         111    0.000    0.000  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\move_log.py:21(move_to_str)
+                                                                                                      205818    0.116    0.145  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\move_order.py:18(_mvvlva)
+                                                                                                      502605    0.274    0.338  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:176(<listcomp>)
+                                                                                                          24    0.000    0.000  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\uci.py:19(uci_to_move)
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:160(isSquareAttacked)    <-    1520    0.008    0.032  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:50(kingMoves)
+                                                                                                         882    0.005    0.056  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\move_generator.py:82(legalMoves)
+                                                                                                          24    0.000    0.001  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\move_log.py:84(is_check_checkmate_str)
+                                                                                                       19718    0.093    0.256  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:56(negamax)
+                                                                                                      100357    0.819    2.275  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:154(quiescence)
+                                                                                                         284    0.001    0.007  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:204(best_move)
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\bitboard.py:1(iterateBits)          <- 1354012    0.543    0.581  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\move_generator.py:7(generateMoves)
+                                                                                                          88    0.000    0.000  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\zobrist.py:17(computeHash)
+                                                                                                     1343557    0.137    0.168  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:41(_position_eval)
+                                                                                                      617665    0.041    0.058  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:68(_pawn_eval)
+                                                                                                      224894    0.057    0.061  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:122(_rook_eval)
+                                                                                                      166316    0.014    0.017  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:154(_king_eval)
+                                                                                                       83158    0.010    0.014  {built-in function next}
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:154(quiescence)         <-   17722    0.111   13.158  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:56(negamax)
+                                                                                                   28881/2934    0.450   10.930  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:154(quiescence)
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\apply_move.py:183(undoMove)         <-     882    0.017    0.026  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\move_generator.py:82(legalMoves)
+                                                                                                       19647    0.110    0.176  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:56(negamax)
+                                                                                                       53754    0.404    0.666  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:154(quiescence)
+                                                                                                         284    0.002    0.003  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:204(best_move)
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:68(_pawn_eval)            <-   41579    0.470    0.702  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:254(evaluate)
+{built-in function getattr}                                                                       <-  862202    0.120    0.120  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\apply_move.py:5(applyMove)
+                                                                                                      516974    0.115    0.115  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\apply_move.py:183(undoMove)
+                                                                                                         154    0.000    0.000  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\move_log.py:21(move_to_str)
+                                                                                                          24    0.000    0.000  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\zobrist.py:17(computeHash)
+                                                                                                      415790    0.062    0.062  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:27(_material_eval)
+                                                                                                      415790    0.050    0.050  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:41(_position_eval)
+                                                                                                      538152    0.115    0.115  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\move_order.py:11(_pieceValueOnSq)
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:154(_king_eval)           <-   41579    0.420    0.472  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:254(evaluate)
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:141(rookAttacks)         <-   15659    0.056    0.271  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:155(queenAttacks)
+                                                                                                      107672    0.198    0.973  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\attacks.py:160(isSquareAttacked)
+                                                                                                       37842    0.119    0.574  C:\Users\cum\Documents\coding\01_master\chess-and-engine\core\move_generator.py:7(generateMoves)
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:41(_position_eval)        <-   41579    0.361    0.605  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\eval.py:254(evaluate)
+C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:56(negamax)             <- 19449/598    0.343   14.313  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:56(negamax)
+                                                                                                         284    0.010   14.828  C:\Users\cum\Documents\coding\01_master\chess-and-engine\engine\search.py:204(best_move)
+
+
+

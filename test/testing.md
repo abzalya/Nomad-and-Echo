@@ -23,6 +23,7 @@
 |---------|--------|-------|
 | v0.1 vs v0.2 | v0.2 wins 100-0 | v0.1 ignores clock, times out every game |
 | v0.2 vs v0.3 | v0.3 wins 55-45 | Marginal, LOS 15.9% — not significant. Both still drain clock |
+| v0.6 vs v0.7 | current wins 53.5–46.5 | 12 W / 5 L / 83 D.  High draw rate (83%) from 3-fold repetition. |
 
 ## Leightweigh Testing game played in pygame with debug printing of depth, NPS and time
 
@@ -32,7 +33,7 @@
 | Nomad-v0.4 | 3 |  ~1,662 | |
 | Nomad-v0.5(wip) | 3 | ~3150  | apply-undo instead of copy |
 | Nomad-v0.5 | 3 | ~8090 | pypy3 as interpreter |
-| Nomad-v0.6(wip) | 3 | ~37924 | pseudo-legal moves and lazy legality |
+| Nomad-v0.6 | 3 | ~37924 | pseudo-legal moves and lazy legality |
 
 
 Game: engine = black
