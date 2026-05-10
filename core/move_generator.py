@@ -181,3 +181,36 @@ def generateQuiescence(gs):
 #pinned pieces are restricted to movement along their pinned ray
 #king is allowed AND against ~attacked_squares bitboard
 #en-passant we will simply do our apply undo check as its easier and its a rare move anyway
+
+def bitwiserayscanpindetection(gs):
+    pinned_mask = 0
+    pin_rays = {}
+    
+    ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+    sq = iterateBits(ownKing)
+    for direction in range (7):
+    #msb relevant 3, 4, 5, 6, se, s, sw, w
+    if direction = msb relevant 4, 5, 6, 7, se, s, sw, w
+        msb relevant Code
+    #lsb relevant 0, 1, 2, 7, n, ne, e, nw
+    if direction == 0 or 2: #N and E
+        ray = RAYATTACK[direction][sq]
+        relevant_sliders = enemy rook and queen
+        blockers = ray & allPieces
+        #early return if blockers == 0 or == 1 NOT A PIN
+        if blockers <= 1:
+            continue
+        first_blocker = blockers & -blockers
+        first_blocker_sq = first_blocker.bit_lenght() - 1
+        #early return case where first blocker is enemy NOT A PIN
+        if first_blocker & enemyPieces:
+            continue
+        rest = blockers ^ first_blocker
+        second_blocker = rest & -rest
+        #if second blocker is NOT a relevant slider, NOT A PIN
+        if second_blocker & relevant_sliders
+            continue
+        pinned_mask |= (1 << second_blocker)
+        pin_ray = ray & ((1 << (second_blocker + 1)) -1)
+        pin_rays[first_blocker_sq] = pin_ray
+
