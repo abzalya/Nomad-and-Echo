@@ -16,6 +16,7 @@
 | Nomad-v0.4 | Fix: time check granularity 1024 → 128 nodes. Fix: TT move ordering now works. | 0 W / 99 L / 1 D (62 on time, 37 checkmates) |
 | Nomad-v0.5 | using pypy as interpreter | 67 W / 28 L / 5 D (zero time forfeits) |
 | Nomad-v0.6 | pseudo-legal + lazy legality + some move_gen optimizations | 82 W / 10 L / 8 D |
+| Nomad-v0.8 | MoveFlag int constants, capture-only quiescence gen | 71 W / 28 L / 1 D vs SF1500, 48 W / 47 L / 5 D vs SF1600, 40 W / 52 L / 8 D vs SF1700 |
 
 ## VS
 
@@ -24,7 +25,7 @@
 | v0.1 vs v0.2 | v0.2 wins 100-0 | v0.1 ignores clock, times out every game |
 | v0.2 vs v0.3 | v0.3 wins 55-45 | Marginal, LOS 15.9% — not significant. Both still drain clock |
 | v0.6 vs v0.7 | current wins 53.5–46.5 | 12 W / 5 L / 83 D. High draw rate (83%) from 3-fold repetition. |
-| v0.7 vs current | current wins 60.5–39.5 | 47 W / 26 L / 27 D. Elo +74.1 ±59.6, LOS 99.3%. |
+| v0.8 vs v0.7 |  wins 69–31 | 56 W / 18 L / 26 D. Elo +139.0 ±62.3, LOS 100%. |
 
 ## Leightweigh Testing game played in pygame with debug printing of depth, NPS and time
 
