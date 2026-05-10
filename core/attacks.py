@@ -1,4 +1,5 @@
 from core.bitboard import FULL, NOT_A_FILE, NOT_H_FILE, NOT_AB_FILE, NOT_GH_FILE, RANK_2, RANK_7
+from core.bitboard import iterateBits
 
 def knightAttacks(sq):
     bb = 1 << sq
@@ -47,25 +48,37 @@ def _extended_king_zone(sq):
 
 EXTENDED_KING_ZONE = [_extended_king_zone(sq) for sq in range(64)]
 
-def kingMoves(sq, ownPieces, allPieces, gs):
+def kingMoves(sq, ownPieces, allPieces, gs, attacked_bb=None):
     attacks = KING_ATTACKS[sq]
-    #i think castling should go here
     bb = 1 << sq
     castleKingSideSquares = ((bb << 1) | (bb << 2))
     castleQueenSideSquares = ((bb >> 1) | (bb >> 2) | (bb >> 3))
+
     if gs.whiteToMove:
-        if gs.wKingSideCastle and not (castleKingSideSquares & allPieces):
-            if not isSquareAttacked(sq, gs) and not isSquareAttacked(sq+1, gs) and not isSquareAttacked(sq+2, gs):
-                attacks |= (bb << 2)
-        if gs.wQueenSideCastle and not (castleQueenSideSquares & allPieces):
-            if not isSquareAttacked(sq, gs) and not isSquareAttacked(sq-1, gs) and not isSquareAttacked(sq-2, gs):
-                attacks |= (bb >> 2)
+        ks_right = gs.wKingSideCastle
+        qs_right = gs.wQueenSideCastle
     else:
-        if gs.bKingSideCastle and not (castleKingSideSquares & allPieces):
-            if not isSquareAttacked(sq, gs) and not isSquareAttacked(sq+1, gs) and not isSquareAttacked(sq+2, gs):
+        ks_right = gs.bKingSideCastle
+        qs_right = gs.bQueenSideCastle
+
+    #castling: rights still valid + path clear of own/enemy pieces
+    can_ks = ks_right and not (castleKingSideSquares & allPieces)
+    can_qs = qs_right and not (castleQueenSideSquares & allPieces)
+
+    if can_ks or can_qs:
+        #only compute the enemy attack bitboard if we actually need it
+        if attacked_bb is None:
+            attacked_bb = attackedBy(gs)
+        if can_ks:
+            #king path: e1->f1->g1 (or e8->f8->g8) — none can be attacked
+            ks_path = bb | (bb << 1) | (bb << 2)
+            if not (attacked_bb & ks_path):
                 attacks |= (bb << 2)
-        if gs.bQueenSideCastle and not (castleQueenSideSquares & allPieces):
-            if not isSquareAttacked(sq, gs) and not isSquareAttacked(sq-1, gs) and not isSquareAttacked(sq-2, gs):
+        if can_qs:
+            #king path: e1->d1->c1 (or e8->d8->c8) — b1/b8 must be empty (already checked above)
+            #but doesn't need to be unattacked since the king doesn't pass through it
+            qs_path = bb | (bb >> 1) | (bb >> 2)
+            if not (attacked_bb & qs_path):
                 attacks |= (bb >> 2)
     return attacks & ~ownPieces
 
@@ -186,3 +199,47 @@ def isSquareAttacked(sq, gs): #reverse lookup approach for any arbitrary square 
     if bishopAttacks(sq, allPieces, ownPieces) & (enemyBishops | enemyQueens): return True
     if rookAttacks(sq, allPieces, ownPieces) & (enemyRooks | enemyQueens): return True
     return False
+
+def attackedBy(gs, exclude_defender_king=False):
+    white_attacking = not gs.whiteToMove
+    
+    #sometimes we would want to not include our king in allPieces to see what enemy sliders are x-raying through our king. 
+    allPieces = (gs.whitePawns | gs.whiteRooks | gs.whiteKnights |
+                 gs.whiteBishops | gs.whiteQueens | gs.whiteKing |
+                 gs.blackPawns | gs.blackRooks | gs.blackKnights |
+                 gs.blackBishops | gs.blackQueens | gs.blackKing)
+
+    if exclude_defender_king:
+        if white_attacking:
+            allPieces &= ~gs.blackKing  # remove the defender's king
+        else:
+            allPieces &= ~gs.whiteKing
+
+    attacked = 0
+    if white_attacking:
+        for sq in iterateBits(gs.whitePawns):
+            attacked |= PAWN_ATTACKS[0][sq]
+        for sq in iterateBits(gs.whiteKnights):
+            attacked |= KNIGHT_ATTACKS[sq]
+        for sq in iterateBits(gs.whiteKing):
+            attacked |= KING_ATTACKS[sq]
+        for sq in iterateBits(gs.whiteBishops | gs.whiteQueens):
+            attacked |= bishopAttacks(sq, allPieces, ownPieces=0)
+        for sq in iterateBits(gs.whiteRooks | gs.whiteQueens):
+            attacked |= rookAttacks(sq, allPieces, ownPieces=0)
+    else:
+        for sq in iterateBits(gs.blackPawns):
+            attacked |= PAWN_ATTACKS[1][sq]
+        for sq in iterateBits(gs.blackKnights):
+            attacked |= KNIGHT_ATTACKS[sq]
+        for sq in iterateBits(gs.blackKing):
+            attacked |= KING_ATTACKS[sq]
+        for sq in iterateBits(gs.blackBishops | gs.blackQueens):
+            attacked |= bishopAttacks(sq, allPieces, ownPieces=0)
+        for sq in iterateBits(gs.blackRooks | gs.blackQueens):
+            attacked |= rookAttacks(sq, allPieces, ownPieces=0)
+    return attacked
+
+def inCheck(gs):
+    ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+    return bool(attackedBy(gs) & ownKing)

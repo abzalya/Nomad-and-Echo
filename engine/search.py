@@ -5,7 +5,7 @@ from engine.tt import tt_get, tt_store, EXACT, LOWER, UPPER
 from core.move_generator import generateMoves, generateQuiescence
 from core.move import MoveFlag
 from core.apply_move import applyMove, undoMove
-from core.attacks import isSquareAttacked
+from core.attacks import isSquareAttacked, attackedBy, inCheck
 from core.zobrist import ZOBRIST_SIDE, ZOBRIST_EP
 
 MATE_SCORE     = 100000
@@ -82,11 +82,15 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     if depth == 0:
         return quiescence(gs, alpha, beta, info, depth=0, ply=ply)
 
+    ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+    in_check = None
+    attacked_bb = None
+
     # Null move pruning — skip in check or zugzwang-prone positions
     if allow_null and depth >= 3 and _has_pieces(gs):
-        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-        #guard check cheking as its a slower function
-        if not isSquareAttacked(ownKing.bit_length() - 1, gs):
+        attacked_bb = attackedBy(gs)
+        in_check = bool(attacked_bb & ownKing)
+        if not in_check:
             R = 3 if depth >= 6 else 2
             ep_save = gs.epSquare
             if ep_save != -1:
@@ -109,7 +113,7 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
             if null_score >= beta and abs(null_score) < 90000:
                 return beta
 
-    moves = movesOrdered(generateMoves(gs), gs, tt_move)
+    moves = movesOrdered(generateMoves(gs, attacked_bb), gs, tt_move)
 
     best = None
     legal_move_found = False
@@ -118,8 +122,8 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
 
         #lazy legality check
         gs.whiteToMove = not gs.whiteToMove
-        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-        sq = ownKing.bit_length() - 1
+        moverKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+        sq = moverKing.bit_length() - 1
         illegal = isSquareAttacked(sq, gs)
         gs.whiteToMove = not gs.whiteToMove
 
@@ -140,9 +144,9 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
             return beta
 
     if not legal_move_found:
-        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-        sq = ownKing.bit_length() - 1
-        return -(MATE_SCORE - ply) if isSquareAttacked(sq, gs) else 0
+        if in_check is None:
+            in_check = inCheck(gs)
+        return -(MATE_SCORE - ply) if in_check else 0
 
     flag = EXACT if alpha > original_alpha else UPPER
     tt_store(gs.zobristHash, _score_to_tt(alpha, ply), depth, flag, best)
@@ -155,8 +159,7 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
     if info.stop:
         return 0
 
-    ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-    in_check = isSquareAttacked(ownKing.bit_length() - 1, gs)
+    in_check = inCheck(gs)
 
     if not in_check:
         quiet_score = evaluate(gs)

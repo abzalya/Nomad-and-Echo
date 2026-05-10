@@ -1,10 +1,10 @@
 # Move Generation
 from core.move import Move, MoveFlag
 from core.bitboard import iterateBits, RANK_18
-from core.attacks import pawnActions, pawnAttacks, pawnMoves, knightMoves, kingMoves, bishopAttacks, rookAttacks, queenAttacks, isSquareAttacked
+from core.attacks import pawnActions, pawnAttacks, pawnMoves, knightMoves, kingMoves, bishopAttacks, rookAttacks, queenAttacks, isSquareAttacked, KING_ATTACKS
 from core.apply_move import applyMove, undoMove
 
-def generateMoves(gs):
+def generateMoves(gs, attacked_bb=None):
     allMoves = []
     whitePieces = gs.whitePawns | gs.whiteRooks | gs.whiteKnights | gs.whiteBishops | gs.whiteQueens | gs.whiteKing
     blackPieces = gs.blackPawns | gs.blackRooks | gs.blackKnights | gs.blackBishops | gs.blackQueens | gs.blackKing
@@ -46,7 +46,7 @@ def generateMoves(gs):
             allMoves.append(Move(sq, to_sq, flag))
 
     for sq in iterateBits(gs.whiteKing if gs.whiteToMove else gs.blackKing):
-        bb = kingMoves(sq, ownPieces, allPieces, gs)
+        bb = kingMoves(sq, ownPieces, allPieces, gs, attacked_bb)
         for to_sq in iterateBits(bb):
             if (1 << to_sq) & enemyPieces:
                 flag = MoveFlag.CAPTURE
@@ -165,7 +165,19 @@ def generateQuiescence(gs):
 
     #King captures only
     for sq in iterateBits(own_king):
-        for to_sq in iterateBits(kingMoves(sq, ownPieces, allPieces, gs) & enemyPieces):
+        for to_sq in iterateBits(KING_ATTACKS[sq] & enemyPieces):
             allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
 
     return allMoves
+
+#pin-mask legal generation
+#the current generation of legal moves relies on apply-undo and incheck checking for each move generated
+#for speed reasons the legality check has been moved within the searching and that has produced results
+#however, apart from magic botboards being probably the largest remaining improvement on move generation (shelved for now but on todo)
+#there is an option that is done by modern engines that i was unaware of
+#idea
+#we will, generate a bitboard of pinned-pieces and for each piece we will keep the ray its pinned along
+#non-pinned and non-king moves are all passed as legal instantly
+#pinned pieces are restricted to movement along their pinned ray
+#king is allowed AND against ~attacked_squares bitboard
+#en-passant we will simply do our apply undo check as its easier and its a rare move anyway
