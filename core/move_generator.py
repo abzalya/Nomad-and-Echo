@@ -48,25 +48,27 @@ def generateMoves(gs):
         checker_sq = check_mask.bit_length() - 1
         if checker_sq in check_rays:
             check_mask |= check_rays[checker_sq]
-        
+
         #EP edge case: if the checker is the pawn that just double-pushed,
         #the EP capture removes the checker and is a legal evasion. The EP
-        #destination square isn't the checker's square though, so check_mask
-        #needs to include it.
-        #Found during main vs v0.8 matchup
+        #destination square isn't the checker's square though, so the mask
+        #needs to include it — but ONLY for the pawn loop, because only a
+        #pawn EP capture actually removes the checker. A queen/etc. moving
+        #to the EP destination doesn't capture the checker.
+        pawn_check_mask = check_mask
         if gs.epSquare != -1:
             if gs.whiteToMove:
                 ep_pawn_sq = gs.epSquare - 8
             else:
                 ep_pawn_sq = gs.epSquare + 8
             if checker_sq == ep_pawn_sq:
-                check_mask |= (1 << gs.epSquare)
-        
+                pawn_check_mask = check_mask | (1 << gs.epSquare)
+
         #normal move generation EXCEPT its & with check_mask, plus pin_rays if pinned
         for sq in iterateBits(gs.whitePawns if gs.whiteToMove else gs.blackPawns):
             if (1 << sq) & pinned_mask: #if a pawn is a pinned piece
                 bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces, gs.epSquare)
-                pin_bb = bb & pin_rays[sq] & check_mask
+                pin_bb = bb & pin_rays[sq] & pawn_check_mask
                 for to_sq in iterateBits(pin_bb):
                     if to_sq == gs.epSquare:
                         flag = MoveFlag.EN_PASSANT
@@ -87,7 +89,7 @@ def generateMoves(gs):
                     else:
                         allMoves.append(Move(sq, to_sq, flag, promo_piece))
             else:
-                bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces, gs.epSquare) & check_mask
+                bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces, gs.epSquare) & pawn_check_mask
                 for to_sq in iterateBits(bb):
                     if to_sq == gs.epSquare:
                         flag = MoveFlag.EN_PASSANT
@@ -107,7 +109,7 @@ def generateMoves(gs):
                             allMoves.append(Move(sq, to_sq, flag, promotion))
                     else:
                         allMoves.append(Move(sq, to_sq, flag, promo_piece))
-        
+
         for sq in iterateBits(gs.whiteKnights if gs.whiteToMove else gs.blackKnights):
             if (1 << sq) & pinned_mask: #pinned knight can never move along a ray
                 continue
