@@ -23,124 +23,256 @@ def generateMoves(gs):
 
     attacked_bb = attackedBy(gs, exclude_defender_king=True)
     #will use this bb to create only legal moves for the king
+    in_check = False
+    num_checks, check_mask, check_rays = findCheck(gs)
+    #if num_checks > 2, only king moves
+    #if num_checks = 1, king move, capture or block check
+    #if num_checks = 0, standard
 
-    for sq in iterateBits(gs.whitePawns if gs.whiteToMove else gs.blackPawns):
-        #add the pinned pieces first
-        if (1 << sq) & pinned_mask: #if a pawn is a pinned piece
-            bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces, gs.epSquare)
-            pin_bb = bb & pin_rays[sq]
-            for to_sq in iterateBits(pin_bb):
-                if to_sq == gs.epSquare:
-                    flag = MoveFlag.EN_PASSANT
-                elif (1 << to_sq) & enemyPieces:
+    if num_checks >= 2:
+        in_check = True
+        for sq in iterateBits(gs.whiteKing if gs.whiteToMove else gs.blackKing):
+            bb = kingMoves(sq, ownPieces, allPieces, gs, attacked_bb)
+            #remove illegal moves stepping into an attack,
+            bb_legal = bb & ~attacked_bb
+            for to_sq in iterateBits(bb_legal):
+                if (1 << to_sq) & enemyPieces:
                     flag = MoveFlag.CAPTURE
                 else:
                     flag = MoveFlag.NORMAL
-                promo_piece = None
+                allMoves.append(Move(sq, to_sq, flag))
 
-                if ((1 << to_sq) & RANK_18):
-                    flag |= MoveFlag.PROMOTION
-                    if gs.whiteToMove:
-                        promotions = ["whiteQueens", "whiteRooks", "whiteBishops", "whiteKnights"]
+    if num_checks == 1:
+        in_check = True
+        #if the checker is a slider, we extract the ray, and add it to check_mask to have a mask of all possible allowed sqs
+        ray_check_sq = check_mask.bit_length() - 1
+        if ray_check_sq in check_rays:
+            check_mask |= check_rays[ray_check_sq]
+        #normal move generation EXCEPT its & with check_mask, plus pin_rays if pinned
+        for sq in iterateBits(gs.whitePawns if gs.whiteToMove else gs.blackPawns):
+            if (1 << sq) & pinned_mask: #if a pawn is a pinned piece
+                bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces, gs.epSquare)
+                pin_bb = bb & pin_rays[sq] & check_mask
+                for to_sq in iterateBits(pin_bb):
+                    if to_sq == gs.epSquare:
+                        flag = MoveFlag.EN_PASSANT
+                    elif (1 << to_sq) & enemyPieces:
+                        flag = MoveFlag.CAPTURE
                     else:
-                        promotions = ["blackQueens", "blackRooks", "blackBishops", "blackKnights"]
-                    for promotion in promotions:
-                        allMoves.append(Move(sq, to_sq, flag, promotion))
-                else:
-                    allMoves.append(Move(sq, to_sq, flag, promo_piece))
+                        flag = MoveFlag.NORMAL
+                    promo_piece = None
 
+                    if ((1 << to_sq) & RANK_18):
+                        flag |= MoveFlag.PROMOTION
+                        if gs.whiteToMove:
+                            promotions = ["whiteQueens", "whiteRooks", "whiteBishops", "whiteKnights"]
+                        else:
+                            promotions = ["blackQueens", "blackRooks", "blackBishops", "blackKnights"]
+                        for promotion in promotions:
+                            allMoves.append(Move(sq, to_sq, flag, promotion))
+                    else:
+                        allMoves.append(Move(sq, to_sq, flag, promo_piece))
+            else:
+                bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces, gs.epSquare) & check_mask
+                for to_sq in iterateBits(bb):
+                    if to_sq == gs.epSquare:
+                        flag = MoveFlag.EN_PASSANT
+                    elif (1 << to_sq) & enemyPieces:
+                        flag = MoveFlag.CAPTURE
+                    else:
+                        flag = MoveFlag.NORMAL
+                    promo_piece = None
 
-        else:
-            bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces, gs.epSquare)
+                    if ((1 << to_sq) & RANK_18):
+                        flag |= MoveFlag.PROMOTION
+                        if gs.whiteToMove:
+                            promotions = ["whiteQueens", "whiteRooks", "whiteBishops", "whiteKnights"]
+                        else:
+                            promotions = ["blackQueens", "blackRooks", "blackBishops", "blackKnights"]
+                        for promotion in promotions:
+                            allMoves.append(Move(sq, to_sq, flag, promotion))
+                    else:
+                        allMoves.append(Move(sq, to_sq, flag, promo_piece))
+        
+        for sq in iterateBits(gs.whiteKnights if gs.whiteToMove else gs.blackKnights):
+            if (1 << sq) & pinned_mask: #pinned knight can never move along a ray
+                continue
+            bb = knightMoves(sq, ownPieces) & check_mask
             for to_sq in iterateBits(bb):
-                if to_sq == gs.epSquare:
-                    flag = MoveFlag.EN_PASSANT
-                elif (1 << to_sq) & enemyPieces:
+                flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                allMoves.append(Move(sq, to_sq, flag))
+
+        for sq in iterateBits(gs.whiteKing if gs.whiteToMove else gs.blackKing):
+            bb = kingMoves(sq, ownPieces, allPieces, gs, attacked_bb)
+            #remove illegal moves stepping into an attack,
+            bb_legal = bb & ~attacked_bb
+            for to_sq in iterateBits(bb_legal):
+                if (1 << to_sq) & enemyPieces:
                     flag = MoveFlag.CAPTURE
                 else:
                     flag = MoveFlag.NORMAL
-                promo_piece = None
+                allMoves.append(Move(sq, to_sq, flag))
 
-                if ((1 << to_sq) & RANK_18):
-                    flag |= MoveFlag.PROMOTION
-                    if gs.whiteToMove:
-                        promotions = ["whiteQueens", "whiteRooks", "whiteBishops", "whiteKnights"]
+        for sq in iterateBits(gs.whiteBishops if gs.whiteToMove else gs.blackBishops):
+            if (1 << sq) & pinned_mask: #if a pinned piece
+                bb = bishopAttacks(sq, allPieces, ownPieces)
+                pin_bb = bb & pin_rays[sq] & check_mask
+                for to_sq in iterateBits(pin_bb):
+                    flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                    allMoves.append(Move(sq, to_sq, flag))
+            else:
+                bb = bishopAttacks(sq, allPieces, ownPieces) & check_mask
+                for to_sq in iterateBits(bb):
+                    flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                    allMoves.append(Move(sq, to_sq, flag))
+
+        for sq in iterateBits(gs.whiteRooks if gs.whiteToMove else gs.blackRooks):
+            if (1 << sq) & pinned_mask: #if a pinned piece
+                bb = rookAttacks(sq, allPieces, ownPieces)
+                pin_bb = bb & pin_rays[sq] & check_mask
+                for to_sq in iterateBits(pin_bb):
+                    flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                    allMoves.append(Move(sq, to_sq, flag))
+            else:
+                bb = rookAttacks(sq, allPieces, ownPieces) & check_mask
+                for to_sq in iterateBits(bb):
+                    flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                    allMoves.append(Move(sq, to_sq, flag))
+
+        for sq in iterateBits(gs.whiteQueens if gs.whiteToMove else gs.blackQueens):
+            if (1 << sq) & pinned_mask: #if a pinned piece
+                bb = queenAttacks(sq, allPieces, ownPieces)
+                pin_bb = bb & pin_rays[sq] & check_mask
+                for to_sq in iterateBits(pin_bb):
+                    flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                    allMoves.append(Move(sq, to_sq, flag))
+            else:
+                bb = queenAttacks(sq, allPieces, ownPieces) & check_mask
+                for to_sq in iterateBits(bb):
+                    flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                    allMoves.append(Move(sq, to_sq, flag))
+
+            
+
+        
+    if num_checks == 0:
+        for sq in iterateBits(gs.whitePawns if gs.whiteToMove else gs.blackPawns):
+            #add the pinned pieces first
+            if (1 << sq) & pinned_mask: #if a pawn is a pinned piece
+                bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces, gs.epSquare)
+                pin_bb = bb & pin_rays[sq]
+                for to_sq in iterateBits(pin_bb):
+                    if to_sq == gs.epSquare:
+                        flag = MoveFlag.EN_PASSANT
+                    elif (1 << to_sq) & enemyPieces:
+                        flag = MoveFlag.CAPTURE
                     else:
-                        promotions = ["blackQueens", "blackRooks", "blackBishops", "blackKnights"]
-                    for promotion in promotions:
-                        allMoves.append(Move(sq, to_sq, flag, promotion))
-                else:
-                    allMoves.append(Move(sq, to_sq, flag, promo_piece))
+                        flag = MoveFlag.NORMAL
+                    promo_piece = None
 
-    for sq in iterateBits(gs.whiteKnights if gs.whiteToMove else gs.blackKnights):
-        if (1 << sq) & pinned_mask: #if a knigh is a pinned piece
-            continue #pinned knight can never move along a ray
-        else:
+                    if ((1 << to_sq) & RANK_18):
+                        flag |= MoveFlag.PROMOTION
+                        if gs.whiteToMove:
+                            promotions = ["whiteQueens", "whiteRooks", "whiteBishops", "whiteKnights"]
+                        else:
+                            promotions = ["blackQueens", "blackRooks", "blackBishops", "blackKnights"]
+                        for promotion in promotions:
+                            allMoves.append(Move(sq, to_sq, flag, promotion))
+                    else:
+                        allMoves.append(Move(sq, to_sq, flag, promo_piece))
+
+
+            else:
+                bb = pawnActions(sq, gs.whiteToMove, ownPieces, enemyPieces, gs.epSquare)
+                for to_sq in iterateBits(bb):
+                    if to_sq == gs.epSquare:
+                        flag = MoveFlag.EN_PASSANT
+                    elif (1 << to_sq) & enemyPieces:
+                        flag = MoveFlag.CAPTURE
+                    else:
+                        flag = MoveFlag.NORMAL
+                    promo_piece = None
+
+                    if ((1 << to_sq) & RANK_18):
+                        flag |= MoveFlag.PROMOTION
+                        if gs.whiteToMove:
+                            promotions = ["whiteQueens", "whiteRooks", "whiteBishops", "whiteKnights"]
+                        else:
+                            promotions = ["blackQueens", "blackRooks", "blackBishops", "blackKnights"]
+                        for promotion in promotions:
+                            allMoves.append(Move(sq, to_sq, flag, promotion))
+                    else:
+                        allMoves.append(Move(sq, to_sq, flag, promo_piece))
+
+        for sq in iterateBits(gs.whiteKnights if gs.whiteToMove else gs.blackKnights):
+            if (1 << sq) & pinned_mask: #if a knigh is a pinned piece
+                continue #pinned knight can never move along a ray
             bb = knightMoves(sq, ownPieces)
             for to_sq in iterateBits(bb):
                 flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
                 allMoves.append(Move(sq, to_sq, flag))
 
-    for sq in iterateBits(gs.whiteKing if gs.whiteToMove else gs.blackKing):
-        #king is a bit different
-        bb = kingMoves(sq, ownPieces, allPieces, gs, attacked_bb)
-        #remove illegal moves stepping into an attack,
-        bb_legal = bb & ~attacked_bb
-        for to_sq in iterateBits(bb_legal):
-            if (1 << to_sq) & enemyPieces:
-                flag = MoveFlag.CAPTURE
+        for sq in iterateBits(gs.whiteKing if gs.whiteToMove else gs.blackKing):
+            #king is a bit different
+            bb = kingMoves(sq, ownPieces, allPieces, gs, attacked_bb)
+            #remove illegal moves stepping into an attack,
+            bb_legal = bb & ~attacked_bb
+            for to_sq in iterateBits(bb_legal):
+                if (1 << to_sq) & enemyPieces:
+                    flag = MoveFlag.CAPTURE
+                else:
+                    flag = MoveFlag.NORMAL
+                if (to_sq - sq) == 2:
+                    flag |= MoveFlag.CASTLE_K
+                if (to_sq - sq) == -2:
+                    flag |= MoveFlag.CASTLE_Q
+                allMoves.append(Move(sq, to_sq, flag))
+
+        for sq in iterateBits(gs.whiteBishops if gs.whiteToMove else gs.blackBishops):
+            if (1 << sq) & pinned_mask: #if a pinned piece
+                bb = bishopAttacks(sq, allPieces, ownPieces)
+                pin_bb = bb & pin_rays[sq]
+                for to_sq in iterateBits(pin_bb):
+                    flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                    allMoves.append(Move(sq, to_sq, flag))
             else:
-                flag = MoveFlag.NORMAL
-            if (to_sq - sq) == 2:
-                flag |= MoveFlag.CASTLE_K
-            if (to_sq - sq) == -2:
-                flag |= MoveFlag.CASTLE_Q
-            allMoves.append(Move(sq, to_sq, flag))
+                bb = bishopAttacks(sq, allPieces, ownPieces)
+                for to_sq in iterateBits(bb):
+                    flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                    allMoves.append(Move(sq, to_sq, flag))
 
-    for sq in iterateBits(gs.whiteBishops if gs.whiteToMove else gs.blackBishops):
-        if (1 << sq) & pinned_mask: #if a pinned piece
-            bb = bishopAttacks(sq, allPieces, ownPieces)
-            pin_bb = bb & pin_rays[sq]
-            for to_sq in iterateBits(pin_bb):
-                flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
-                allMoves.append(Move(sq, to_sq, flag))
-        else:
-            bb = bishopAttacks(sq, allPieces, ownPieces)
-            for to_sq in iterateBits(bb):
-                flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
-                allMoves.append(Move(sq, to_sq, flag))
+        for sq in iterateBits(gs.whiteRooks if gs.whiteToMove else gs.blackRooks):
+            if (1 << sq) & pinned_mask: #if a pinned piece
+                bb = rookAttacks(sq, allPieces, ownPieces)
+                pin_bb = bb & pin_rays[sq]
+                for to_sq in iterateBits(pin_bb):
+                    flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                    allMoves.append(Move(sq, to_sq, flag))
+            else:
+                bb = rookAttacks(sq, allPieces, ownPieces)
+                for to_sq in iterateBits(bb):
+                    flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                    allMoves.append(Move(sq, to_sq, flag))
 
-    for sq in iterateBits(gs.whiteRooks if gs.whiteToMove else gs.blackRooks):
-        if (1 << sq) & pinned_mask: #if a pinned piece
-            bb = rookAttacks(sq, allPieces, ownPieces)
-            pin_bb = bb & pin_rays[sq]
-            for to_sq in iterateBits(pin_bb):
-                flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
-                allMoves.append(Move(sq, to_sq, flag))
-        else:
-            bb = rookAttacks(sq, allPieces, ownPieces)
-            for to_sq in iterateBits(bb):
-                flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
-                allMoves.append(Move(sq, to_sq, flag))
+        for sq in iterateBits(gs.whiteQueens if gs.whiteToMove else gs.blackQueens):
+            if (1 << sq) & pinned_mask: #if a pinned piece
+                bb = queenAttacks(sq, allPieces, ownPieces)
+                pin_bb = bb & pin_rays[sq]
+                for to_sq in iterateBits(pin_bb):
+                    flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                    allMoves.append(Move(sq, to_sq, flag))
+            else:
+                bb = queenAttacks(sq, allPieces, ownPieces)
+                for to_sq in iterateBits(bb):
+                    flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
+                    allMoves.append(Move(sq, to_sq, flag))
 
-    for sq in iterateBits(gs.whiteQueens if gs.whiteToMove else gs.blackQueens):
-        if (1 << sq) & pinned_mask: #if a pinned piece
-            bb = queenAttacks(sq, allPieces, ownPieces)
-            pin_bb = bb & pin_rays[sq]
-            for to_sq in iterateBits(pin_bb):
-                flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
-                allMoves.append(Move(sq, to_sq, flag))
-        else:
-            bb = queenAttacks(sq, allPieces, ownPieces)
-            for to_sq in iterateBits(bb):
-                flag = MoveFlag.CAPTURE if (1 << to_sq) & enemyPieces else MoveFlag.NORMAL
-                allMoves.append(Move(sq, to_sq, flag))
-
-    return allMoves
+    return allMoves, in_check
 
 def legalMoves(gs):
     allLegalMoves = []
-    for move in generateMoves(gs):
+    moves, _ = generateMoves(gs)
+    for move in moves:
         applyMove(gs, move)
         gs.whiteToMove = not gs.whiteToMove  # flip back to check own king
         ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
