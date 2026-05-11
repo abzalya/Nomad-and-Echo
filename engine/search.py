@@ -82,14 +82,11 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     if depth == 0:
         return quiescence(gs, alpha, beta, info, depth=0, ply=ply)
 
-    ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-    in_check = None
-    attacked_bb = None
+    moves, in_check = generateMoves(gs)
+    moves = movesOrdered(moves, gs, tt_move)
 
     # Null move pruning — skip in check or zugzwang-prone positions
     if allow_null and depth >= 3 and _has_pieces(gs):
-        attacked_bb = attackedBy(gs)
-        in_check = bool(attacked_bb & ownKing)
         if not in_check:
             R = 3 if depth >= 6 else 2
             ep_save = gs.epSquare
@@ -113,23 +110,18 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
             if null_score >= beta and abs(null_score) < 90000:
                 return beta
 
-    moves = movesOrdered(generateMoves(gs, attacked_bb), gs, tt_move)
-
     best = None
     legal_move_found = False
     for move in moves:
         applyMove(gs, move)
-
-        #lazy legality check
-        gs.whiteToMove = not gs.whiteToMove
-        moverKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-        sq = moverKing.bit_length() - 1
-        illegal = isSquareAttacked(sq, gs)
-        gs.whiteToMove = not gs.whiteToMove
-
-        if illegal:
-            undoMove(gs)
-            continue
+        if move.flags & MoveFlag.EN_PASSANT:
+            gs.whiteToMove = not gs.whiteToMove
+            moverKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+            illegal = isSquareAttacked(moverKing.bit_length() - 1, gs)
+            gs.whiteToMove = not gs.whiteToMove
+            if illegal:
+                undoMove(gs)
+                continue
 
         legal_move_found = True
         score = -negamax(gs, -beta, -alpha, depth - 1, info, ply=ply+1)
@@ -144,8 +136,6 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
             return beta
 
     if not legal_move_found:
-        if in_check is None:
-            in_check = inCheck(gs)
         return -(MATE_SCORE - ply) if in_check else 0
 
     flag = EXACT if alpha > original_alpha else UPPER
@@ -173,7 +163,10 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
         alpha = max(alpha, quiet_score)
 
     # in check: must search all moves for evasions; otherwise tactical moves only (captures, EP, all promotions)
-    candidates = generateMoves(gs) if in_check else generateQuiescence(gs)
+    if in_check:
+        candidates, _ = generateMoves(gs)
+    else:
+        candidates = generateQuiescence(gs)
 
     legal_move_found = False
     for move in movesOrdered(candidates, gs):
@@ -200,22 +193,21 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
 
 
 def best_move(gs, depth, info, last_best=None):
-    moves = movesOrdered(generateMoves(gs), gs, last_best)
+    moves, _ = generateMoves(gs)
+    moves = movesOrdered(moves, gs, last_best)
     best = None
     alpha = -10_000_000 #completely stop infinity from appearing large int values
     beta  =  10_000_000
     for move in moves:
         applyMove(gs, move)
-        #lazy legality check
-        gs.whiteToMove = not gs.whiteToMove
-        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-        sq = ownKing.bit_length() - 1
-        illegal = isSquareAttacked(sq, gs)
-        gs.whiteToMove = not gs.whiteToMove
-
-        if illegal:
-            undoMove(gs)
-            continue
+        if move.flags & MoveFlag.EN_PASSANT:
+            gs.whiteToMove = not gs.whiteToMove
+            moverKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+            illegal = isSquareAttacked(moverKing.bit_length() - 1, gs)
+            gs.whiteToMove = not gs.whiteToMove
+            if illegal:
+                undoMove(gs)
+                continue
         score = -negamax(gs, -beta, -alpha, depth - 1, info, ply=1)
         undoMove(gs)
         if info.stop:
