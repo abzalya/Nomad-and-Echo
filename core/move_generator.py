@@ -45,9 +45,23 @@ def generateMoves(gs):
     if num_checks == 1:
         in_check = True
         #if the checker is a slider, we extract the ray, and add it to check_mask to have a mask of all possible allowed sqs
-        ray_check_sq = check_mask.bit_length() - 1
-        if ray_check_sq in check_rays:
-            check_mask |= check_rays[ray_check_sq]
+        checker_sq = check_mask.bit_length() - 1
+        if checker_sq in check_rays:
+            check_mask |= check_rays[checker_sq]
+        
+        #EP edge case: if the checker is the pawn that just double-pushed,
+        #the EP capture removes the checker and is a legal evasion. The EP
+        #destination square isn't the checker's square though, so check_mask
+        #needs to include it.
+        #Found during main vs v0.8 matchup
+        if gs.epSquare != -1:
+            if gs.whiteToMove:
+                ep_pawn_sq = gs.epSquare - 8
+            else:
+                ep_pawn_sq = gs.epSquare + 8
+            if checker_sq == ep_pawn_sq:
+                check_mask |= (1 << gs.epSquare)
+        
         #normal move generation EXCEPT its & with check_mask, plus pin_rays if pinned
         for sq in iterateBits(gs.whitePawns if gs.whiteToMove else gs.blackPawns):
             if (1 << sq) & pinned_mask: #if a pawn is a pinned piece
@@ -321,43 +335,75 @@ def generateQuiescence(gs):
 
     ep_sq = gs.epSquare
 
-    #Pawns: captures + EP via pawnAttacks; quiet promotions via pawnMoves filtered to last rank
-    for sq in iterateBits(own_pawns):
-        cap_bb = pawnAttacks(sq, gs.whiteToMove, enemyPieces, ep_sq)
-        for to_sq in iterateBits(cap_bb):
-            if to_sq == ep_sq:
-                allMoves.append(Move(sq, to_sq, MoveFlag.EN_PASSANT))
-            elif (1 << to_sq) & RANK_18:
-                flag = MoveFlag.CAPTURE | MoveFlag.PROMOTION
-                for promo in promo_pieces:
-                    allMoves.append(Move(sq, to_sq, flag, promo))
-            else:
-                allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
-        #quiet promotion with no capture
-        for to_sq in iterateBits(pawnMoves(sq, gs.whiteToMove, allPieces) & RANK_18):
-            for promo in promo_pieces:
-                allMoves.append(Move(sq, to_sq, MoveFlag.PROMOTION, promo))
+    pinned_mask, pin_rays = findPinnedPieces(gs)
+    attacked_bb = attackedBy(gs, exclude_defender_king=True)
 
-    #Other pieces: attack masked to enemy squares only
+    for sq in iterateBits(own_pawns):
+        if (1 << sq) & pinned_mask:
+            bb = pawnAttacks(sq, gs.whiteToMove, enemyPieces, ep_sq) & pin_rays[sq]
+            for to_sq in iterateBits(bb):
+                if to_sq == ep_sq:
+                    allMoves.append(Move(sq, to_sq, MoveFlag.EN_PASSANT))
+                elif (1 << to_sq) & RANK_18:
+                    flag = MoveFlag.CAPTURE | MoveFlag.PROMOTION
+                    for promo in promo_pieces:
+                        allMoves.append(Move(sq, to_sq, flag, promo))
+                else:
+                    allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+            for to_sq in iterateBits(pawnMoves(sq, gs.whiteToMove, allPieces) & RANK_18 & pin_rays[sq]):
+                for promo in promo_pieces:
+                    allMoves.append(Move(sq, to_sq, MoveFlag.PROMOTION, promo))
+        else:
+            bb = pawnAttacks(sq, gs.whiteToMove, enemyPieces, ep_sq)
+            for to_sq in iterateBits(bb):
+                if to_sq == ep_sq:
+                    allMoves.append(Move(sq, to_sq, MoveFlag.EN_PASSANT))
+                elif (1 << to_sq) & RANK_18:
+                    flag = MoveFlag.CAPTURE | MoveFlag.PROMOTION
+                    for promo in promo_pieces:
+                        allMoves.append(Move(sq, to_sq, flag, promo))
+                else:
+                    allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+            for to_sq in iterateBits(pawnMoves(sq, gs.whiteToMove, allPieces) & RANK_18):
+                for promo in promo_pieces:
+                    allMoves.append(Move(sq, to_sq, MoveFlag.PROMOTION, promo))
+
     for sq in iterateBits(own_knights):
+        if (1 << sq) & pinned_mask:
+            continue
         for to_sq in iterateBits(knightMoves(sq, ownPieces) & enemyPieces):
             allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
 
     for sq in iterateBits(own_bishops):
-        for to_sq in iterateBits(bishopAttacks(sq, allPieces, ownPieces) & enemyPieces):
-            allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+        if (1 << sq) & pinned_mask:
+            bb = bishopAttacks(sq, allPieces, ownPieces) & enemyPieces & pin_rays[sq]
+            for to_sq in iterateBits(bb):
+                allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+        else:
+            for to_sq in iterateBits(bishopAttacks(sq, allPieces, ownPieces) & enemyPieces):
+                allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
 
     for sq in iterateBits(own_rooks):
-        for to_sq in iterateBits(rookAttacks(sq, allPieces, ownPieces) & enemyPieces):
-            allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+        if (1 << sq) & pinned_mask:
+            bb = rookAttacks(sq, allPieces, ownPieces) & enemyPieces & pin_rays[sq]
+            for to_sq in iterateBits(bb):
+                allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+        else:
+            for to_sq in iterateBits(rookAttacks(sq, allPieces, ownPieces) & enemyPieces):
+                allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
 
     for sq in iterateBits(own_queens):
-        for to_sq in iterateBits(queenAttacks(sq, allPieces, ownPieces) & enemyPieces):
-            allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+        if (1 << sq) & pinned_mask:
+            bb = queenAttacks(sq, allPieces, ownPieces) & enemyPieces & pin_rays[sq]
+            for to_sq in iterateBits(bb):
+                allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
+        else:
+            for to_sq in iterateBits(queenAttacks(sq, allPieces, ownPieces) & enemyPieces):
+                allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
 
-    #King captures only
+    #King captures only — filtered by ~attacked_bb, cant capture into check.
     for sq in iterateBits(own_king):
-        for to_sq in iterateBits(KING_ATTACKS[sq] & enemyPieces):
+        for to_sq in iterateBits(KING_ATTACKS[sq] & enemyPieces & ~attacked_bb):
             allMoves.append(Move(sq, to_sq, MoveFlag.CAPTURE))
 
     return allMoves

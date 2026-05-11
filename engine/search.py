@@ -171,14 +171,15 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
     legal_move_found = False
     for move in movesOrdered(candidates, gs):
         applyMove(gs, move)
-        gs.whiteToMove = not gs.whiteToMove
-        moverKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-        illegal = isSquareAttacked(moverKing.bit_length() - 1, gs)
-        gs.whiteToMove = not gs.whiteToMove
-
-        if illegal:
-            undoMove(gs)
-            continue
+        
+        if move.flags & MoveFlag.EN_PASSANT:
+            gs.whiteToMove = not gs.whiteToMove
+            moverKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+            illegal = isSquareAttacked(moverKing.bit_length() - 1, gs)
+            gs.whiteToMove = not gs.whiteToMove
+            if illegal:
+                undoMove(gs)
+                continue
 
         legal_move_found = True
         score = -quiescence(gs, -beta, -alpha, info, depth + 1, ply=ply+1)
