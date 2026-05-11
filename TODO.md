@@ -45,6 +45,7 @@
 - speed thoughts
     - Rewrite hot paths in C pybind11, almost 1 to 1 apart from syntax (if bottlenecking hard)
     - Bitboard attack tables — precomputed magic bitboards for slider attacks instead of ray tracing per call
+    - [1] i built a ray attack pattern for pinned piece detection. i can reuse that, slightly modified for my slider pieces. not magic bitboards, but way faster than looping. need to implement
 
 - profile optimizations
     - [X] Kill IntFlag. Replace MoveFlag with plain int constants

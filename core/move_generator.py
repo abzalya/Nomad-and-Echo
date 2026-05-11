@@ -187,30 +187,64 @@ def bitwiserayscanpindetection(gs):
     pin_rays = {}
     
     ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-    sq = iterateBits(ownKing)
-    for direction in range (7):
-    #msb relevant 3, 4, 5, 6, se, s, sw, w
-    if direction = msb relevant 4, 5, 6, 7, se, s, sw, w
-        msb relevant Code
-    #lsb relevant 0, 1, 2, 7, n, ne, e, nw
-    if direction == 0 or 2: #N and E
-        ray = RAYATTACK[direction][sq]
-        relevant_sliders = enemy rook and queen
-        blockers = ray & allPieces
-        #early return if blockers == 0 or == 1 NOT A PIN
-        if blockers <= 1:
-            continue
-        first_blocker = blockers & -blockers
-        first_blocker_sq = first_blocker.bit_lenght() - 1
-        #early return case where first blocker is enemy NOT A PIN
-        if first_blocker & enemyPieces:
-            continue
-        rest = blockers ^ first_blocker
-        second_blocker = rest & -rest
-        #if second blocker is NOT a relevant slider, NOT A PIN
-        if second_blocker & relevant_sliders
-            continue
-        pinned_mask |= (1 << second_blocker)
-        pin_ray = ray & ((1 << (second_blocker + 1)) -1)
-        pin_rays[first_blocker_sq] = pin_ray
+    whitePieces = gs.whitePawns | gs.whiteRooks | gs.whiteKnights | gs.whiteBishops | gs.whiteQueens | gs.whiteKing
+    blackPieces = gs.blackPawns | gs.blackRooks | gs.blackKnights | gs.blackBishops | gs.blackQueens | gs.blackKing
+    allPieces = whitePieces | blackPieces
+    if gs.whiteToMove:
+        ownPieces, enemyPieces = whitePieces, blackPieces
+        enemy_rook_queen = gs.blackRooks | gs.blackQueens
+        enemy_bishop_queen = gs.blackBishops | gs.blackQueens
+    else:
+        ownPieces, enemyPieces = blackPieces, whitePieces
+        enemy_rook_queen = gs.whiteRooks | gs.whiteQueens
+        enemy_bishop_queen = gs.whiteBishops | gs.whiteQueens
 
+
+    sq = ownKing.bit_length() - 1
+    #msb relevant 3, 4, 5, 6, se, s, sw, w
+    #lsb relevant 0, 1, 2, 7, n, ne, e, nw
+
+    for direction in range(8):
+        is_lsb = direction in (0, 1, 2, 7)
+        ray = RAY_ATTACKS[direction][sq]
+        blockers = ray & allPieces
+        #if none on ray = not a pin
+        if blockers == 0:
+            continue
+    
+        if is_lsb:
+            first_blocker = blockers & -blockers
+        else:
+            first_blocker_sq = blockers.bit_length() - 1
+            first_blocker = 1 << first_blocker_sq
+
+        #if first blocker is NOT our piece = not a pin
+        if not (first_blocker & ownPieces):
+            continue
+
+        rest = blockers ^ first_blocker
+        #if only one piece on ray = not a pin
+        if rest == 0:
+            continue
+
+        if is_lsb:
+            second_blocker = rest & -rest
+            second_blocker_sq = second_blocker.bit_length() - 1
+            #ray upto and including pinner, rest irrelevant
+            pin_ray = ray & ((1 << (second_blocker_sq + 1)) - 1)
+        else:
+            second_blocker_sq = rest.bit_length() - 1
+            second_blocker = 1 << second_blocker_sq
+            pin_ray = ray & ~((1 << second_blocker_sq) - 1)
+
+        relevant_sliders = enemy_rook_queen if direction % 2 == 0 else enemy_bishop_queen
+        #if second blocker is not an relevant enemy slider = not a pin
+        if not (second_blocker & relevant_sliders):
+            continue
+            
+        #save the bitboard of all pinned pieces and the rays they are pinned along
+        first_blocker_sq = first_blocker.bit_length() - 1
+        pinned_mask |= first_blocker
+        pin_rays[first_blocker_sq] = pin_ray
+    return pinned_mask, pin_rays
+    #i need to reuse this for ray attacks of the slider pieces. jsut adopt it for first blocker only i think
