@@ -37,14 +37,18 @@
 | Nomad-v0.5 | 3 | ~8090 | pypy3 as interpreter |
 | Nomad-v0.6 | 3 | ~37924 | pseudo-legal moves and lazy legality |
 
+## Claude Profile
 
-Game: engine = black
-e2e4 e7e5 g1f3 d7d6 d2d4 c8g4 d4e5 g4f3 d1f3 d6e5
-f1c4 g8f6 f3b3 d8e7 b1c3 c7c6 c1g5 b7b5 c3b5 c6b5
-c4b5 b8d7 e1c1 a8d8 d1d7 d8d7 h1d1 e7e6 b5d7 f6d7
-b3b8 d7b8 d1d8
+Workload: 2 positions (Opera middlegame + startpos), depth 4 each. cProfile under PyPy with JIT
+disabled — absolute times are slower than real-engine play; relative deltas and hotspot ranking
+are what's trustworthy. NPS values are from the engine's own `info` lines during the same
+workload, with JIT on.
 
-mini tests:
-After move 16 (b3b8) — engine should see the forced mate
-After move 9 (c1g5) — test that it finds the knight sacrifice on b5
-After move 22 (a8d8) — material is even, positional test
+| Stage | Wall time | Calls | Notes |
+|-------|-----------|-------|-------|
+| baseline (~v0.7) | 15.09s | 27.04M | Top hotspots: `generateMoves` 13%, sliding rays combined 17%, `applyMove` 9%, `isSquareAttacked` 6%. **Surprises**: `enum.IntFlag.__and__` 6.3% and `getattr` builtin 3.1% — both stdlib overhead from how `MoveFlag` and string-keyed attribute access were written. |
+| + IntFlag → int, getattr unrolled, apply/undo unrolled | 9.86s | 13.89M | −35% wall, −49% calls. `IntFlag` and `getattr` drop out of the top 25 entirely. `applyMove` −34%, `undoMove` −25%. Downstream wins on `isSquareAttacked` (−25%) and ray attacks (−30%) just from less surrounding overhead. |
+| v0.8 (+ generateQuiescence: captures + EP + all promotions) | 8.32s | 11.98M | −45% cumulative wall. NPS doubled at startpos (8,499 → 17,511) and +74% at middlegame (3,257 → 5,658) in the actual engine. New top: sliding rays still ~15%, `applyMove` 9%, `generateQuiescence` ~10% (replaces the old pseudo-legal generate-and-filter pattern). |
+| main pre-v0.9 (legal generator for `generateMoves`: pin masks, check detection, attacked_bb king filter) | 8.74s | 13.18M | Effectively neutral wall time vs v0.8 (within noise). **The big shifts**: `applyMove` calls −33% (74K → 50K), `isSquareAttacked` calls −75% (123K → 31K). New hotspot `attackedBy` at 0.59s / 54K calls. Upfront pin/check cost in `generateMoves` (+18% self-time) roughly cancels the per-move savings — break-even because most nodes only have ~10 moves and only ~1 illegal. EP-discovered-check edge case bug surfaced in tournament (1 illegal-move forfeit, "h5g5" — fxg3 wasn't generated as legal in single-check because `check_mask` only contained the checker's square, not the EP destination). |
+| v0.9pre (+ legal `generateQuiescence` with pin masks + king attack filter, EP-only legality check everywhere) | 8.82s | 13.78M | Wall time still neutral (within noise). `isSquareAttacked` drops out of top 25 entirely — EP-only legality check is doing its job. **Architectural win, not a perf win**: bookkeeping shifted from per-move (per applyMove cycle) to per-node (one `findPinnedPieces` + one `attackedBy` upfront). `generateQuiescence` self-time jumped 0.55s → 0.79s, cumulative 1.21s → 2.11s — pin/attack work added inside. `findPinnedPieces` is now visible at 0.27s. Together `generateQuiescence` + `generateMoves` are 42% of total runtime; both bottle-necked on the slider ray-walk loops that v0.10 will replace. EP-discovered-check bug fixed. |
+| v0.9pre+ (+ classical-bitboard slider attacks via `RAY_ATTACKS`, unified `rayAttack` helper) | 8.56s | 14.63M | −3% wall, **+4% NPS startpos d4** (17,771 → 18,471), +2.6% NPS middlegame (5,243 → 5,379). Per-ray cost dropped from ~720 ns to ~290 ns (≈2.5×). `negativeRayAttacks` + `positiveRayAttacks` ray-walking versions gone. `attackedBy` cumulative −26% (1.77s → 1.31s) because it calls slider attacks repeatedly. **New top hotspot is `evaluate` at 25% of wall** — `_position_eval` / `_pawn_eval` / `_king_eval` iterating bitboards. The next target if you keep pushing. |

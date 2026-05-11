@@ -1,5 +1,6 @@
 from core.bitboard import FULL, NOT_A_FILE, NOT_H_FILE, NOT_AB_FILE, NOT_GH_FILE, RANK_2, RANK_7
 from core.bitboard import iterateBits
+from core.ray_attacks import RAY_ATTACKS
 
 def knightAttacks(sq):
     bb = 1 << sq
@@ -116,50 +117,31 @@ def pawnActions(sq, whiteToMove, ownPieces, enemyPieces, epSquare):
     attacks = pawnAttacks(sq, whiteToMove, enemyPieces, epSquare)
     return moves | (attacks & ~ownPieces)
 
-def positiveRayAttacks(sq, allPieces, ownPieces, direction, fileMask=FULL):
-    #iterating on the attack squares. move 1 square in a direction and check. if blocker, break, if wrapped file, break,
-    #if empty the new start is the currect check sq. do again
-    bb = 1 << sq
-    attacks = 0
-    for i in range (7):
-        attacked_sq = (bb << direction) & fileMask & FULL
-        if attacked_sq == 0:
-            break
-        if attacked_sq & allPieces:
-            attacks |= attacked_sq
-            break
-        else:
-            attacks |= attacked_sq
-            bb = attacked_sq
-    return attacks & ~ownPieces
+def rayAttack(sq, allPieces, ownPieces, direction):
+    ray = RAY_ATTACKS[direction][sq]
+    blockers = ray & allPieces
+    if blockers == 0:
+        return ray & ~ownPieces
+    if direction <= 2 or direction == 7:
+        first_sq = (blockers & -blockers).bit_length() - 1
+        return (ray & ((1 << (first_sq + 1)) - 1)) & ~ownPieces
+    else:
+        first_sq = blockers.bit_length() - 1
+        return (ray & ~((1 << first_sq) - 1)) & ~ownPieces
 
-def negativeRayAttacks(sq, allPieces, ownPieces, direction, fileMask=FULL):
-    bb = 1 << sq
-    attacks = 0
-    for i in range (7):
-        attacked_sq = (bb >> direction) & fileMask & FULL
-        if attacked_sq == 0:
-            break
-        if attacked_sq & allPieces:
-            attacks |= attacked_sq
-            break
-        else:
-            attacks |= attacked_sq
-            bb = attacked_sq
-    return attacks & ~ownPieces
 
 def rookAttacks(sq, allPieces, ownPieces):
-    attacks = positiveRayAttacks(sq, allPieces, ownPieces, 8)
-    attacks |= positiveRayAttacks(sq, allPieces, ownPieces, 1, NOT_A_FILE)
-    attacks |= negativeRayAttacks(sq, allPieces, ownPieces, 8)
-    attacks |= negativeRayAttacks(sq, allPieces, ownPieces, 1, NOT_H_FILE)
+    attacks = rayAttack(sq, allPieces, ownPieces, 0)
+    attacks |= rayAttack(sq, allPieces, ownPieces, 2)
+    attacks |= rayAttack(sq, allPieces, ownPieces, 4)
+    attacks |= rayAttack(sq, allPieces, ownPieces, 6)
     return attacks
 
 def bishopAttacks(sq, allPieces, ownPieces):
-    attacks = positiveRayAttacks(sq, allPieces, ownPieces, 9, NOT_A_FILE)
-    attacks |= positiveRayAttacks(sq, allPieces, ownPieces, 7, NOT_H_FILE)
-    attacks |= negativeRayAttacks(sq, allPieces, ownPieces, 7, NOT_A_FILE)
-    attacks |= negativeRayAttacks(sq, allPieces, ownPieces, 9, NOT_H_FILE)
+    attacks = rayAttack(sq, allPieces, ownPieces, 1)
+    attacks |= rayAttack(sq, allPieces, ownPieces, 3)
+    attacks |= rayAttack(sq, allPieces, ownPieces, 5)
+    attacks |= rayAttack(sq, allPieces, ownPieces, 7)
     return attacks
 
 def queenAttacks(sq, allPieces, ownPieces):

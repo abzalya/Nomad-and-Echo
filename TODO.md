@@ -45,14 +45,14 @@
 - speed thoughts
     - Rewrite hot paths in C pybind11, almost 1 to 1 apart from syntax (if bottlenecking hard)
     - Bitboard attack tables — precomputed magic bitboards for slider attacks instead of ray tracing per call
-    - [1] i built a ray attack pattern for pinned piece detection. i can reuse that, slightly modified for my slider pieces. not magic bitboards, but way faster than looping. need to implement
+    - [X] i built a ray attack pattern for pinned piece detection. i can reuse that, slightly modified for my slider pieces. not magic bitboards, but way faster than looping. need to implement
 
 - profile optimizations
     - [X] Kill IntFlag. Replace MoveFlag with plain int constants
     - [X] Stop string-building attribute names. Find every getattr(gs, "white" + x) / getattr(gs, attr) in a hot loop and unroll into direct access.
     - [X] Capture-only move generator.
     - [X] Pin-mask legal generation. Cheaper than apply-undo legality check IMPLEMENT ASAP
-    - [4] Apply same legal move generation to quiescense as its still pseudo-legal
+    - [X] Apply same legal move generation to quiescense as its still pseudo-legal
     - [5] Killer moves + history heuristic
     - [6] Magic bitboards for sliding piece attacks
     - [7] Delta pruning + SEE in qsearch.
