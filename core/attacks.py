@@ -48,7 +48,7 @@ def _extended_king_zone(sq):
 
 EXTENDED_KING_ZONE = [_extended_king_zone(sq) for sq in range(64)]
 
-def kingMoves(sq, ownPieces, allPieces, gs, attacked_bb=None):
+def kingMoves(sq, ownPieces, allPieces, gs, attacked_bb):
     attacks = KING_ATTACKS[sq]
     bb = 1 << sq
     castleKingSideSquares = ((bb << 1) | (bb << 2))
@@ -66,9 +66,6 @@ def kingMoves(sq, ownPieces, allPieces, gs, attacked_bb=None):
     can_qs = qs_right and not (castleQueenSideSquares & allPieces)
 
     if can_ks or can_qs:
-        #only compute the enemy attack bitboard if we actually need it
-        if attacked_bb is None:
-            attacked_bb = attackedBy(gs)
         if can_ks:
             #king path: e1->f1->g1 (or e8->f8->g8) — none can be attacked
             ks_path = bb | (bb << 1) | (bb << 2)
