@@ -1,7 +1,7 @@
 # Move Generation
 from core.move import Move, MoveFlag
 from core.bitboard import iterateBits, RANK_18
-from core.attacks import pawnActions, pawnAttacks, pawnMoves, knightMoves, kingMoves, bishopAttacks, rookAttacks, queenAttacks, isSquareAttacked, KING_ATTACKS, attackedBy
+from core.attacks import pawnActions, pawnAttacks, pawnMoves, knightMoves, kingMoves, bishopAttacks, rookAttacks, queenAttacks, isSquareAttacked, KING_ATTACKS, attackedBy, PAWN_ATTACKS, KNIGHT_ATTACKS
 from core.apply_move import applyMove, undoMove
 from core.ray_attacks import RAY_ATTACKS
 
@@ -230,18 +230,6 @@ def generateQuiescence(gs):
 
     return allMoves
 
-#pin-mask legal generation
-#the current generation of legal moves relies on apply-undo and incheck checking for each move generated
-#for speed reasons the legality check has been moved within the searching and that has produced results
-#however, apart from magic botboards being probably the largest remaining improvement on move generation (shelved for now but on todo)
-#there is an option that is done by modern engines that i was unaware of
-#idea
-#we will, generate a bitboard of pinned-pieces and for each piece we will keep the ray its pinned along
-#non-pinned and non-king moves are all passed as legal instantly
-#pinned pieces are restricted to movement along their pinned ray
-#king is allowed AND against ~attacked_squares bitboard
-#en-passant we will simply do our apply undo check as its easier and its a rare move anyway
-
 def findPinnedPieces(gs):
     pinned_mask = 0
     pin_rays = {}
@@ -307,3 +295,72 @@ def findPinnedPieces(gs):
         pin_rays[first_blocker_sq] = pin_ray
     return pinned_mask, pin_rays
     #i need to reuse this for ray attacks of the slider pieces. jsut adopt it for first blocker only i think
+
+def findCheck(gs):
+    num_checks = 0
+    check_mask = 0
+    check_rays = {}
+    
+    ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+    whitePieces = gs.whitePawns | gs.whiteRooks | gs.whiteKnights | gs.whiteBishops | gs.whiteQueens | gs.whiteKing
+    blackPieces = gs.blackPawns | gs.blackRooks | gs.blackKnights | gs.blackBishops | gs.blackQueens | gs.blackKing
+    allPieces = whitePieces | blackPieces
+    if gs.whiteToMove:
+        ownPieces, enemyPieces = whitePieces, blackPieces
+        enemy_rook_queen = gs.blackRooks | gs.blackQueens
+        enemy_bishop_queen = gs.blackBishops | gs.blackQueens
+        enemyPawns = gs.blackPawns
+        enemyKnights = gs.blackKnights
+    else:
+        ownPieces, enemyPieces = blackPieces, whitePieces
+        enemy_rook_queen = gs.whiteRooks | gs.whiteQueens
+        enemy_bishop_queen = gs.whiteBishops | gs.whiteQueens
+        enemyPawns = gs.whitePawns
+        enemyKnights = gs.whiteKnights
+
+    sq = ownKing.bit_length() - 1
+    
+    pawn_check = PAWN_ATTACKS[0 if gs.whiteToMove else 1][sq] & enemyPawns
+    if pawn_check: 
+        num_checks += 1
+        check_mask |= pawn_check
+    knight_check = KNIGHT_ATTACKS[sq] & enemyKnights
+    if knight_check:
+        num_checks += 1
+        check_mask |= knight_check
+    #ray_checks
+    for direction in range(8):
+        is_lsb = direction in (0, 1, 2, 7)
+        ray = RAY_ATTACKS[direction][sq]
+        blockers = ray & allPieces
+
+        if blockers == 0:
+            continue
+    
+        if is_lsb:
+            first_blocker = blockers & -blockers
+            first_blocker_sq = first_blocker.bit_length() - 1
+        else:
+            first_blocker_sq = blockers.bit_length() - 1
+            first_blocker = 1 << first_blocker_sq
+
+        #if first blocker is our piece = not a check
+        if (first_blocker & ownPieces):
+            continue
+
+        if is_lsb:
+            #ray upto and including checker, rest irrelevant
+            check_ray = ray & ((1 << (first_blocker_sq + 1)) - 1)
+        else:
+            check_ray = ray & ~((1 << first_blocker_sq) - 1)
+
+        relevant_sliders = enemy_rook_queen if direction % 2 == 0 else enemy_bishop_queen
+        #if first blocker is not an relevant enemy slider = not a check
+        if not (first_blocker & relevant_sliders):
+            continue
+
+        #save check piece and the ray
+        num_checks += 1    
+        check_mask |= first_blocker
+        check_rays[first_blocker_sq] = check_ray
+    return num_checks, check_mask, check_rays
