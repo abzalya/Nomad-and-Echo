@@ -84,8 +84,11 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     if depth == 0:
         return quiescence(gs, alpha, beta, info, depth=0, ply=ply)
 
-    moves, in_check = generateMoves(gs)
-    moves = movesOrdered(moves, gs, tt_move, killers=info.killers[ply], history=info.history)
+
+    #null move pruning requires in_check as an input
+    #moving move generation after this, usign the faster in_check method
+    ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+    in_check = isSquareAttacked(ownKing.bit_length() - 1, gs) 
 
     # Null move pruning — skip in check or zugzwang-prone positions
     if allow_null and depth >= 3 and _has_pieces(gs):
@@ -111,6 +114,10 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
             #if we skip our turn and opponent cant improve past beta, prune
             if null_score >= beta and abs(null_score) < 90000:
                 return beta
+
+    #small optimization
+    moves, _ = generateMoves(gs)
+    moves = movesOrdered(moves, gs, tt_move, killers=info.killers[ply], history=info.history)
 
     best = None
     legal_move_found = False
@@ -159,7 +166,9 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
     if info.stop:
         return 0
 
-    in_check = inCheck(gs)
+    #faster than inCheck, targeted reverse lookup & has early returns. benefited from faster ray attacks implemented earlier
+    ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+    in_check = isSquareAttacked(ownKing.bit_length() - 1, gs) 
 
     if not in_check:
         quiet_score = evaluate(gs)
