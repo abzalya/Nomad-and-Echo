@@ -1,7 +1,4 @@
 from core.move import MoveFlag
-from core.move_generator import legalMoves, captureMovesOnly
-from core.apply_move import applyMove, undoMove
-from core.attacks import isSquareAttacked
 
 def _pieceValueOnSq(sq, gs):
     bit = 1 << sq
@@ -19,10 +16,18 @@ def _mvvlva(move, gs):
     #victim - attacker scoring
     return _pieceValueOnSq(move.to_sq, gs) * 10 - _pieceValueOnSq(move.from_sq, gs) #times 10 to sort. 
 
-def movesOrdered(moves, gs, known_best=None):
-    moves.sort(key=lambda m: _mvvlva(m, gs), reverse=True)
-    #last best move from depth -1 should be first in line
-    #remove from list and insert at front
+#move scoring function for sorting
+def _score_move(move, gs, killers, history):
+    if move.flags & MoveFlag.CAPTURE:
+        return 1000000 + _mvvlva(move, gs) #captures first 
+    if killers and move == killers[0]: return 900000 #killer 1
+    if killers and move == killers[1]: return 800000 #killer 2
+    if history: return history[move.from_sq][move.to_sq]  #rest/quiet move history score
+    return 0
+
+def movesOrdered(moves, gs, known_best=None, killers=None, history=None):
+    moves.sort(key=lambda m: _score_move(m, gs, killers, history), reverse=True)
+    #last best move from depth -1 first in line
     if known_best is not None and known_best in moves:
         moves.remove(known_best)
         moves.insert(0, known_best)

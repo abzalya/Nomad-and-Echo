@@ -32,13 +32,15 @@ def _uci_score(score):
     return f"cp {score}"
 
 class _Info:
-    __slots__ = ("nodes", "start", "limit", "stop") #good optimisation for engines
+    __slots__ = ("nodes", "start", "limit", "stop", "killers", "history")
     
     def __init__(self, limit):
         self.nodes = 0
         self.start = time.perf_counter()
         self.limit = limit
         self.stop = False
+        self.killers = [[None, None] for _ in range(128)] #ply index
+        self.history = [[0] * 64 for _ in range(64)] #store as[from_sq][to_sq]
     
     def check(self):
         #check counter every 128 nodes. the time management was super off for python
@@ -83,7 +85,7 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
         return quiescence(gs, alpha, beta, info, depth=0, ply=ply)
 
     moves, in_check = generateMoves(gs)
-    moves = movesOrdered(moves, gs, tt_move)
+    moves = movesOrdered(moves, gs, tt_move, killers=info.killers[ply], history=info.history)
 
     # Null move pruning — skip in check or zugzwang-prone positions
     if allow_null and depth >= 3 and _has_pieces(gs):
@@ -132,6 +134,14 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
             alpha = score
             best = move
         if alpha >= beta:
+            #if a quiet moved caused a beta-cutoff in a sibling node at same depth, =killer
+            if not (move.flags & MoveFlag.CAPTURE):
+                if move != info.killers[ply][0]:
+                    info.killers[ply][1] = info.killers[ply][0]
+                    info.killers[ply][0] = move
+                #tracks how often a move* caused a beta-cutoff in entirety of the search    
+                info.history[move.from_sq][move.to_sq] += depth * depth
+
             tt_store(gs.zobristHash, _score_to_tt(beta, ply), depth, LOWER, best)
             return beta
 

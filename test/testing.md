@@ -17,6 +17,8 @@
 | Nomad-v0.5 | using pypy as interpreter | 67 W / 28 L / 5 D (zero time forfeits) |
 | Nomad-v0.6 | pseudo-legal + lazy legality + some move_gen optimizations | 82 W / 10 L / 8 D |
 | Nomad-v0.8 | MoveFlag int constants, capture-only quiescence gen | 71 W / 28 L / 1 D vs SF1500, 48 W / 47 L / 5 D vs SF1600, 40 W / 52 L / 8 D vs SF1700 |
+| Nomad-v0.9 | pin-mask legal generation + classical bitboard ray attacks | TBD |
+
 
 ## VS
 
@@ -26,16 +28,8 @@
 | v0.2 vs v0.3 | v0.3 wins 55-45 | Marginal, LOS 15.9% — not significant. Both still drain clock |
 | v0.6 vs v0.7 | current wins 53.5–46.5 | 12 W / 5 L / 83 D. High draw rate (83%) from 3-fold repetition. |
 | v0.8 vs v0.7 |  wins 69–31 | 56 W / 18 L / 26 D. Elo +139.0 ±62.3, LOS 100%. |
-
-## Leightweigh Testing game played in pygame with debug printing of depth, NPS and time
-
-| Tag | Depth | NPS | Notes |
-|-----|-------|-----| ----- | 
-| Nomad-v0.1 | 3 | ~10k -> ~1.5k | NPS degrading as the position has more legal moves|
-| Nomad-v0.4 | 3 |  ~1,662 | |
-| Nomad-v0.5(wip) | 3 | ~3150  | apply-undo instead of copy |
-| Nomad-v0.5 | 3 | ~8090 | pypy3 as interpreter |
-| Nomad-v0.6 | 3 | ~37924 | pseudo-legal moves and lazy legality |
+| v0.9 vs v0.8 | TBD | TBD |
+| v0.10pre vs v0.9 | TBD | TBD |
 
 ## Claude Profile
 
@@ -51,4 +45,5 @@ workload, with JIT on.
 | v0.8 (+ generateQuiescence: captures + EP + all promotions) | 8.32s | 11.98M | −45% cumulative wall. NPS doubled at startpos (8,499 → 17,511) and +74% at middlegame (3,257 → 5,658) in the actual engine. New top: sliding rays still ~15%, `applyMove` 9%, `generateQuiescence` ~10% (replaces the old pseudo-legal generate-and-filter pattern). |
 | main pre-v0.9 (legal generator for `generateMoves`: pin masks, check detection, attacked_bb king filter) | 8.74s | 13.18M | Effectively neutral wall time vs v0.8 (within noise). **The big shifts**: `applyMove` calls −33% (74K → 50K), `isSquareAttacked` calls −75% (123K → 31K). New hotspot `attackedBy` at 0.59s / 54K calls. Upfront pin/check cost in `generateMoves` (+18% self-time) roughly cancels the per-move savings — break-even because most nodes only have ~10 moves and only ~1 illegal. EP-discovered-check edge case bug surfaced in tournament (1 illegal-move forfeit, "h5g5" — fxg3 wasn't generated as legal in single-check because `check_mask` only contained the checker's square, not the EP destination). |
 | v0.9pre (+ legal `generateQuiescence` with pin masks + king attack filter, EP-only legality check everywhere) | 8.82s | 13.78M | Wall time still neutral (within noise). `isSquareAttacked` drops out of top 25 entirely — EP-only legality check is doing its job. **Architectural win, not a perf win**: bookkeeping shifted from per-move (per applyMove cycle) to per-node (one `findPinnedPieces` + one `attackedBy` upfront). `generateQuiescence` self-time jumped 0.55s → 0.79s, cumulative 1.21s → 2.11s — pin/attack work added inside. `findPinnedPieces` is now visible at 0.27s. Together `generateQuiescence` + `generateMoves` are 42% of total runtime; both bottle-necked on the slider ray-walk loops that v0.10 will replace. EP-discovered-check bug fixed. |
-| v0.9pre+ (+ classical-bitboard slider attacks via `RAY_ATTACKS`, unified `rayAttack` helper) | 8.56s | 14.63M | −3% wall, **+4% NPS startpos d4** (17,771 → 18,471), +2.6% NPS middlegame (5,243 → 5,379). Per-ray cost dropped from ~720 ns to ~290 ns (≈2.5×). `negativeRayAttacks` + `positiveRayAttacks` ray-walking versions gone. `attackedBy` cumulative −26% (1.77s → 1.31s) because it calls slider attacks repeatedly. **New top hotspot is `evaluate` at 25% of wall** — `_position_eval` / `_pawn_eval` / `_king_eval` iterating bitboards. The next target if you keep pushing. |
+| v0.9 (+ classical-bitboard slider attacks via `RAY_ATTACKS`, unified `rayAttack` helper) | 8.56s | 14.63M | −3% wall, **+4% NPS startpos d4** (17,771 → 18,471), +2.6% NPS middlegame (5,243 → 5,379). Per-ray cost dropped from ~720 ns to ~290 ns (≈2.5×). `negativeRayAttacks` + `positiveRayAttacks` ray-walking versions gone. `attackedBy` cumulative −26% (1.77s → 1.31s) because it calls slider attacks repeatedly. **New top hotspot is `evaluate` at 25% of wall** — `_position_eval` / `_pawn_eval` / `_king_eval` iterating bitboards. The next target if you keep pushing. |
+| v0.10pre (+killer & history heuristic move ordering) | N/A - running on a different machine | 9.6M | -34% of total calls. -64% negamax and -40% quiescence calls. Massive downstream gains on all other function calls as well due to earlier beta-cutoffs. Play strength TBD|
