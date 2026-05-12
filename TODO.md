@@ -41,7 +41,6 @@ PYGAME UI - BENCHED
     - [X] Capture-only move generator.
     - [X] Pin-mask legal generation. Cheaper than apply-undo legality check IMPLEMENT ASAP
     - [X] Apply same legal move generation to quiescense as its still pseudo-legal
-    - [5] Killer moves + history heuristic
+    - [X] Killer moves + history heuristic
     - [6] Delta pruning + SEE in qsearch.
     - [7] Magic bitboards for sliding piece attacks
-    - [7] Delta pruning + SEE in qsearch.

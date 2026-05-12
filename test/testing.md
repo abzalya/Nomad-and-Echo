@@ -17,7 +17,7 @@
 | Nomad-v0.5 | using pypy as interpreter | 67 W / 28 L / 5 D (zero time forfeits) |
 | Nomad-v0.6 | pseudo-legal + lazy legality + some move_gen optimizations | 82 W / 10 L / 8 D |
 | Nomad-v0.8 | MoveFlag int constants, capture-only quiescence gen | 71 W / 28 L / 1 D vs SF1500, 48 W / 47 L / 5 D vs SF1600, 40 W / 52 L / 8 D vs SF1700 |
-| Nomad-v0.9 | pin-mask legal generation + classical bitboard ray attacks | TBD |
+| Nomad-v0.9 | pin-mask legal generation + classical bitboard ray attacks | this version has a gamebreaking color asymmetry bug. details below in the vs|
 
 
 ## VS
@@ -28,7 +28,7 @@
 | v0.2 vs v0.3 | v0.3 wins 55-45 | Marginal, LOS 15.9% — not significant. Both still drain clock |
 | v0.6 vs v0.7 | current wins 53.5–46.5 | 12 W / 5 L / 83 D. High draw rate (83%) from 3-fold repetition. |
 | v0.8 vs v0.7 |  wins 69–31 | 56 W / 18 L / 26 D. Elo +139.0 ±62.3, LOS 100%. |
-| v0.9 vs v0.8 | TBD | TBD |
+| v0.9 vs v0.8 | as white: 12-2-36, as black: 7-34-9 | there is a massive color assymetry. possible bug affecting black. |
 | v0.10pre vs v0.9 | TBD | TBD |
 
 ## Claude Profile
