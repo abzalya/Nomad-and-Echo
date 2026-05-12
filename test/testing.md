@@ -16,8 +16,9 @@
 | Nomad-v0.4 | Fix: time check granularity 1024 → 128 nodes. Fix: TT move ordering now works. | 0 W / 99 L / 1 D (62 on time, 37 checkmates) |
 | Nomad-v0.5 | using pypy as interpreter | 67 W / 28 L / 5 D (zero time forfeits) |
 | Nomad-v0.6 | pseudo-legal + lazy legality + some move_gen optimizations | 82 W / 10 L / 8 D |
-| Nomad-v0.8 | MoveFlag int constants, capture-only quiescence gen | 71 W / 28 L / 1 D vs SF1500, 48 W / 47 L / 5 D vs SF1600, 40 W / 52 L / 8 D vs SF1700 |
+| Nomad-v0.8 | MoveFlag int constants, capture-only quiescence gen | 71 W / 28 L / 1 D vs SF1500, 48 W / 47 L / 5 D vs SF1600, 40 W / 52 L / 8 D vs SF1700 APPROX ELO ~1600|
 | Nomad-v0.9 | pin-mask legal generation + classical bitboard ray attacks | this version has a gamebreaking color asymmetry bug. details below in the vs|
+| Nomad-v0.10pre | killer + history heuristic move ordering | ELO + 195 +- 55 over 0.8. identical logic to 0.9 suggests the abnormal result of 0.9 vs 0.8 is due to slower engine + noise|
 
 
 ## VS
@@ -29,7 +30,7 @@
 | v0.6 vs v0.7 | current wins 53.5–46.5 | 12 W / 5 L / 83 D. High draw rate (83%) from 3-fold repetition. |
 | v0.8 vs v0.7 |  wins 69–31 | 56 W / 18 L / 26 D. Elo +139.0 ±62.3, LOS 100%. |
 | v0.9 vs v0.8 | as white: 12-2-36, as black: 7-34-9 | there is a massive color assymetry. possible bug affecting black. |
-| v0.10pre vs v0.9 | TBD | TBD |
+| v0.10pre vs v0.8 | 56 - 5 - 39 | ELO + 195 +- 55. identical logic to v0.9 suggests 0.9 "bug" is simply a slower engine affecting black play way harder + some noise|
 
 ## Claude Profile
 
