@@ -1,6 +1,6 @@
 import time
 from engine.eval import evaluate
-from engine.move_order import movesOrdered, see
+from engine.move_order import movesOrdered, see, pieceValueOnSq
 from engine.tt import tt_get, tt_store, EXACT, LOWER, UPPER
 from core.move_generator import generateMoves, generateQuiescence
 from core.move import MoveFlag
@@ -159,6 +159,8 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     tt_store(gs.zobristHash, _score_to_tt(alpha, ply), depth, flag, best)
     return alpha
 
+DELTA = 200
+
 #search position for captures until quiet. Should stop blunders in the middle of exchanges on the horizon
 def quiescence(gs, alpha, beta, info, depth=0, ply=0):
     info.nodes += 1
@@ -171,7 +173,7 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
     in_check = isSquareAttacked(ownKing.bit_length() - 1, gs) 
 
     if not in_check:
-        quiet_score = evaluate(gs)
+        quiet_score, is_endgame = evaluate(gs)
         quiet_score = quiet_score if gs.whiteToMove else -quiet_score
 
         #quiescence depth limit. it kept blowing up my search
@@ -189,6 +191,10 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
 
     legal_move_found = False
     for move in movesOrdered(candidates, gs):
+        if not is_endgame: #disable delta pruning in endgames (total material < 3600)
+            if quiet_score + pieceValueOnSq(move.to_sq, gs) + DELTA <= alpha:
+                continue        
+        
         #before searching node, scheck see_score, skip loosing captures
         if see(move, gs) < 0:
             continue

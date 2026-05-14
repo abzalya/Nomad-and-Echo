@@ -26,9 +26,9 @@ PYGAME UI - BENCHED
 - move ordering
     - [X] killer heuristic
     - [X] history heuristic
-    - [3] static exchange eval (SEE) + delta pruning
-    - [4] full pipeline - hash, capture (SEE) (good ones), killer, history, quiet (feeds LMR)
-
+    - [X] static exchange eval (SEE) + delta pruning
+    - [X] full pipeline - hash, capture (SEE) (good ones), killer, history, quiet (feeds LMR)
+    - [?] staged move ordering ? 
 
 - speed thoughts
     - Rewrite hot paths in C pybind11, almost 1 to 1 apart from syntax (if bottlenecking hard)
@@ -42,5 +42,5 @@ PYGAME UI - BENCHED
     - [X] Pin-mask legal generation. Cheaper than apply-undo legality check IMPLEMENT ASAP
     - [X] Apply same legal move generation to quiescense as its still pseudo-legal
     - [X] Killer moves + history heuristic
-    - [6] Delta pruning + SEE in qsearch.
+    - [X] Delta pruning + SEE in qsearch.
     - [7] Magic bitboards for sliding piece attacks

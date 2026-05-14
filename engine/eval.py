@@ -21,6 +21,8 @@ def _material_eval(gs):
     black_total = bp + br + bn + bb + bq
     return white_total - black_total, white_total + black_total
 
+ENDGAME_THRESHOLD = 3600
+
 #postiion of the piece using piece square tables
 def _position_eval(gs, total_material):
     score = 0
@@ -37,7 +39,7 @@ def _position_eval(gs, total_material):
     for sq in iterateBits(gs.blackQueens):  score -= QUEEN_PST[sq ^ 56]
     
     #mid/end game decision (tapered eval like stockfish)
-    phase = min(total_material/2600, 1.0)
+    phase = min(total_material/ENDGAME_THRESHOLD, 1.0)
     #white king
     white_king_sq = next(iterateBits(gs.whiteKing))
     black_king_sq = next(iterateBits(gs.blackKing))
@@ -248,5 +250,9 @@ def evaluate(gs):
     bishop_score = _bishop_eval(gs)
     mopup_score = _mopup_eval(gs)
     tempo = TEMPO_BONUS if gs.whiteToMove else -TEMPO_BONUS
-    return material_score + position_score + pawn_score + rook_score + king_score + bishop_score + mopup_score + tempo
+    #endgame bool for search
+    is_endgame = False
+    if total_material < ENDGAME_THRESHOLD:
+        is_endgame = True
+    return material_score + position_score + pawn_score + rook_score + king_score + bishop_score + mopup_score + tempo, is_endgame
 

@@ -2,7 +2,7 @@ from core.move import MoveFlag
 from core.apply_move import applyMove, undoMove
 from core.move_generator import generateMoves, generateQuiescence
 
-def _pieceValueOnSq(sq, gs):
+def pieceValueOnSq(sq, gs):
     bit = 1 << sq
     #ordered by frequency: pawns most common, queens least
     if (gs.whitePawns   | gs.blackPawns)   & bit: return 100
@@ -16,7 +16,7 @@ def _mvvlva(move, gs):
     if not (move.flags & MoveFlag.CAPTURE):
         return 0
     #victim - attacker scoring
-    return _pieceValueOnSq(move.to_sq, gs) * 10 - _pieceValueOnSq(move.from_sq, gs) #times 10 to sort. 
+    return pieceValueOnSq(move.to_sq, gs) * 10 - pieceValueOnSq(move.from_sq, gs) #times 10 to sort. 
 
 #static exchange evaluation, returns expected material gain/loss 
 def see(move, gs):
@@ -29,7 +29,7 @@ def see(move, gs):
     if move.flags & MoveFlag.EN_PASSANT:
         gains = [100]
     else:
-        gains = [_pieceValueOnSq(capture_sq, gs)]
+        gains = [pieceValueOnSq(capture_sq, gs)]
     
     #apply move
     applyMove(gs, move)
@@ -42,7 +42,7 @@ def see(move, gs):
         for move in generateQuiescence(gs):
             if move.to_sq != capture_sq:
                 continue
-            value = _pieceValueOnSq(move.from_sq, gs)
+            value = pieceValueOnSq(move.from_sq, gs)
             if value < lva:
                 lva = value
                 lva_move = move
@@ -51,7 +51,7 @@ def see(move, gs):
             break
 
         #if found, append the new value of the captured piece to the lsit
-        gains.append(_pieceValueOnSq(capture_sq, gs))
+        gains.append(pieceValueOnSq(capture_sq, gs))
         applyMove(gs, lva_move)
         depth += 1
         #keep going until capture sequence is finished
@@ -68,8 +68,8 @@ def see(move, gs):
 
 #improve mvvlva with see*
 def _mvvlva_see(move, gs):
-    victim = _pieceValueOnSq(move.to_sq, gs)
-    attacker = _pieceValueOnSq(move.from_sq, gs)
+    victim = pieceValueOnSq(move.to_sq, gs)
+    attacker = pieceValueOnSq(move.from_sq, gs)
 
     if victim > attacker: #skip see, expensive, classic mvv-lva
         return 1000000 + victim * 10 - attacker 
