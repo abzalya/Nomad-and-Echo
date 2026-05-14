@@ -19,7 +19,7 @@ def _mvvlva(move, gs):
     return _pieceValueOnSq(move.to_sq, gs) * 10 - _pieceValueOnSq(move.from_sq, gs) #times 10 to sort. 
 
 #static exchange evaluation, returns expected material gain/loss 
-def _see(move, gs):
+def see(move, gs):
     capture_sq = move.to_sq
     capture_bb = 1 << capture_sq
     if not (move.flags & MoveFlag.CAPTURE):
@@ -74,7 +74,7 @@ def _mvvlva_see(move, gs):
     if victim > attacker: #skip see, expensive, classic mvv-lva
         return 1000000 + victim * 10 - attacker 
     else:#victim <= attacker = check see
-        see_score = _see(move, gs)
+        see_score = see(move, gs)
         if see_score >= 0:
             return 1000000 + see_score
         else:

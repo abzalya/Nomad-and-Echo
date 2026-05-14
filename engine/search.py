@@ -1,6 +1,6 @@
 import time
 from engine.eval import evaluate
-from engine.move_order import movesOrdered
+from engine.move_order import movesOrdered, see
 from engine.tt import tt_get, tt_store, EXACT, LOWER, UPPER
 from core.move_generator import generateMoves, generateQuiescence
 from core.move import MoveFlag
@@ -189,6 +189,10 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
 
     legal_move_found = False
     for move in movesOrdered(candidates, gs):
+        #before searching node, scheck see_score, skip loosing captures
+        if see(move, gs) < 0:
+            continue
+        
         applyMove(gs, move)
         
         if move.flags & MoveFlag.EN_PASSANT:
