@@ -191,7 +191,7 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
 
     legal_move_found = False
     for move in movesOrdered(candidates, gs):
-        if not is_endgame: #disable delta pruning in endgames (total material < 3600)
+        if not in_check and not is_endgame: #disable delta pruning in endgames (total material < 3600)
             if quiet_score + pieceValueOnSq(move.to_sq, gs) + DELTA <= alpha:
                 continue        
         
