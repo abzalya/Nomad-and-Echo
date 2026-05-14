@@ -1,4 +1,6 @@
 from core.move import MoveFlag
+from core.apply_move import applyMove, undoMove
+from core.move_generator import generateMoves, generateQuiescence
 
 def _pieceValueOnSq(sq, gs):
     bit = 1 << sq
@@ -16,10 +18,72 @@ def _mvvlva(move, gs):
     #victim - attacker scoring
     return _pieceValueOnSq(move.to_sq, gs) * 10 - _pieceValueOnSq(move.from_sq, gs) #times 10 to sort. 
 
+#static exchange evaluation, returns expected material gain/loss 
+def _see(move, gs):
+    capture_sq = move.to_sq
+    capture_bb = 1 << capture_sq
+    if not (move.flags & MoveFlag.CAPTURE):
+        return 0
+
+    #record a ;ist of values of pieces on the capture_sq
+    if move.flags & MoveFlag.EN_PASSANT:
+        gains = [100]
+    else:
+        gains = [_pieceValueOnSq(capture_sq, gs)]
+    
+    #apply move
+    applyMove(gs, move)
+    depth = 1
+
+    while True:
+        #lva for the recapture
+        lva_move = None
+        lva = 100000
+        for move in generateQuiescence(gs):
+            if move.to_sq != capture_sq:
+                continue
+            value = _pieceValueOnSq(move.from_sq, gs)
+            if value < lva:
+                lva = value
+                lva_move = move
+        
+        if lva_move is None:
+            break
+
+        #if found, append the new value of the captured piece to the lsit
+        gains.append(_pieceValueOnSq(capture_sq, gs))
+        applyMove(gs, lva_move)
+        depth += 1
+        #keep going until capture sequence is finished
+
+    #undo all
+    for _ in range(depth):
+        undoMove(gs)
+
+    score = 0
+    for gain in reversed(gains[1:]):
+        score = max(0, gain - score)
+
+    return gains[0] - score
+
+#improve mvvlva with see*
+def _mvvlva_see(move, gs):
+    victim = _pieceValueOnSq(move.to_sq, gs)
+    attacker = _pieceValueOnSq(move.from_sq, gs)
+
+    if victim > attacker: #skip see, expensive, classic mvv-lva
+        return 1000000 + victim * 10 - attacker 
+    else:#victim <= attacker = check see
+        see_score = _see(move, gs)
+        if see_score >= 0:
+            return 1000000 + see_score
+        else:
+            return 500000 + see_score #bad captures are below killers/history, still ordered
+
 #move scoring function for sorting
 def _score_move(move, gs, killers, history):
     if move.flags & MoveFlag.CAPTURE:
-        return 1000000 + _mvvlva(move, gs) #captures first 
+        return _mvvlva_see(move, gs) 
     if killers and move == killers[0]: return 900000 #killer 1
     if killers and move == killers[1]: return 800000 #killer 2
     if history: return history[move.from_sq][move.to_sq]  #rest/quiet move history score
