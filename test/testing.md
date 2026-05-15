@@ -20,7 +20,7 @@
 | Nomad-v0.9 | pin-mask legal generation + classical bitboard ray attacks | this version has a gamebreaking color asymmetry bug. details below in the vs|
 | Nomad-v0.10pre | killer + history heuristic move ordering | ELO + 195 +- 55 over 0.8. identical logic to 0.9 suggests the abnormal result of 0.9 vs 0.8 is due to slower engine + noise|
 | Nomad-v0.10 | killer + history heuristic move ordering | 57 - 41 - 2 vs SF1700 Estimated ELO ~1756 |
-
+| Nomad-v0.11 | SEE + Delta pruning |  |
 
 ## VS
 

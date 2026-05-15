@@ -35,16 +35,18 @@ def see(move, gs):
     if move.flags & MoveFlag.EN_PASSANT:
         victim = 100
         ep_pawn_sq = capture_sq - 8 if gs.whiteToMove else capture_sq + 8
-        occ ^= 1 << ep_pawn_sq
+        see_occ ^= 1 << ep_pawn_sq
     else:
         victim = pieceValueOnSq(capture_sq, gs)
 
     gains = [victim]
 
-    #promotion bonus
+    #promotion bonus: pawn becomes queen on capture_sq
     if move.flags & MoveFlag.PROMOTION:
         gains[0] += 800
-        attacker_val = 900 #queen now on capture_sq
+        attacker_val = 900
+    else:
+        attacker_val = pieceValueOnSq(move.from_sq, gs)
 
     #remove initial attacker
     see_occ ^= 1 << move.from_sq
@@ -74,10 +76,9 @@ def see(move, gs):
             if lva:
                 lva_sq = (lva & -lva).bit_length() - 1
                 gains.append(attacker_val - gains[-1])
-                attacker_val = PIECE_VALUE[piece] #new piece on capture_sq
-                occ ^= 1 << lva_sq
-                #recompute attackers
-                attackers = attackersTo(capture_sq, occ, gs) & occ
+                attacker_val = PIECE_VALUE[piece]
+                see_occ ^= 1 << lva_sq
+                attackers = attackersTo(capture_sq, gs, see_occ) & see_occ
                 break
 
         white_recapture = not white_recapture
