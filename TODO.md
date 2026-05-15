@@ -12,7 +12,7 @@ PYGAME UI - BENCHED
     - [X] null move pruning
     - [2] check extensions
     - [3] futility pruning
-    - [4] late move reduction
+    - [X] late move reduction
     - [5] aspiration windows
     - [6] repetition detection
 - evaluation:

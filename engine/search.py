@@ -11,6 +11,8 @@ from core.zobrist import ZOBRIST_SIDE, ZOBRIST_EP
 MATE_SCORE     = 100000
 MATE_THRESHOLD = 90000
 
+LATE_MOVE_REDUCTION = {10: 1, 15:2, 20:3}
+
 def _score_to_tt(score, ply):
     if score > MATE_THRESHOLD:  return score + ply
     if score < -MATE_THRESHOLD: return score - ply
@@ -118,9 +120,11 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     #small optimization
     moves, _ = generateMoves(gs)
     moves = movesOrdered(moves, gs, tt_move, killers=info.killers[ply], history=info.history)
-
+    
+    #main search
     best = None
     legal_move_found = False
+    move_index = 0
     for move in moves:
         applyMove(gs, move)
         if move.flags & MoveFlag.EN_PASSANT:
@@ -133,7 +137,21 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
                 continue
 
         legal_move_found = True
-        score = -negamax(gs, -beta, -alpha, depth - 1, info, ply=ply+1)
+        
+        #LMR
+        is_killer = move in info.killers[ply]
+        if (depth >= 3 and move_index >= 10 and not in_check
+                and not (move.flags & MoveFlag.CAPTURE)
+                and not (move.flags & MoveFlag.PROMOTION)
+                and not is_killer): #all of the guards. 
+            reduction = max((r for t, r in LATE_MOVE_REDUCTION.items() if move_index >= t), default=1)
+            score = -negamax(gs, -beta, -alpha, depth - 1 - reduction, info, ply=ply+1)
+            if score > alpha:
+                #re-search at full depth
+                score = -negamax(gs, -beta, -alpha, depth - 1, info, ply=ply+1)
+        else:
+            score = -negamax(gs, -beta, -alpha, depth - 1, info, ply=ply+1)
+
         undoMove(gs)
         if info.stop:
             return 0
@@ -146,11 +164,12 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
                 if move != info.killers[ply][0]:
                     info.killers[ply][1] = info.killers[ply][0]
                     info.killers[ply][0] = move
-                #tracks how often a move* caused a beta-cutoff in entirety of the search    
+                #tracks how often a move* caused a beta-cutoff in entirety of the search
                 info.history[move.from_sq][move.to_sq] += depth * depth
-
             tt_store(gs.zobristHash, _score_to_tt(beta, ply), depth, LOWER, best)
             return beta
+
+        move_index += 1
 
     if not legal_move_found:
         return -(MATE_SCORE - ply) if in_check else 0
