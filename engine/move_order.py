@@ -31,6 +31,9 @@ def see(move, gs):
     else:
         gains = [pieceValueOnSq(capture_sq, gs)]
     
+    if move.flags & MoveFlag.PROMOTION:
+        gains[0] += 800
+
     #apply move
     applyMove(gs, move)
     depth = 1
@@ -74,11 +77,14 @@ def _mvvlva_see(move, gs):
     if victim > attacker: #skip see, expensive, classic mvv-lva
         return 1000000 + victim * 10 - attacker 
     else:#victim <= attacker = check see
-        see_score = see(move, gs)
-        if see_score >= 0:
-            return 1000000 + see_score
-        else:
-            return 500000 + see_score #bad captures are below killers/history, still ordered
+        return 500000 #send bad captures that need see verification to the back
+        #we are calling see on these moves twice at the moment.
+        
+        # see_score = see(move, gs)
+        # if see_score >= 0:
+        #     return 1000000 + see_score
+        # else:
+        #     return 500000 + see_score #bad captures are below killers/history, still ordered
 
 #move scoring function for sorting
 def _score_move(move, gs, killers, history):

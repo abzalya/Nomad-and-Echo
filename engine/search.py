@@ -192,12 +192,19 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
     legal_move_found = False
     for move in movesOrdered(candidates, gs):
         if not in_check and not is_endgame: #disable delta pruning in endgames (total material < 3600)
-            if quiet_score + pieceValueOnSq(move.to_sq, gs) + DELTA <= alpha:
+            quiet_promo_score = 0
+            if move.flags & MoveFlag.PROMOTION:
+                quiet_promo_score = 800
+            if quiet_score + pieceValueOnSq(move.to_sq, gs) + DELTA + quiet_promo_score <= alpha:
                 continue        
         
         #before searching node, scheck see_score, skip loosing captures
-        if see(move, gs) < 0:
-            continue
+        #even though move ordering orders winning captures* first, we are still checking see here, guard
+        if not in_check: #add in_check guard
+            victim = pieceValueOnSq(move.to_sq, gs) #classic mvvlva quick check before calling see
+            attacker = pieceValueOnSq(move.from_sq, gs)
+            if victim < attacker and see(move, gs) < 0:
+                continue
         
         applyMove(gs, move)
         
