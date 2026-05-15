@@ -179,6 +179,15 @@ def isSquareAttacked(sq, gs): #reverse lookup approach for any arbitrary square 
     if rookAttacks(sq, allPieces, ownPieces) & (enemyRooks | enemyQueens): return True
     return False
 
+def attackersTo(sq, gs, occ):
+    attackers = PAWN_ATTACKS[1][sq] & gs.whitePawns
+    attackers |= PAWN_ATTACKS[0][sq] & gs.blackPawns
+    attackers |= KNIGHT_ATTACKS[sq] & (gs. whiteKnights | gs.blackKnights)
+    attackers |= KING_ATTACKS[sq] & (gs. whiteKing | gs.blackKing)
+    attackers |= bishopAttacks(sq, occ, ownPieces=0) & (gs.whiteBishops | gs.blackBishops | gs.whiteQueens | gs.blackQueens)
+    attackers |= rookAttacks(sq, occ, ownPieces=0) & (gs.whiteRooks   | gs.blackRooks   | gs.whiteQueens | gs.blackQueens)
+    return attackers
+
 def attackedBy(gs, exclude_defender_king=False):
     white_attacking = not gs.whiteToMove
     

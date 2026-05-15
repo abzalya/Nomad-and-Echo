@@ -1,6 +1,7 @@
 from core.move import MoveFlag
 from core.apply_move import applyMove, undoMove
 from core.move_generator import generateMoves, generateQuiescence
+from core.attacks import attackersTo
 
 def pieceValueOnSq(sq, gs):
     bit = 1 << sq
@@ -12,6 +13,8 @@ def pieceValueOnSq(sq, gs):
     if (gs.whiteQueens  | gs.blackQueens)  & bit: return 900
     return 0
 
+PIECE_VALUE = [100, 320, 330, 500, 900, 10000]  #p, N, B, R, Q, K
+
 def _mvvlva(move, gs):
     if not (move.flags & MoveFlag.CAPTURE):
         return 0
@@ -20,54 +23,70 @@ def _mvvlva(move, gs):
 
 #static exchange evaluation, returns expected material gain/loss 
 def see(move, gs):
-    capture_sq = move.to_sq
-    capture_bb = 1 << capture_sq
     if not (move.flags & MoveFlag.CAPTURE):
         return 0
+    
+    capture_sq = move.to_sq
+    capture_bb = 1 << capture_sq
 
+    see_occ = (gs.whitePawns | gs.whiteKnights | gs.whiteBishops | gs.whiteRooks | gs.whiteQueens | gs.whiteKing   | gs.blackPawns   | gs.blackKnights | gs.blackBishops | gs.blackRooks | gs.blackQueens  | gs.blackKing)
+    
     #record a ;ist of values of pieces on the capture_sq
     if move.flags & MoveFlag.EN_PASSANT:
-        gains = [100]
+        victim = 100
+        ep_pawn_sq = capture_sq - 8 if gs.whiteToMove else capture_sq + 8
+        occ ^= 1 << ep_pawn_sq
     else:
-        gains = [pieceValueOnSq(capture_sq, gs)]
-    
+        victim = pieceValueOnSq(capture_sq, gs)
+
+    gains = [victim]
+
+    #promotion bonus
     if move.flags & MoveFlag.PROMOTION:
         gains[0] += 800
+        attacker_val = 900 #queen now on capture_sq
 
-    #apply move
-    applyMove(gs, move)
-    depth = 1
+    #remove initial attacker
+    see_occ ^= 1 << move.from_sq
+
+    white_recapture = not gs.whiteToMove # who is recapturing
+    attackers = attackersTo(capture_sq, gs, see_occ) & see_occ #enemy attackers
 
     while True:
-        #lva for the recapture
-        lva_move = None
-        lva = 100000
-        for move in generateQuiescence(gs):
-            if move.to_sq != capture_sq:
-                continue
-            value = pieceValueOnSq(move.from_sq, gs)
-            if value < lva:
-                lva = value
-                lva_move = move
-        
-        if lva_move is None:
+        #filter
+        if white_recapture:
+            own = (gs.whitePawns | gs.whiteKnights | gs.whiteBishops |
+                   gs.whiteRooks | gs.whiteQueens  | gs.whiteKing)
+            piece_bbs = [gs.whitePawns, gs.whiteKnights, gs.whiteBishops,
+                         gs.whiteRooks, gs.whiteQueens, gs.whiteKing]
+        else:
+            own = (gs.blackPawns | gs.blackKnights | gs.blackBishops |
+                   gs.blackRooks | gs.blackQueens  | gs.blackKing)
+            piece_bbs = [gs.blackPawns, gs.blackKnights, gs.blackBishops,
+                         gs.blackRooks, gs.blackQueens, gs.blackKing]
+
+        recapture_attackers = attackers & own
+        if not recapture_attackers: #no piece to recapture 
             break
+        
+        for piece, bb in enumerate(piece_bbs):
+            lva = recapture_attackers & bb
+            if lva:
+                lva_sq = (lva & -lva).bit_length() - 1
+                gains.append(attacker_val - gains[-1])
+                attacker_val = PIECE_VALUE[piece] #new piece on capture_sq
+                occ ^= 1 << lva_sq
+                #recompute attackers
+                attackers = attackersTo(capture_sq, occ, gs) & occ
+                break
 
-        #if found, append the new value of the captured piece to the lsit
-        gains.append(pieceValueOnSq(capture_sq, gs))
-        applyMove(gs, lva_move)
-        depth += 1
-        #keep going until capture sequence is finished
+        white_recapture = not white_recapture
 
-    #undo all
-    for _ in range(depth):
-        undoMove(gs)
-
-    score = 0
-    for gain in reversed(gains[1:]):
-        score = max(0, gain - score)
-
-    return gains[0] - score
+    #see minimax fold
+    while len(gains) > 1:
+        gains[-2] = -max(-gains[-2], gains[-1])
+        gains.pop()
+    return gains[0]
 
 #improve mvvlva with see*
 def _mvvlva_see(move, gs):
