@@ -20,7 +20,7 @@
 | Nomad-v0.9 | pin-mask legal generation + classical bitboard ray attacks | this version has a gamebreaking color asymmetry bug. details below in the vs|
 | Nomad-v0.10pre | killer + history heuristic move ordering | ELO + 195 +- 55 over 0.8. identical logic to 0.9 suggests the abnormal result of 0.9 vs 0.8 is due to slower engine + noise|
 | Nomad-v0.10 | killer + history heuristic move ordering | 57 - 41 - 2 vs SF1700 Estimated ELO ~1756 |
-| Nomad-v0.11 | SEE + Delta pruning |  |
+| Nomad-v0.11 | SEE + Delta pruning | ELO ~+40 over v0.10. Could be noise  |
 
 ## VS
 
@@ -32,6 +32,7 @@
 | v0.8 vs v0.7 |  wins 69–31 | 56 W / 18 L / 26 D. Elo +139.0 ±62.3, LOS 100%. |
 | v0.9 vs v0.8 | as white: 12-2-36, as black: 7-34-9 | there is a massive color assymetry. possible bug affecting black. |
 | v0.10pre vs v0.8 | 56 - 5 - 39 | ELO + 195 +- 55. identical logic to v0.9 suggests 0.9 "bug" is simply a slower engine affecting black play way harder + some noise|
+| v0.11 vs v0.10 | 39 - 33 - 28 | some struggles with slower SEE, managed to make it faster and saw slight improvement on play strength. Not massive elo wise, but should be really good in general.  |
 
 ## Claude Profile
 
