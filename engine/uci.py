@@ -2,6 +2,8 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from core.game import Game
+from core.board import gamestate_from_fen
+from core.move_generator import legalMoves
 from core.move import MoveFlag
 from engine.search import best_move, iterative_deepening, _Info
 from engine.tt import tt_clear
@@ -79,13 +81,16 @@ def uci_loop():
             tt_clear()
 
         elif line.startswith("position"):
-            game  = Game()
             parts = line.split()
-            if "moves" in parts:
-                moves_list = parts[parts.index("moves") + 1:]
-            else:
-                moves_list = []
-            # only startpos supported (no FEN parsing yet)
+            moves_idx = parts.index("moves") if "moves" in parts else len(parts)
+            moves_list = parts[moves_idx + 1:]
+
+            game = Game()
+            if parts[1] == "fen":
+                fen_str = " ".join(parts[2:moves_idx])
+                game.gs = gamestate_from_fen(fen_str)
+                game.legal_moves = legalMoves(game.gs)
+
             for uci in moves_list:
                 move = uci_to_move(uci, game.legal_moves, game.gs.whiteToMove)
                 if move:

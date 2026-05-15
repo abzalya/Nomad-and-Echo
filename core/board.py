@@ -1,5 +1,51 @@
 from core import zobrist
 
+def gamestate_from_fen(fen_str):
+    gs = GameState()
+    gs.whitePawns = gs.whiteRooks = gs.whiteKnights = gs.whiteBishops = gs.whiteQueens = gs.whiteKing = 0
+    gs.blackPawns = gs.blackRooks = gs.blackKnights = gs.blackBishops = gs.blackQueens = gs.blackKing = 0
+    gs.wKingSideCastle = gs.wQueenSideCastle = gs.bKingSideCastle = gs.bQueenSideCastle = False
+
+    parts = fen_str.split()
+    placement, active, castling, ep = parts[0], parts[1], parts[2], parts[3]
+    halfmove = int(parts[4]) if len(parts) > 4 else 0
+
+    for r_idx, rank in enumerate(placement.split('/')):
+        sq = (7 - r_idx) * 8
+        for ch in rank:
+            if ch.isdigit():
+                sq += int(ch)
+            else:
+                bit = 1 << sq
+                if   ch == 'P': gs.whitePawns   |= bit
+                elif ch == 'R': gs.whiteRooks   |= bit
+                elif ch == 'N': gs.whiteKnights |= bit
+                elif ch == 'B': gs.whiteBishops |= bit
+                elif ch == 'Q': gs.whiteQueens  |= bit
+                elif ch == 'K': gs.whiteKing    |= bit
+                elif ch == 'p': gs.blackPawns   |= bit
+                elif ch == 'r': gs.blackRooks   |= bit
+                elif ch == 'n': gs.blackKnights |= bit
+                elif ch == 'b': gs.blackBishops |= bit
+                elif ch == 'q': gs.blackQueens  |= bit
+                elif ch == 'k': gs.blackKing    |= bit
+                sq += 1
+
+    gs.whiteToMove     = (active == 'w')
+    gs.wKingSideCastle  = 'K' in castling
+    gs.wQueenSideCastle = 'Q' in castling
+    gs.bKingSideCastle  = 'k' in castling
+    gs.bQueenSideCastle = 'q' in castling
+    gs.halfMoveCounter  = halfmove
+
+    if ep != '-':
+        gs.epSquare = (int(ep[1]) - 1) * 8 + (ord(ep[0]) - ord('a'))
+    else:
+        gs.epSquare = -1
+
+    gs.zobristHash = zobrist.computeHash(gs)
+    return gs
+
 class GameState:
     def __init__(self):
         self.whitePawns   = 0b0000000000000000000000000000000000000000000000001111111100000000
