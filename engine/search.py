@@ -34,15 +34,22 @@ def _uci_score(score):
     return f"cp {score}"
 
 class _Info:
-    __slots__ = ("nodes", "start", "limit", "stop", "killers", "history")
-    
+    __slots__ = ("nodes", "start", "limit", "stop", "killers", "history",
+                 "last_score", "last_depth")
+
     def __init__(self, limit):
         self.nodes = 0
         self.start = time.perf_counter()
         self.limit = limit
         self.stop = False
-        self.killers = [[None, None] for _ in range(128)] #ply index
+        #ply index. Sized generously: extensions / deep tactical lines can
+        #push ply past max_depth, and an IndexError here crashes the search.
+        self.killers = [[None, None] for _ in range(256)]
         self.history = [[0] * 64 for _ in range(64)] #store as[from_sq][to_sq]
+        #latest completed-depth score and depth, populated by best_move / iterative_deepening
+        #used by the web API to report what the engine settled on
+        self.last_score = 0
+        self.last_depth = 0
     
     def check(self):
         #check counter every 128 nodes. the time management was super off for python
@@ -83,14 +90,26 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
         if alpha >= beta:
             return tt_score
 
-    if depth == 0:
-        return quiescence(gs, alpha, beta, info, depth=0, ply=ply)
-
-
-    #null move pruning requires in_check as an input
-    #moving move generation after this, usign the faster in_check method
+    #in check 
     ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
     in_check = isSquareAttacked(ownKing.bit_length() - 1, gs) 
+
+    #eval at the top of search for incoming RFP, FP, Razoring
+    if in_check:
+        static_eval = None
+    else:
+        static_eval = evaluate(gs)
+
+    #RFP
+    if 1 <= depth <= 4 and not in_check: #depth can be tuned
+        pv_node = (beta - alpha) > 1
+        if not pv_node and abs(beta) < MATE_THRESHOLD:
+            if static_eval - 80 * depth >= beta: #margin can be tuned
+                return static_eval
+
+    if depth <= 0:
+        return quiescence(gs, alpha, beta, info, depth=0, ply=ply)
+
 
     # Null move pruning — skip in check or zugzwang-prone positions
     if allow_null and depth >= 3 and _has_pieces(gs):
@@ -277,12 +296,18 @@ def best_move(gs, depth, info, last_best=None):
     if best is not None:
         score_str = _uci_score(int(alpha))
         print(f"info depth {depth} score {score_str} nodes {info.nodes} nps {nps} time {int(elapsed * 1000)}")
+        #record the score+depth from this completed iteration so callers (web API) can read them
+        info.last_score = int(alpha)
+        info.last_depth = depth
     return best
 
 MAX_DEPTH = 32
 
-def iterative_deepening(gs, time_limit=None, max_depth=MAX_DEPTH):
-    info = _Info(time_limit)
+def iterative_deepening(gs, time_limit=None, max_depth=MAX_DEPTH, info=None):
+    #info can be passed in by the caller (web API) to read back score/depth/nodes after the search.
+    #for UCI/CLI callers, leaving it None preserves the original behavior.
+    if info is None:
+        info = _Info(time_limit)
     last_best = None
     for depth in range(1, max_depth + 1):
         candidate = best_move(gs, depth, info, last_best)
