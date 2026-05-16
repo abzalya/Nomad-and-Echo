@@ -11,10 +11,10 @@ PYGAME UI - BENCHED
 - search
     - [X] null move pruning
     - [2] check extensions
-    - [3] futility pruning
+    - [X] futility pruning
     - [X] late move reduction
     - [5] aspiration windows
-    - [6] repetition detection
+    - [X] repetition detection
 - evaluation:
     - [X] pawn structure - doubled/isolated/passed pawns
     - [x] king safety - open files near king, pawn shield
@@ -23,6 +23,7 @@ PYGAME UI - BENCHED
     - [4] tapered eval
     - [5] mobility - count legal moves as a bonus, rewards active pieces
     - [6] endgame knowledge
+    - [7] evaluation in TT
 - move ordering
     - [X] killer heuristic
     - [X] history heuristic

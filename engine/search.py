@@ -100,12 +100,30 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     else:
         static_eval, _ = evaluate(gs, alpha, beta)
 
+    pv_node = (beta - alpha) > 1
+
     #RFP
-    if 1 <= depth <= 4 and not in_check: #depth can be tuned
-        pv_node = (beta - alpha) > 1
-        if not pv_node and abs(beta) < MATE_THRESHOLD:
-            if static_eval - 80 * depth >= beta: #margin can be tuned
-                return static_eval
+    #doing so good that we can simply return static_eval
+    if (1 <= depth <= 4 #depth can be tuned
+        and not in_check
+        and not pv_node 
+        and abs(beta) < MATE_THRESHOLD):
+        RFP_MARGIN = 80 * depth #margin can be tuned
+        if static_eval - RFP_MARGIN >= beta:
+            return static_eval
+
+    #Razoring
+    #so hopeless that qsearch is below alpha, trust qsearch results
+    if (1 <= depth <= 2 
+        and not in_check 
+        and not pv_node
+        and abs(alpha) < MATE_THRESHOLD):
+        RAZOR_MARGIN = 300 * depth #margin can be tuned
+        if static_eval + RAZOR_MARGIN <= alpha:
+            q_score = quiescence(gs, alpha, beta, info, depth=0, ply=ply)
+            if q_score <= alpha:
+                return q_score #qsearch cant save us. return early
+
 
     if depth <= 0:
         return quiescence(gs, alpha, beta, info, depth=0, ply=ply)
@@ -145,6 +163,18 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     legal_move_found = False
     move_index = 0
     for move in moves:
+        #FP
+        #quiet moves that dont increase eval above alpha with a margin are futile, skip
+        if (depth <= 2 
+            and not in_check 
+            and not (move.flags & MoveFlag.CAPTURE) 
+            and not (move.flags & MoveFlag.PROMOTION) 
+            and abs(alpha) < MATE_THRESHOLD):
+            FP_MARGIN = 150 * depth #margin can be tuned
+            if static_eval + FP_MARGIN <= alpha:
+                continue
+        
+        
         applyMove(gs, move)
         if move.flags & MoveFlag.EN_PASSANT:
             gs.whiteToMove = not gs.whiteToMove
@@ -159,10 +189,11 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
         
         #LMR
         is_killer = move in info.killers[ply]
-        if (depth >= 3 and move_index >= 10 and not in_check
-                and not (move.flags & MoveFlag.CAPTURE)
-                and not (move.flags & MoveFlag.PROMOTION)
-                and not is_killer): #all of the guards. 
+        if (depth >= 3 and move_index >= 10 
+            and not in_check
+            and not (move.flags & MoveFlag.CAPTURE)
+            and not (move.flags & MoveFlag.PROMOTION)
+            and not is_killer): #all of the guards. 
             reduction = max((r for t, r in LATE_MOVE_REDUCTION.items() if move_index >= t), default=1)
             score = -negamax(gs, -beta, -alpha, depth - 1 - reduction, info, ply=ply+1)
             if score > alpha:
