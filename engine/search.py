@@ -172,6 +172,8 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
             and abs(alpha) < MATE_THRESHOLD):
             FP_MARGIN = 150 * depth #margin can be tuned
             if static_eval + FP_MARGIN <= alpha:
+                if not move.flags & MoveFlag.EN_PASSANT:
+                    legal_move_found = True
                 continue
         
         

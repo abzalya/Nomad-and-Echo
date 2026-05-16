@@ -250,12 +250,13 @@ def evaluate(gs, alpha, beta):
         is_endgame = True
 
     #lazy evaluation
-    lazy = material_score + position_score
-    LAZY_MARGIN = 300
-    if lazy - LAZY_MARGIN >= beta: #winning by margin
-        return lazy, is_endgame
-    if lazy + LAZY_MARGIN <= alpha: #losing by margin
-        return lazy, is_endgame
+    if not is_endgame:
+        lazy = material_score + position_score
+        LAZY_MARGIN = 200
+        if lazy - LAZY_MARGIN >= beta: #winning by margin
+            return lazy, is_endgame
+        if lazy + LAZY_MARGIN <= alpha: #losing by margin
+            return lazy, is_endgame
 
     #expensize only call if not winning/losing by margin
     pawn_score = _pawn_eval(gs)
