@@ -98,7 +98,7 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     if in_check:
         static_eval = None
     else:
-        static_eval = evaluate(gs)
+        static_eval, _ = evaluate(gs, alpha, beta)
 
     #RFP
     if 1 <= depth <= 4 and not in_check: #depth can be tuned
@@ -211,7 +211,7 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
     in_check = isSquareAttacked(ownKing.bit_length() - 1, gs) 
 
     if not in_check:
-        quiet_score, is_endgame = evaluate(gs)
+        quiet_score, is_endgame = evaluate(gs, alpha, beta)
         quiet_score = quiet_score if gs.whiteToMove else -quiet_score
 
         #quiescence depth limit. it kept blowing up my search

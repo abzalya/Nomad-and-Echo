@@ -241,9 +241,23 @@ def _mopup_eval(gs):
 
 TEMPO_BONUS = 10
 
-def evaluate(gs):
+def evaluate(gs, alpha, beta):
+    #cheap evaluation
     material_score, total_material = _material_eval(gs)
     position_score, phase = _position_eval(gs, total_material)
+    is_endgame = False
+    if total_material < ENDGAME_THRESHOLD:
+        is_endgame = True
+
+    #lazy evaluation
+    lazy = material_score + position_score
+    LAZY_MARGIN = 300
+    if lazy - LAZY_MARGIN >= beta: #winning by margin
+        return lazy, is_endgame
+    if lazy + LAZY_MARGIN <= alpha: #losing by margin
+        return lazy, is_endgame
+
+    #expensize only call if not winning/losing by margin
     pawn_score = _pawn_eval(gs)
     rook_score = _rook_eval(gs)
     king_score = _king_eval(gs, phase)
@@ -251,8 +265,6 @@ def evaluate(gs):
     mopup_score = _mopup_eval(gs)
     tempo = TEMPO_BONUS if gs.whiteToMove else -TEMPO_BONUS
     #endgame bool for search
-    is_endgame = False
-    if total_material < ENDGAME_THRESHOLD:
-        is_endgame = True
     return material_score + position_score + pawn_score + rook_score + king_score + bishop_score + mopup_score + tempo, is_endgame
 
+    
