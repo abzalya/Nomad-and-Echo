@@ -21,6 +21,8 @@
 | Nomad-v0.10pre | killer + history heuristic move ordering | ELO + 195 +- 55 over 0.8. identical logic to 0.9 suggests the abnormal result of 0.9 vs 0.8 is due to slower engine + noise|
 | Nomad-v0.10 | killer + history heuristic move ordering | 57 - 41 - 2 vs SF1700 Estimated ELO ~1756 |
 | Nomad-v0.11 | SEE + Delta pruning | ELO ~+40 over v0.10. Could be noise  |
+| Nomad-v0.12 | LMR | ~+34 ELO over v0.11. Due to large regression observed on the first round, I investigated the cause by isolating features one by one. RFP and lazy eval has contributed some by calling evaluate at every node. lazy eval helped but not as much. RFP was not cutting enough nodes to be worth it. Slowing the engine down too much and loosing performance. These features need to be tuned one by one and added slowly. Adding all at the same time was a mistake. Next is to add PVS which should help RFP and Razoring. |
+| Nomad-v0.12+ | RFP, FP, Razoring and Lazy Evaluation | |
 
 ## VS
 
@@ -33,6 +35,7 @@
 | v0.9 vs v0.8 | as white: 12-2-36, as black: 7-34-9 | there is a massive color assymetry. possible bug affecting black. |
 | v0.10pre vs v0.8 | 56 - 5 - 39 | ELO + 195 +- 55. identical logic to v0.9 suggests 0.9 "bug" is simply a slower engine affecting black play way harder + some noise|
 | v0.11 vs v0.10 | 39 - 33 - 28 | some struggles with slower SEE, managed to make it faster and saw slight improvement on play strength. Not massive elo wise, but should be really good in general.  |
+| v0.12pre vs v0.11 | 21W - 63L - 16D (29.0%), Elo difference -155.5 ± 68.6, LOS 0.0%. | regression, 0.12pre is about 155 Elo weaker than v0.11. |
 
 ## Claude Profile
 
@@ -50,3 +53,4 @@ workload, with JIT on.
 | v0.9pre (+ legal `generateQuiescence` with pin masks + king attack filter, EP-only legality check everywhere) | 8.82s | 13.78M | Wall time still neutral (within noise). `isSquareAttacked` drops out of top 25 entirely — EP-only legality check is doing its job. **Architectural win, not a perf win**: bookkeeping shifted from per-move (per applyMove cycle) to per-node (one `findPinnedPieces` + one `attackedBy` upfront). `generateQuiescence` self-time jumped 0.55s → 0.79s, cumulative 1.21s → 2.11s — pin/attack work added inside. `findPinnedPieces` is now visible at 0.27s. Together `generateQuiescence` + `generateMoves` are 42% of total runtime; both bottle-necked on the slider ray-walk loops that v0.10 will replace. EP-discovered-check bug fixed. |
 | v0.9 (+ classical-bitboard slider attacks via `RAY_ATTACKS`, unified `rayAttack` helper) | 8.56s | 14.63M | −3% wall, **+4% NPS startpos d4** (17,771 → 18,471), +2.6% NPS middlegame (5,243 → 5,379). Per-ray cost dropped from ~720 ns to ~290 ns (≈2.5×). `negativeRayAttacks` + `positiveRayAttacks` ray-walking versions gone. `attackedBy` cumulative −26% (1.77s → 1.31s) because it calls slider attacks repeatedly. **New top hotspot is `evaluate` at 25% of wall** — `_position_eval` / `_pawn_eval` / `_king_eval` iterating bitboards. The next target if you keep pushing. |
 | v0.10pre (+killer & history heuristic move ordering) | N/A - running on a different machine | 9.6M | -34% of total calls. -64% negamax and -40% quiescence calls. Massive downstream gains on all other function calls as well due to earlier beta-cutoffs. Play strength TBD|
+| main (v0.12pre: +LMR +RFP +Razoring +FP +lazy eval) vs v0.11 | — (proportional only) | 3.21M vs 3.63M | **Pure proportional comparison, main vs v0.11.** Node count at opening pos depth 4: **8,962 vs 13,852 (−35%)** — LMR is working as advertised. Tree-expansion functions all fall: `applyMove` −0.6pp, `generateQuiescence` −1.1pp, `quiescence` own −0.8pp, `generateMoves` −0.3pp, `see` −0.4pp. Eval-related % rises because RFP calls `evaluate()` at the top of every interior node: `iterateBits` +1.6pp, `_position_eval` +1.6pp, `_pawn_eval` +0.8pp. Eval-per-call cost flat (~3.6µs) — pure call-count increase, not regression. **Lazy eval firing rate only 14.4%** (1,583 / 10,968 evaluate calls short-circuit); `LAZY_MARGIN=300` is too conservative given typical expensive-term swing ~150–200cp. Lowering to 200 should ~2–3× the firing rate. Hotspot ranking is unchanged from v0.11 — additive search-side change, no eval regression. |

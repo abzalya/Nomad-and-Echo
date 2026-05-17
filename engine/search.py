@@ -94,35 +94,37 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
     in_check = isSquareAttacked(ownKing.bit_length() - 1, gs) 
 
-    #eval at the top of search for incoming RFP, FP, Razoring
-    if in_check:
-        static_eval = None
-    else:
-        static_eval, _ = evaluate(gs, alpha, beta)
+    #DISABLING static_eval in negamax until better move ordering and PVS for the other features
+    # #eval at the top of search for incoming RFP, FP, Razoring
+    # if in_check:
+    #     static_eval = None
+    # else:
+    #     static_eval, _ = evaluate(gs, alpha, beta)
 
     pv_node = (beta - alpha) > 1
 
-    #RFP
-    #doing so good that we can simply return static_eval
-    if (1 <= depth <= 4 #depth can be tuned
-        and not in_check
-        and not pv_node 
-        and abs(beta) < MATE_THRESHOLD):
-        RFP_MARGIN = 80 * depth #margin can be tuned
-        if static_eval - RFP_MARGIN >= beta:
-            return static_eval
+    #DISABLING RFP AND RAZORING
+    # #RFP
+    # #doing so good that we can simply return static_eval
+    # if (1 <= depth <= 4 #depth can be tuned
+    #     and not in_check
+    #     and not pv_node 
+    #     and abs(beta) < MATE_THRESHOLD):
+    #     RFP_MARGIN = 80 * depth #margin can be tuned
+    #     if static_eval - RFP_MARGIN >= beta:
+    #         return static_eval
 
-    #Razoring
-    #so hopeless that qsearch is below alpha, trust qsearch results
-    if (1 <= depth <= 2 
-        and not in_check 
-        and not pv_node
-        and abs(alpha) < MATE_THRESHOLD):
-        RAZOR_MARGIN = 300 * depth #margin can be tuned
-        if static_eval + RAZOR_MARGIN <= alpha:
-            q_score = quiescence(gs, alpha, beta, info, depth=0, ply=ply)
-            if q_score <= alpha:
-                return q_score #qsearch cant save us. return early
+    # #Razoring
+    # #so hopeless that qsearch is below alpha, trust qsearch results
+    # if (1 <= depth <= 2 
+    #     and not in_check 
+    #     and not pv_node
+    #     and abs(alpha) < MATE_THRESHOLD):
+    #     RAZOR_MARGIN = 300 * depth #margin can be tuned
+    #     if static_eval + RAZOR_MARGIN <= alpha:
+    #         q_score = quiescence(gs, alpha, beta, info, depth=0, ply=ply)
+    #         if q_score <= alpha:
+    #             return q_score #qsearch cant save us. return early
 
 
     if depth <= 0:
@@ -165,16 +167,17 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     for move in moves:
         #FP
         #quiet moves that dont increase eval above alpha with a margin are futile, skip
-        if (depth <= 2 
-            and not in_check 
-            and not (move.flags & MoveFlag.CAPTURE) 
-            and not (move.flags & MoveFlag.PROMOTION) 
-            and abs(alpha) < MATE_THRESHOLD):
-            FP_MARGIN = 150 * depth #margin can be tuned
-            if static_eval + FP_MARGIN <= alpha:
-                if not move.flags & MoveFlag.EN_PASSANT:
-                    legal_move_found = True
-                continue
+        #disable FP for now
+        # if (depth <= 2 
+        #     and not in_check 
+        #     and not (move.flags & MoveFlag.CAPTURE) 
+        #     and not (move.flags & MoveFlag.PROMOTION) 
+        #     and abs(alpha) < MATE_THRESHOLD):
+        #     FP_MARGIN = 150 * depth #margin can be tuned
+        #     if static_eval + FP_MARGIN <= alpha:
+        #         if not move.flags & MoveFlag.EN_PASSANT:
+        #             legal_move_found = True
+        #         continue
         
         
         applyMove(gs, move)
