@@ -102,6 +102,7 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     #     static_eval, _ = evaluate(gs, alpha, beta)
 
     pv_node = (beta - alpha) > 1
+    #will be false for a scout node, we can RFP and Razor prune here
 
     #DISABLING RFP AND RAZORING
     # #RFP
@@ -191,21 +192,32 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
                 continue
 
         legal_move_found = True
-        
-        #LMR
+
+        #PVS + LMR
         is_killer = move in info.killers[ply]
-        if (depth >= 3 and move_index >= 10 
-            and not in_check
-            and not (move.flags & MoveFlag.CAPTURE)
-            and not (move.flags & MoveFlag.PROMOTION)
-            and not is_killer): #all of the guards. 
-            reduction = max((r for t, r in LATE_MOVE_REDUCTION.items() if move_index >= t), default=1)
-            score = -negamax(gs, -beta, -alpha, depth - 1 - reduction, info, ply=ply+1)
-            if score > alpha:
-                #re-search at full depth
-                score = -negamax(gs, -beta, -alpha, depth - 1, info, ply=ply+1)
-        else:
+        if move_index == 0:
+            #first move: full window, full depth (this is the PV move)
             score = -negamax(gs, -beta, -alpha, depth - 1, info, ply=ply+1)
+        else:
+            #scout with zero window
+            if (depth >= 3 and move_index >= 10
+                    and not in_check
+                    and not (move.flags & MoveFlag.CAPTURE)
+                    and not (move.flags & MoveFlag.PROMOTION)
+                    and not is_killer):
+                #LMR: reduced-depth scout
+                reduction = max((r for t, r in LATE_MOVE_REDUCTION.items() if move_index >= t), default=1)
+                score = -negamax(gs, -alpha - 1, -alpha, depth - 1 - reduction, info, ply=ply+1)
+                if score > alpha:
+                    #LMR failed high: re-search at full depth, still zero window
+                    score = -negamax(gs, -alpha - 1, -alpha, depth - 1, info, ply=ply+1)
+            else:
+                #normal scout at full depth
+                score = -negamax(gs, -alpha - 1, -alpha, depth - 1, info, ply=ply+1)
+
+            #PVS re-search: scout suggests this might be a new PV
+            if alpha < score < beta:
+                score = -negamax(gs, -beta, -alpha, depth - 1, info, ply=ply+1)
 
         undoMove(gs)
         if info.stop:
