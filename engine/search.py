@@ -95,25 +95,27 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     in_check = isSquareAttacked(ownKing.bit_length() - 1, gs) 
 
     #DISABLING static_eval in negamax until better move ordering and PVS for the other features
-    # #eval at the top of search for incoming RFP, FP, Razoring
-    # if in_check:
-    #     static_eval = None
-    # else:
-    #     static_eval, _ = evaluate(gs, alpha, beta)
+    #eval at the top of search for incoming RFP, FP, Razoring
+    if in_check:
+        static_eval = None
+    else:
+        static_eval, _ = evaluate(gs, alpha, beta)
+        if not gs.whiteToMove:
+            static_eval = -static_eval
 
     pv_node = (beta - alpha) > 1
     #will be false for a scout node, we can RFP and Razor prune here
 
     #DISABLING RFP AND RAZORING
-    # #RFP
-    # #doing so good that we can simply return static_eval
-    # if (1 <= depth <= 4 #depth can be tuned
-    #     and not in_check
-    #     and not pv_node 
-    #     and abs(beta) < MATE_THRESHOLD):
-    #     RFP_MARGIN = 80 * depth #margin can be tuned
-    #     if static_eval - RFP_MARGIN >= beta:
-    #         return static_eval
+    #RFP
+    #doing so good that we can simply return static_eval
+    if (1 <= depth <= 3 #depth can be tuned
+        and not in_check
+        and not pv_node 
+        and abs(beta) < MATE_THRESHOLD):
+        RFP_MARGIN = 120 * depth #margin can be tuned
+        if static_eval - RFP_MARGIN >= beta:
+            return beta #be conservative and return beta
 
     # #Razoring
     # #so hopeless that qsearch is below alpha, trust qsearch results
