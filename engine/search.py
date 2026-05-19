@@ -62,7 +62,7 @@ def _has_pieces(gs):
         return (gs.whiteRooks | gs.whiteKnights | gs.whiteBishops | gs.whiteQueens) != 0
     return (gs.blackRooks | gs.blackKnights | gs.blackBishops | gs.blackQueens) != 0
 
-def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
+def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0, extensions = 0):
     info.nodes += 1
     info.check()
     if info.stop:
@@ -94,7 +94,10 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
     ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
     in_check = isSquareAttacked(ownKing.bit_length() - 1, gs) 
 
-    #DISABLING static_eval in negamax until better move ordering and PVS for the other features
+    #check extension based on current node, + max
+    MAX_EXTENSIONS = 16
+    extension = 1 if (in_check and extensions < MAX_EXTENSIONS) else 0
+
     #eval at the top of search for incoming RFP, FP, Razoring
     if in_check:
         static_eval = None
@@ -200,7 +203,7 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
         is_killer = move in info.killers[ply]
         if move_index == 0:
             #first move: full window, full depth (this is the PV move)
-            score = -negamax(gs, -beta, -alpha, depth - 1, info, ply=ply+1)
+            score = -negamax(gs, -beta, -alpha, depth - 1 + extension, info, ply=ply+1, extensions=extensions+extension)
         else:
             #scout with zero window
             if (depth >= 3 and move_index >= 10
@@ -210,17 +213,17 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
                     and not is_killer):
                 #LMR: reduced-depth scout
                 reduction = max((r for t, r in LATE_MOVE_REDUCTION.items() if move_index >= t), default=1)
-                score = -negamax(gs, -alpha - 1, -alpha, depth - 1 - reduction, info, ply=ply+1)
+                score = -negamax(gs, -alpha - 1, -alpha, depth - 1 - reduction + extension, info, ply=ply+1, extensions=extensions+extension)
                 if score > alpha:
                     #LMR failed high: re-search at full depth, still zero window
-                    score = -negamax(gs, -alpha - 1, -alpha, depth - 1, info, ply=ply+1)
+                    score = -negamax(gs, -alpha - 1, -alpha, depth - 1 + extension, info, ply=ply+1, extensions=extensions+extension)
             else:
                 #normal scout at full depth
-                score = -negamax(gs, -alpha - 1, -alpha, depth - 1, info, ply=ply+1)
+                score = -negamax(gs, -alpha - 1, -alpha, depth - 1 + extension, info, ply=ply+1, extensions=extensions+extension)
 
             #PVS re-search: scout suggests this might be a new PV
             if alpha < score < beta:
-                score = -negamax(gs, -beta, -alpha, depth - 1, info, ply=ply+1)
+                score = -negamax(gs, -beta, -alpha, depth - 1 + extension, info, ply=ply+1, extensions=extensions+extension)
 
         undoMove(gs)
         if info.stop:
