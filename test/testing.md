@@ -23,7 +23,7 @@
 | Nomad-v0.11 | SEE + Delta pruning | ELO ~+40 over v0.10. Could be noise  |
 | Nomad-v0.12 | LMR | ~+34 ELO over v0.11. Due to large regression observed on the first round, I investigated the cause by isolating features one by one. RFP and lazy eval has contributed some by calling evaluate at every node. lazy eval helped but not as much. RFP was not cutting enough nodes to be worth it. Slowing the engine down too much and loosing performance. These features need to be tuned one by one and added slowly. Adding all at the same time was a mistake. Next is to add PVS which should help RFP and Razoring. |
 | Nomad-v0.13 | PVS  + RFP, Razoring (re-enabled) | Good start as an improveemnt over v0.12. This will serve as a foundation for the re-enabled RFP, razoring. Re-enable one by one and confirm improvement before committing and tagging. Re-enabled RFP on top of PVS has shown to be an improvement. Adding Razoring on top is neutral. OK to keep.|
-
+| Nomad-v0.14 | Aspiration Windows | +49 Elo, LOS 94.6% over v0.13 |
 
 ## VS
 
@@ -40,6 +40,7 @@
 | v0.13pre vs v0.12| 48 - 31 - 21 | +59.6 over v0.12, LOS 97.2% |
 | v0.13pre (PVS+RFP) vs v0.13pre (PVS only)| 41 - 30 - 29 | +38, LOS 90% |
 | v0.13 vs v0.13pre(PVS+RFP) | 40 - 37 - 23 | Neutral, Keep. |
+| v0.14 vs v0.13 | 45 - 31 - 24 | Aspiration windows are an improvement. Interestingly, slightly more dominant as black. |
 
 ## Claude Profile
 

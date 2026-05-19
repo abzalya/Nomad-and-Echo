@@ -376,17 +376,19 @@ def iterative_deepening(gs, time_limit=None, max_depth=MAX_DEPTH, info=None):
 
         while True:
             candidate, score = best_move(gs, depth, info, alpha, beta, last_best_move)
-            last_best_move = candidate
-            if info.stop and last_best_move is not None:
+            if info.stop:
+                if candidate is not None:
+                    last_best_move = candidate
                 break
             if score <= alpha:
                 alpha -= ASPIRATION_WINDOW * 2 #fail-low, widen alpha
             elif score >= beta:
                 beta += ASPIRATION_WINDOW * 2 # fail-high, widen beta
             else:
+                last_best_move = candidate
                 prev_score = score
                 break
-        
-        if info.stop and last_best_move is not None:
-                break
+
+        if info.stop:
+            break
     return last_best_move
