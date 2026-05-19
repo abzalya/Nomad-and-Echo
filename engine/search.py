@@ -325,7 +325,6 @@ def best_move(gs, depth, info, alpha, beta, last_best=None):
     moves, _ = generateMoves(gs)
     moves = movesOrdered(moves, gs, last_best)
     best = None
-    best_score = alpha
     for move in moves:
         applyMove(gs, move)
         if move.flags & MoveFlag.EN_PASSANT:
@@ -343,7 +342,6 @@ def best_move(gs, depth, info, alpha, beta, last_best=None):
         if score > alpha:
             alpha = score
             best = move
-            best_score = score
 
     elapsed = time.perf_counter() - info.start
     nps = int(info.nodes / elapsed) if elapsed > 0 else 0 #0 devision guard
@@ -353,22 +351,32 @@ def best_move(gs, depth, info, alpha, beta, last_best=None):
         #record the score+depth from this completed iteration so callers (web API) can read them
         info.last_score = int(alpha)
         info.last_depth = depth
-    return best, best_score
+    return best, alpha
 
 MAX_DEPTH = 32
 
-def iterative_deepening(gs, time_limit=None, max_depth=MAX_DEPTH, info=None):
+HARD_TIME_LIMIT_MULTI = 1
+INSTABILITY_TIME_LIMIT_MULTI = 1
+
+def iterative_deepening(gs, soft_time_limit=None, max_depth=MAX_DEPTH, info=None):
     #info can be passed in by the caller (web API) to read back score/depth/nodes after the search.
     #for UCI/CLI callers, leaving it None preserves the original behavior.
+    hard_time_limit = soft_time_limit * HARD_TIME_LIMIT_MULTI if soft_time_limit is not None else None
+    
     if info is None:
-        info = _Info(time_limit)
+        info = _Info(hard_time_limit)
     last_best_move = None
 
     #aspiration windows
     #search a narrow window around previous score (faster), if fails widen and re-search
     ASPIRATION_WINDOW = 25
     prev_score = 0
+
     for depth in range(1, max_depth + 1):
+        if soft_time_limit is not None:
+            elapsed = time.perf_counter() - info.start
+            if elapsed > soft_time_limit:
+                break
 
         if depth <= 4: #too shallow, full window
             alpha = -10_000_000
@@ -388,6 +396,11 @@ def iterative_deepening(gs, time_limit=None, max_depth=MAX_DEPTH, info=None):
             elif score >= beta:
                 beta += ASPIRATION_WINDOW * 2 # fail-high, widen beta
             else:
+                #positional instability bonus - spend more time here
+                if last_best_move is not None and candidate != last_best_move:
+                    if soft_time_limit is not None:
+                        soft_time_limit *= INSTABILITY_TIME_LIMIT_MULTI
+
                 last_best_move = candidate
                 prev_score = score
                 break
@@ -395,3 +408,5 @@ def iterative_deepening(gs, time_limit=None, max_depth=MAX_DEPTH, info=None):
         if info.stop:
             break
     return last_best_move
+
+

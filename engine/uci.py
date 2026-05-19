@@ -98,15 +98,15 @@ def uci_loop():
 
         elif line.startswith("go"):
             parts      = line.split()
-            time_limit = None
-            search_depth = depth
+            soft_time_limit = None
+            search_depth    = depth
 
             if "depth" in parts:
                 search_depth = _get(parts, "depth")
 
             elif "movetime" in parts:
-                time_limit   = _get(parts, "movetime") / 1000  # ms → s
-                search_depth = _LARGE_DEPTH
+                soft_time_limit = _get(parts, "movetime") / 1000
+                search_depth    = _LARGE_DEPTH
 
             elif "wtime" in parts or "btime" in parts:
                 wtime = _get(parts, "wtime", 0)
@@ -116,16 +116,16 @@ def uci_loop():
                 mtg   = _get(parts, "movestogo")
                 remaining = wtime if game.gs.whiteToMove else btime
                 inc       = winc  if game.gs.whiteToMove else binc
-                time_limit   = _allocate_time(remaining, inc, mtg)
-                search_depth = _LARGE_DEPTH
+                soft_time_limit = _allocate_time(remaining, inc, mtg)
+                search_depth    = _LARGE_DEPTH
 
             elif "infinite" in parts:
-                search_depth = _LARGE_DEPTH  # runs until 'stop' (not yet supported)
+                search_depth = _LARGE_DEPTH
 
-            if time_limit is not None:
-                move = iterative_deepening(game.gs, time_limit)
+            if soft_time_limit is not None:
+                move = iterative_deepening(game.gs, soft_time_limit)
             else:
-                move = best_move(game.gs, search_depth, _Info(None))
+                move, _ = best_move(game.gs, search_depth, _Info(None), -10_000_000, 10_000_000)
             print(f"bestmove {move_to_uci(move) if move else '0000'}")
 
         elif line == "quit":
