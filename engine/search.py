@@ -119,16 +119,17 @@ def negamax(gs, alpha, beta, depth, info, allow_null=True, ply=0):
 
     # #Razoring
     # #so hopeless that qsearch is below alpha, trust qsearch results
-    # if (1 <= depth <= 2 
-    #     and not in_check 
-    #     and not pv_node
-    #     and abs(alpha) < MATE_THRESHOLD):
-    #     RAZOR_MARGIN = 300 * depth #margin can be tuned
-    #     if static_eval + RAZOR_MARGIN <= alpha:
-    #         q_score = quiescence(gs, alpha, beta, info, depth=0, ply=ply)
-    #         if q_score <= alpha:
-    #             return q_score #qsearch cant save us. return early
+    if (1 <= depth <= 2 
+        and not in_check 
+        and not pv_node
+        and abs(alpha) < MATE_THRESHOLD):
+        RAZOR_MARGIN = 300 * depth #margin can be tuned
+        if static_eval + RAZOR_MARGIN <= alpha:
+            q_score = quiescence(gs, alpha, beta, info, depth=0, ply=ply)
+            if q_score <= alpha:
+                return q_score #qsearch cant save us. return early
 
+    #main 40 – PVS+RFP 37 – 23 draws (score: 0.515, +10.4 Elo, LOS 63%). HMMMM
 
     if depth <= 0:
         return quiescence(gs, alpha, beta, info, depth=0, ply=ply)
