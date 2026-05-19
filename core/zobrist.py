@@ -27,3 +27,17 @@ def computeHash(gs):
     if gs.epSquare != -1:
         hash ^= ZOBRIST_EP[gs.epSquare % 8]
     return hash
+
+#Pawn Hash
+#Pure function of pawn positions — does NOT include side-to-move.
+#Pawn structure eval is identical regardless of whose turn it is, so including
+#side would double the key space and halve the hit rate.
+_WP_IDX = 0  #matches order in PIECE_BITBOARDS / ZOBRIST_PIECES
+_BP_IDX = 6
+def computePawnHash(gs):
+    hash = 0
+    for sq in iterateBits(gs.whitePawns):
+        hash ^= ZOBRIST_PIECES[_WP_IDX][sq]
+    for sq in iterateBits(gs.blackPawns):
+        hash ^= ZOBRIST_PIECES[_BP_IDX][sq]
+    return hash

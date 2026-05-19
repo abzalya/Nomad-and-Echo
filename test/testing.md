@@ -24,6 +24,7 @@
 | Nomad-v0.12 | LMR | ~+34 ELO over v0.11. Due to large regression observed on the first round, I investigated the cause by isolating features one by one. RFP and lazy eval has contributed some by calling evaluate at every node. lazy eval helped but not as much. RFP was not cutting enough nodes to be worth it. Slowing the engine down too much and loosing performance. These features need to be tuned one by one and added slowly. Adding all at the same time was a mistake. Next is to add PVS which should help RFP and Razoring. |
 | Nomad-v0.13 | PVS  + RFP, Razoring (re-enabled) | Good start as an improveemnt over v0.12. This will serve as a foundation for the re-enabled RFP, razoring. Re-enable one by one and confirm improvement before committing and tagging. Re-enabled RFP on top of PVS has shown to be an improvement. Adding Razoring on top is neutral. OK to keep.|
 | Nomad-v0.14 | Aspiration Windows | +49 Elo, LOS 94.6% over v0.13 |
+| Nomad-v0.15 | Check Extensions + Pawn Hash Table | +45.4 ELO, LOS 93% over v0.14 |
 
 ## VS
 
@@ -41,6 +42,7 @@
 | v0.13pre (PVS+RFP) vs v0.13pre (PVS only)| 41 - 30 - 29 | +38, LOS 90% |
 | v0.13 vs v0.13pre(PVS+RFP) | 40 - 37 - 23 | Neutral, Keep. |
 | v0.14 vs v0.13 | 45 - 31 - 24 | Aspiration windows are an improvement. Interestingly, slightly more dominant as black. |
+| Nomad-v0.15 | 45 - 32 - 23  | Small improvement. My only incoming changes are going to be tweaks to time management and opening books. This might be the last algorithm changes before v1.0 |
 
 ## Claude Profile
 
@@ -59,3 +61,5 @@ workload, with JIT on.
 | v0.9 (+ classical-bitboard slider attacks via `RAY_ATTACKS`, unified `rayAttack` helper) | 8.56s | 14.63M | −3% wall, **+4% NPS startpos d4** (17,771 → 18,471), +2.6% NPS middlegame (5,243 → 5,379). Per-ray cost dropped from ~720 ns to ~290 ns (≈2.5×). `negativeRayAttacks` + `positiveRayAttacks` ray-walking versions gone. `attackedBy` cumulative −26% (1.77s → 1.31s) because it calls slider attacks repeatedly. **New top hotspot is `evaluate` at 25% of wall** — `_position_eval` / `_pawn_eval` / `_king_eval` iterating bitboards. The next target if you keep pushing. |
 | v0.10pre (+killer & history heuristic move ordering) | N/A - running on a different machine | 9.6M | -34% of total calls. -64% negamax and -40% quiescence calls. Massive downstream gains on all other function calls as well due to earlier beta-cutoffs. Play strength TBD|
 | main (v0.12pre: +LMR +RFP +Razoring +FP +lazy eval) vs v0.11 | — (proportional only) | 3.21M vs 3.63M | **Pure proportional comparison, main vs v0.11.** Node count at opening pos depth 4: **8,962 vs 13,852 (−35%)** — LMR is working as advertised. Tree-expansion functions all fall: `applyMove` −0.6pp, `generateQuiescence` −1.1pp, `quiescence` own −0.8pp, `generateMoves` −0.3pp, `see` −0.4pp. Eval-related % rises because RFP calls `evaluate()` at the top of every interior node: `iterateBits` +1.6pp, `_position_eval` +1.6pp, `_pawn_eval` +0.8pp. Eval-per-call cost flat (~3.6µs) — pure call-count increase, not regression. **Lazy eval firing rate only 14.4%** (1,583 / 10,968 evaluate calls short-circuit); `LAZY_MARGIN=300` is too conservative given typical expensive-term swing ~150–200cp. Lowering to 200 should ~2–3× the firing rate. Hotspot ranking is unchanged from v0.11 — additive search-side change, no eval regression. |
+| v0.13pre (+PVS +aspiration, RFP/Razoring tuned, FP off) | 1.153s | 2.73M | Same workload. −39% wall vs v0.12pre with ~same node count → ~40% faster per node. PVS scout windows narrowed everything: `generateQuiescence` calls −37%, `quiescence` calls −13%, `applyMove` calls −9%. Lazy eval firing rate up to **22%** (margin 200 + is_endgame guard). Eval still dominates at ~47% of total — pawn hash is next. |
+| + pawn hash (initial impl had 2 bugs: wrong piece indices in initial compute, plus incorrect side-to-move toggle — both fixed) | 1.169s | 2.73M | Wall time flat but **`_pawn_eval` dropped from 7.9% → <0.9% of runtime (−87%)** and fell out of top 25. `_pawn_islands` also dropped out. Cache hit rate ~90%+ on the ~10.6k non-lazy eval calls. Savings converted into more search depth: **Opera d4 nodes 8,614 → 11,771 (+37%)**, NPS up 27%, depth-4 score moved from cp 165 → cp 210 (more confident, deeper-informed). The expected "speed → depth" loop fired exactly as intended. |

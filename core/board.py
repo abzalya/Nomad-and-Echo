@@ -77,3 +77,5 @@ class GameState:
         self.zobristHash = zobrist.computeHash(self)
         #undo move history
         self.history = []
+        #pawn hash
+        self.pawnHash = zobrist.computePawnHash(self)

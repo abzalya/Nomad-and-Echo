@@ -55,7 +55,7 @@ def applyMove(gs, move):
         move, captured_attr, captured_sq, gs.epSquare, gs.zobristHash,
         gs.wKingSideCastle, gs.wQueenSideCastle,
         gs.bKingSideCastle, gs.bQueenSideCastle,
-        gs.halfMoveCounter,
+        gs.halfMoveCounter, gs.pawnHash
     ))
 
     #4. XOR out old ep / castling
@@ -71,6 +71,7 @@ def applyMove(gs, move):
         if   captured_attr == "blackPawns":
             gs.zobristHash ^= ZOBRIST_PIECES[_BP][move.to_sq]
             gs.blackPawns &= ~to_bb
+            gs.pawnHash ^= ZOBRIST_PIECES[_BP][move.to_sq] #pawn hash
         elif captured_attr == "blackRooks":
             gs.zobristHash ^= ZOBRIST_PIECES[_BR][move.to_sq]
             gs.blackRooks &= ~to_bb
@@ -92,6 +93,7 @@ def applyMove(gs, move):
             gs.blackKing &= ~to_bb
         elif captured_attr == "whitePawns":
             gs.zobristHash ^= ZOBRIST_PIECES[_WP][move.to_sq]
+            gs.pawnHash ^= ZOBRIST_PIECES[_WP][move.to_sq] #pawn hash
             gs.whitePawns &= ~to_bb
         elif captured_attr == "whiteRooks":
             gs.zobristHash ^= ZOBRIST_PIECES[_WR][move.to_sq]
@@ -119,18 +121,22 @@ def applyMove(gs, move):
         if gs.whiteToMove:
             gs.zobristHash ^= ZOBRIST_PIECES[_BP][captured_sq]
             gs.blackPawns &= ~captured_bit
+            gs.pawnHash ^= ZOBRIST_PIECES[_BP][captured_sq] #pawn hash
         else:
             gs.zobristHash ^= ZOBRIST_PIECES[_WP][captured_sq]
             gs.whitePawns &= ~captured_bit
+            gs.pawnHash ^= ZOBRIST_PIECES[_WP][captured_sq] #pawn hash
 
     #7. Promotion: clear pawn from from_sq, set promo piece on to_sq
     if flags & MoveFlag.PROMOTION:
         if gs.whiteToMove:
             gs.whitePawns &= ~from_bb
             gs.zobristHash ^= ZOBRIST_PIECES[_WP][move.from_sq]
+            gs.pawnHash ^= ZOBRIST_PIECES[_WP][move.from_sq] #pawn hash
         else:
             gs.blackPawns &= ~from_bb
             gs.zobristHash ^= ZOBRIST_PIECES[_BP][move.from_sq]
+            gs.pawnHash ^= ZOBRIST_PIECES[_BP][move.from_sq] #pawn hash
         promo = move.promo_piece
         if   promo == "whiteQueens":
             gs.whiteQueens |= to_bb
@@ -185,6 +191,7 @@ def applyMove(gs, move):
             if gs.whitePawns & from_bb:
                 gs.zobristHash ^= ZOBRIST_PIECES[_WP][move.from_sq] ^ ZOBRIST_PIECES[_WP][move.to_sq]
                 gs.whitePawns = (gs.whitePawns & ~from_bb) | to_bb
+                gs.pawnHash ^= ZOBRIST_PIECES[_WP][move.from_sq] ^ ZOBRIST_PIECES[_WP][move.to_sq] #pawn hash
                 is_pawn_move = True
                 if abs(move.to_sq - move.from_sq) == 16:
                     gs.epSquare = (move.from_sq + move.to_sq) // 2
@@ -221,6 +228,7 @@ def applyMove(gs, move):
             if gs.blackPawns & from_bb:
                 gs.zobristHash ^= ZOBRIST_PIECES[_BP][move.from_sq] ^ ZOBRIST_PIECES[_BP][move.to_sq]
                 gs.blackPawns = (gs.blackPawns & ~from_bb) | to_bb
+                gs.pawnHash ^= ZOBRIST_PIECES[_BP][move.from_sq] ^ ZOBRIST_PIECES[_BP][move.to_sq] #pawn hash
                 is_pawn_move = True
                 if abs(move.to_sq - move.from_sq) == 16:
                     gs.epSquare = (move.from_sq + move.to_sq) // 2
@@ -269,10 +277,12 @@ def applyMove(gs, move):
     #12. Flip side
     gs.whiteToMove = not gs.whiteToMove
     gs.zobristHash ^= ZOBRIST_SIDE
+    #pawnHash intentionally does NOT toggle side — pawn structure is the same
+    #regardless of whose turn it is
 
 
 def undoMove(gs):
-    (move, captured_attr, captured_sq, ep, zhash, wk, wq, bk, bq, clock) = gs.history.pop()
+    (move, captured_attr, captured_sq, ep, zhash, wk, wq, bk, bq, clock, phash) = gs.history.pop()
     from_bb = 1 << move.from_sq
     to_bb   = 1 << move.to_sq
     flags   = move.flags
@@ -344,4 +354,5 @@ def undoMove(gs):
     gs.bKingSideCastle, gs.bQueenSideCastle = bk, bq
     gs.halfMoveCounter = clock
     gs.zobristHash = zhash
+    gs.pawnHash = phash
     gs.whiteToMove = not gs.whiteToMove

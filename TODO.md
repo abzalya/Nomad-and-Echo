@@ -13,17 +13,17 @@ PYGAME UI - BENCHED
     - [2] check extensions
     - [X] futility pruning
     - [X] late move reduction
-    - [5] aspiration windows
+    - [X] aspiration windows
     - [X] repetition detection
 - evaluation:
     - [X] pawn structure - doubled/isolated/passed pawns
     - [x] king safety - open files near king, pawn shield
     - [x] piece coordination - bishop pair, rook on open file, rook on 7th
         - connected rooks is expensive calculation. left out for now
-    - [4] tapered eval
+    - [X] tapered eval
     - [5] mobility - count legal moves as a bonus, rewards active pieces
     - [6] endgame knowledge
-    - [7] evaluation in TT
+    - [7] evaluation in TT 
 - move ordering
     - [X] killer heuristic
     - [X] history heuristic

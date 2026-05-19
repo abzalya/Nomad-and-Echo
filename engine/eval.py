@@ -5,6 +5,7 @@ from engine.psts import (PAWN_PST, KNIGHT_PST, BISHOP_PST, ROOK_PST,
                           QUEEN_PST, KING_MG_PST, KING_EG_PST)
 from engine.pawn_eval_masks import FILE_MASKS, ADJACENT_FILES_MASKS, PASSED_MASKS
 from core.attacks import PAWN_ATTACKS, KING_ATTACKS, EXTENDED_KING_ZONE
+from engine.pawn_eval_hash import _pawn_eval_cache
 
 def _material_eval(gs):
     wp = gs.whitePawns.bit_count()   * 100
@@ -47,63 +48,63 @@ def _position_eval(gs, total_material):
     score -= (phase * KING_MG_PST[black_king_sq ^ 56] + (1 - phase) * KING_EG_PST[black_king_sq ^ 56])
     return score, phase
 
-#Pawn related penalty/bonuses
-DOUBLED_PENALTY  = 20
-ISOLATED_PENALTY = 20
-PASSED_BONUS     = 60
-PASSED_RANK_BONUS = [0, 10, 20, 40, 65, 100, 150, 0]
-CONNECTED_PAWNS_BONUS = 10
-PAWN_ISLAND_PENALTY = 10
+# #Pawn related penalty/bonuses
+# DOUBLED_PENALTY  = 20
+# ISOLATED_PENALTY = 20
+# PASSED_BONUS     = 60
+# PASSED_RANK_BONUS = [0, 10, 20, 40, 65, 100, 150, 0]
+# CONNECTED_PAWNS_BONUS = 10
+# PAWN_ISLAND_PENALTY = 10
 
-def _pawn_eval(gs):
-    score = 0
-    wp = gs.whitePawns
-    bp = gs.blackPawns
-    for sq in iterateBits(wp):
-        file = sq % 8
-        if (FILE_MASKS[file] & wp).bit_count() > 1:
-            score -= DOUBLED_PENALTY
-        if (ADJACENT_FILES_MASKS[file] & wp) == 0:
-            score -= ISOLATED_PENALTY
-        if (PASSED_MASKS[0][sq] & bp) == 0:
-            rank = sq // 8
-            score += PASSED_BONUS + PASSED_RANK_BONUS[rank]
-        #connected pawns
-        if (PAWN_ATTACKS[0][sq] & wp).bit_count() != 0:
-            score += CONNECTED_PAWNS_BONUS
-    for sq in iterateBits(bp):
-        file = sq % 8
-        if (FILE_MASKS[file] & bp).bit_count() > 1:
-            score += DOUBLED_PENALTY
-        if (ADJACENT_FILES_MASKS[file] & bp) == 0:
-            score += ISOLATED_PENALTY
-        if (PASSED_MASKS[1][sq] & wp) == 0:
-            rank = sq // 8
-            score -= PASSED_BONUS + PASSED_RANK_BONUS[7 - rank]
-        if (PAWN_ATTACKS[1][sq] & bp).bit_count() != 0:
-            score -= CONNECTED_PAWNS_BONUS
-    #pawn islands
-    wislands = _pawn_islands(wp)
-    bislands = _pawn_islands(bp)
-    if wislands >> 1:
-        score -= (wislands - 1) * PAWN_ISLAND_PENALTY
-    if bislands >> 1:
-        score += (bislands - 1) * PAWN_ISLAND_PENALTY
-    return score
+# def _pawn_eval(gs):
+#     score = 0
+#     wp = gs.whitePawns
+#     bp = gs.blackPawns
+#     for sq in iterateBits(wp):
+#         file = sq % 8
+#         if (FILE_MASKS[file] & wp).bit_count() > 1:
+#             score -= DOUBLED_PENALTY
+#         if (ADJACENT_FILES_MASKS[file] & wp) == 0:
+#             score -= ISOLATED_PENALTY
+#         if (PASSED_MASKS[0][sq] & bp) == 0:
+#             rank = sq // 8
+#             score += PASSED_BONUS + PASSED_RANK_BONUS[rank]
+#         #connected pawns
+#         if (PAWN_ATTACKS[0][sq] & wp).bit_count() != 0:
+#             score += CONNECTED_PAWNS_BONUS
+#     for sq in iterateBits(bp):
+#         file = sq % 8
+#         if (FILE_MASKS[file] & bp).bit_count() > 1:
+#             score += DOUBLED_PENALTY
+#         if (ADJACENT_FILES_MASKS[file] & bp) == 0:
+#             score += ISOLATED_PENALTY
+#         if (PASSED_MASKS[1][sq] & wp) == 0:
+#             rank = sq // 8
+#             score -= PASSED_BONUS + PASSED_RANK_BONUS[7 - rank]
+#         if (PAWN_ATTACKS[1][sq] & bp).bit_count() != 0:
+#             score -= CONNECTED_PAWNS_BONUS
+#     #pawn islands
+#     wislands = _pawn_islands(wp)
+#     bislands = _pawn_islands(bp)
+#     if wislands >> 1:
+#         score -= (wislands - 1) * PAWN_ISLAND_PENALTY
+#     if bislands >> 1:
+#         score += (bislands - 1) * PAWN_ISLAND_PENALTY
+#     return score
 
-def _pawn_islands(bb):
-    occupied_files = 0
-    for file in range(8):
-        if FILE_MASKS[file] & bb:
-            occupied_files |= (1 << file)
-    #count 0 to 1 transitions
-    islands, prev = 0, 0
-    for file in range(8):
-        bit = (occupied_files >> file) & 1
-        if bit and not prev:
-            islands += 1
-        prev = bit
-    return islands
+# def _pawn_islands(bb):
+#     occupied_files = 0
+#     for file in range(8):
+#         if FILE_MASKS[file] & bb:
+#             occupied_files |= (1 << file)
+#     #count 0 to 1 transitions
+#     islands, prev = 0, 0
+#     for file in range(8):
+#         bit = (occupied_files >> file) & 1
+#         if bit and not prev:
+#             islands += 1
+#         prev = bit
+#     return islands
 
 OPEN_FILE_BONUS = 25
 ROOK_ON_SEVENTH_BONUS = 20
@@ -259,7 +260,7 @@ def evaluate(gs, alpha, beta):
             return lazy, is_endgame
 
     #expensize only call if not winning/losing by margin
-    pawn_score = _pawn_eval(gs)
+    pawn_score = _pawn_eval_cache(gs)
     rook_score = _rook_eval(gs)
     king_score = _king_eval(gs, phase)
     bishop_score = _bishop_eval(gs)
