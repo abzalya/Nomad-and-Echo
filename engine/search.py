@@ -318,12 +318,11 @@ def quiescence(gs, alpha, beta, info, depth=0, ply=0):
     return alpha
 
 
-def best_move(gs, depth, info, last_best=None):
+def best_move(gs, depth, info, alpha, beta, last_best=None):
     moves, _ = generateMoves(gs)
     moves = movesOrdered(moves, gs, last_best)
     best = None
-    alpha = -10_000_000 #completely stop infinity from appearing large int values
-    beta  =  10_000_000
+    best_score = alpha
     for move in moves:
         applyMove(gs, move)
         if move.flags & MoveFlag.EN_PASSANT:
@@ -341,6 +340,7 @@ def best_move(gs, depth, info, last_best=None):
         if score > alpha:
             alpha = score
             best = move
+            best_score = score
 
     elapsed = time.perf_counter() - info.start
     nps = int(info.nodes / elapsed) if elapsed > 0 else 0 #0 devision guard
@@ -350,7 +350,7 @@ def best_move(gs, depth, info, last_best=None):
         #record the score+depth from this completed iteration so callers (web API) can read them
         info.last_score = int(alpha)
         info.last_depth = depth
-    return best
+    return best, best_score
 
 MAX_DEPTH = 32
 
@@ -359,10 +359,34 @@ def iterative_deepening(gs, time_limit=None, max_depth=MAX_DEPTH, info=None):
     #for UCI/CLI callers, leaving it None preserves the original behavior.
     if info is None:
         info = _Info(time_limit)
-    last_best = None
+    last_best_move = None
+
+    #aspiration windows
+    #search a narrow window around previous score (faster), if fails widen and re-search
+    ASPIRATION_WINDOW = 25
+    prev_score = 0
     for depth in range(1, max_depth + 1):
-        candidate = best_move(gs, depth, info, last_best)
-        if info.stop and last_best is not None:
-            break
-        last_best = candidate #only returns best move of full depth X
-    return last_best
+
+        if depth <= 4: #too shallow, full window
+            alpha = -10_000_000
+            beta  =  10_000_000
+        else:
+            alpha = prev_score - ASPIRATION_WINDOW
+            beta = prev_score + ASPIRATION_WINDOW
+
+        while True:
+            candidate, score = best_move(gs, depth, info, alpha, beta, last_best_move)
+            last_best_move = candidate
+            if info.stop and last_best_move is not None:
+                break
+            if score <= alpha:
+                alpha -= ASPIRATION_WINDOW * 2 #fail-low, widen alpha
+            elif score >= beta:
+                beta += ASPIRATION_WINDOW * 2 # fail-high, widen beta
+            else:
+                prev_score = score
+                break
+        
+        if info.stop and last_best_move is not None:
+                break
+    return last_best_move
