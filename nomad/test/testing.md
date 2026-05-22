@@ -26,6 +26,7 @@
 | Nomad-v0.14 | Aspiration Windows | +49 Elo, LOS 94.6% over v0.13 |
 | Nomad-v0.15 | Check Extensions + Pawn Hash Table | +45.4 ELO, LOS 93% over v0.14 |
 | Nomad-v0.16 | komodo opening book | ~ +21 ELO LOS 77%|
+| Nomad-v1.0pre | endgame knowledge eval terms | small regression at the moment. |
 
 ## VS
 
@@ -45,6 +46,7 @@
 | v0.14 vs v0.13 | 45 - 31 - 24 | Aspiration windows are an improvement. Interestingly, slightly more dominant as black. |
 | v0.15 vs v0.14 | 45 - 32 - 23  | Small improvement. My only incoming changes are going to be tweaks to time management and opening books. This might be the last algorithm changes before v1.0 |
 | v0.16 vs v0.15 | 36 - 30 - 34  | Opening book adds a little bit, but the high drawrate indicates the close match strength wise. Expected.  |
+| v1.0pre vs v0.16 | 31 - 48 - 21 | extra eval terms are hurting the engine even though they should help convert the endgames. clearly some tweaking left to do. return to this |
 
 ## Claude Profile
 
@@ -65,3 +67,10 @@ workload, with JIT on.
 | main (v0.12pre: +LMR +RFP +Razoring +FP +lazy eval) vs v0.11 | — (proportional only) | 3.21M vs 3.63M | **Pure proportional comparison, main vs v0.11.** Node count at opening pos depth 4: **8,962 vs 13,852 (−35%)** — LMR is working as advertised. Tree-expansion functions all fall: `applyMove` −0.6pp, `generateQuiescence` −1.1pp, `quiescence` own −0.8pp, `generateMoves` −0.3pp, `see` −0.4pp. Eval-related % rises because RFP calls `evaluate()` at the top of every interior node: `iterateBits` +1.6pp, `_position_eval` +1.6pp, `_pawn_eval` +0.8pp. Eval-per-call cost flat (~3.6µs) — pure call-count increase, not regression. **Lazy eval firing rate only 14.4%** (1,583 / 10,968 evaluate calls short-circuit); `LAZY_MARGIN=300` is too conservative given typical expensive-term swing ~150–200cp. Lowering to 200 should ~2–3× the firing rate. Hotspot ranking is unchanged from v0.11 — additive search-side change, no eval regression. |
 | v0.13pre (+PVS +aspiration, RFP/Razoring tuned, FP off) | 1.153s | 2.73M | Same workload. −39% wall vs v0.12pre with ~same node count → ~40% faster per node. PVS scout windows narrowed everything: `generateQuiescence` calls −37%, `quiescence` calls −13%, `applyMove` calls −9%. Lazy eval firing rate up to **22%** (margin 200 + is_endgame guard). Eval still dominates at ~47% of total — pawn hash is next. |
 | + pawn hash (initial impl had 2 bugs: wrong piece indices in initial compute, plus incorrect side-to-move toggle — both fixed) | 1.169s | 2.73M | Wall time flat but **`_pawn_eval` dropped from 7.9% → <0.9% of runtime (−87%)** and fell out of top 25. `_pawn_islands` also dropped out. Cache hit rate ~90%+ on the ~10.6k non-lazy eval calls. Savings converted into more search depth: **Opera d4 nodes 8,614 → 11,771 (+37%)**, NPS up 27%, depth-4 score moved from cp 165 → cp 210 (more confident, deeper-informed). The expected "speed → depth" loop fired exactly as intended. |
+
+## How to evaluate the engine
+
+### Strength: benchmark positions
+- **WAC (Win At Chess)** — 300 positions where there's a clear best move; check if engine finds it
+- **Bratko-Kopec** — classic test suite
+- These give a rough ELO estimate and tell you where your eval is weak

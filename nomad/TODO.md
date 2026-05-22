@@ -1,12 +1,3 @@
-#UI TODO
-PYGAME UI - BENCHED
-- [] game restart
-- [] select colour
-- [] move log on the side
-- [] undo move
-- [] end screen with the game restart button
-
-
 #ENGINE priorities:
 - search
     - [X] null move pruning
@@ -45,3 +36,9 @@ PYGAME UI - BENCHED
     - [X] Killer moves + history heuristic
     - [X] Delta pruning + SEE in qsearch.
     - [7] Magic bitboards for sliding piece attacks
+
+#UCI / interop
+- [ ] FEN parser
+    - browser frontends (and many GUIs) send FEN — needed before the engine can be wrapped in a web API
+    - split FEN into 6 fields, parse piece placement into the 12 bitboards, set side/castling/ep/halfmove/fullmove, recompute zobrist via core.zobrist.computeHash(gs)
+    - add a perft test from a non-startpos FEN to validate
