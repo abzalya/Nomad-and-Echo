@@ -109,3 +109,17 @@ def unchatable_pawns(white_passed, black_passed, wk_sq, bk_sq, side_to_move):
     for sq in iterateBits(black_passed):
         if pawn_uncathable(sq, wk_sq, BLACK, side_to_move):
             score -= UNCATCHABLE_PAWN_BONUS
+
+#connected passers
+
+CONNECTED_PASSED_BONUS = 50 #per pawn, but 2 connected are about twice as strong*
+
+def connected_passers(white_passed, black_passed):
+    for sq in iterateBits(white_passed):
+        file = sq % 8
+        if ADJACENT_FILES_MASKS[file] & white_passed:
+            score += CONNECTED_PASSED_BONUS
+    for sq in iterateBits(black_passed):
+        file = sq % 8
+        if ADJACENT_FILES_MASKS[file] & black_passed:
+            score -= CONNECTED_PASSED_BONUS
