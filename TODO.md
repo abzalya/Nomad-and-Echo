@@ -22,7 +22,7 @@ PYGAME UI - BENCHED
         - connected rooks is expensive calculation. left out for now
     - [X] tapered eval
     - [5] mobility - count legal moves as a bonus, rewards active pieces
-    - [6] endgame knowledge
+    - [X] endgame knowledge
     - [7] evaluation in TT 
 - move ordering
     - [X] killer heuristic

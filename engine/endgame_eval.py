@@ -44,8 +44,9 @@ def king_and_pawn(white_passed, black_passed, wk_sq, bk_sq):
 
 #rule of square, uncatchable pawns
 
-def pawn_uncathable(p_sq, k_sq, p_color, side_to_move):
+def pawn_uncathable(p_sq, k_sq, p_color, side_to_move, all_pieces):
     p_rank = p_sq // 8
+    p_file = p_sq % 8
 
     if p_color == "WHITE":
         queen_sq = p_sq | 56
@@ -53,29 +54,40 @@ def pawn_uncathable(p_sq, k_sq, p_color, side_to_move):
         #double push counts as one move
         if p_rank == 1:
             distance = 5
+        #path from pawn to queening sq (exclusive of pawn, inclusive of queening sq)
+        path_mask = 0
+        for r in range(p_rank + 1, 8):
+            path_mask |= 1 << (r * 8 + p_file)
     else:
         queen_sq = p_sq & 7
         distance = p_rank
         if p_rank == 6:
             distance = 5
-    
+        path_mask = 0
+        for r in range(0, p_rank):
+            path_mask |= 1 << (r * 8 + p_file)
+
+    #any piece (own or enemy) in the path invalidates the rule of square
+    if path_mask & all_pieces:
+        return False
+
     king_dist = chebyshev(k_sq, queen_sq)
-    
+
     # If pawn's side to move, extra tempo
     if side_to_move == p_color:
         return king_dist > distance
     else:
         return king_dist > distance + 1
-    
-UNCATCHABLE_PAWN_BONUS = 600
 
-def unchatable_pawns(white_passed, black_passed, wk_sq, bk_sq, side_to_move):
+UNCATCHABLE_PAWN_BONUS = 250  # dropped from 600 — conservative, search verifies the rest
+
+def unchatable_pawns(white_passed, black_passed, wk_sq, bk_sq, side_to_move, all_pieces):
     score = 0
     for sq in iterateBits(white_passed):
-        if pawn_uncathable(sq, bk_sq, "WHITE", side_to_move):
+        if pawn_uncathable(sq, bk_sq, "WHITE", side_to_move, all_pieces):
             score += UNCATCHABLE_PAWN_BONUS
     for sq in iterateBits(black_passed):
-        if pawn_uncathable(sq, wk_sq, "BLACK", side_to_move):
+        if pawn_uncathable(sq, wk_sq, "BLACK", side_to_move, all_pieces):
             score -= UNCATCHABLE_PAWN_BONUS
     return score
 
@@ -142,8 +154,13 @@ def endgame_eval(gs):
     wk_sq = gs.whiteKing.bit_length() - 1
     bk_sq = gs.blackKing.bit_length() - 1
 
+    #all occupancy for blocker checks
+    all_pieces = (gs.whitePawns | gs.whiteRooks | gs.whiteKnights | gs.whiteBishops |
+                  gs.whiteQueens | gs.whiteKing | gs.blackPawns | gs.blackRooks |
+                  gs.blackKnights | gs.blackBishops | gs.blackQueens | gs.blackKing)
+
     k_and_p_score = king_and_pawn(white_passed, black_passed, wk_sq, bk_sq)
-    unchatable_pawns_score = unchatable_pawns(white_passed, black_passed, wk_sq, bk_sq, side_to_move)
+    unchatable_pawns_score = unchatable_pawns(white_passed, black_passed, wk_sq, bk_sq, side_to_move, all_pieces)
     connected_passers_score = connected_passers(white_passed, black_passed)
 
     return k_and_p_score + unchatable_pawns_score + connected_passers_score

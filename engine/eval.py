@@ -214,10 +214,11 @@ def evaluate(gs, alpha, beta):
     mopup_score = _mopup_eval(gs)
     tempo = TEMPO_BONUS if gs.whiteToMove else -TEMPO_BONUS
 
-    #endgame terms
+    #endgame terms — tapered by (1 - phase) so contribution ramps up smoothly
+    #as material drops; no discontinuity at the is_endgame threshold
     endgame_score = 0
     if is_endgame:
-        endgame_score = endgame_eval(gs)
+        endgame_score = int(endgame_eval(gs) * (1 - phase))
 
     #endgame bool for search
     return material_score + position_score + pawn_score + rook_score + king_score + bishop_score + mopup_score + tempo + endgame_score, is_endgame
