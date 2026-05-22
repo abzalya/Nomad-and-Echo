@@ -52,10 +52,11 @@ def chebyshev(sq1, sq2):
 KING_ESCORT_BONUS = 6
 KING_BLOCK_BONUS = 4
 
-def king_and_pawn(gs):
-    white_passed, black_passed = passed_pawns(gs.whitePawns, gs.blackPawns)
-    wk_sq = gs.whiteKing.bit_length() - 1
-    bk_sq = gs.blackKing.bit_length() - 1
+# white_passed, black_passed = passed_pawns(gs.whitePawns, gs.blackPawns)
+# wk_sq = gs.whiteKing.bit_length() - 1
+# bk_sq = gs.blackKing.bit_length() - 1
+
+def king_and_pawn(white_passed, black_passed, wk_sq, bk_sq):
     for sq in iterateBits(white_passed):
         queen_sq = sq | 56
         own_dist = chebyshev(wk_sq, queen_sq)
@@ -70,3 +71,41 @@ def king_and_pawn(gs):
         
         enemy_dist = chebyshev(wk_sq, queen_sq)
         score += (7 - enemy_dist) * KING_BLOCK_BONUS
+
+#rule of square, uncatchable pawns
+
+def pawn_uncathable(p_sq, k_sq, p_color, side_to_move):
+    p_file = p_sq % 8
+    p_rank = p_sq // 8
+    
+    if p_color == WHITE:
+        queen_sq = p_sq | 56
+        distance = 7 - p_rank
+        #double push counts as one move
+        if p_rank == 1:
+            distance = 5
+    else:
+        queen_sq = p_sq & 7
+        distance = p_rank
+        if p_rank == 6:
+            distance = 5
+    
+    king_dist = chebyshev(k_sq, queen_sq)
+    
+    # If pawn's side to move, extra tempo
+    if side_to_move == p_color:
+        return king_dist > distance
+    else:
+        return king_dist > distance + 1
+    
+UNCATCHABLE_PAWN_BONUS = 600
+
+# side_to_move = WHITE if gs.whiteToMove else BLACK
+
+def unchatable_pawns(white_passed, black_passed, wk_sq, bk_sq, side_to_move):
+    for sq in iterateBits(white_passed):
+        if pawn_uncathable(sq, bk_sq, WHITE, side_to_move):
+            score += UNCATCHABLE_PAWN_BONUS
+    for sq in iterateBits(black_passed):
+        if pawn_uncathable(sq, wk_sq, BLACK, side_to_move):
+            score -= UNCATCHABLE_PAWN_BONUS
