@@ -6,6 +6,7 @@ from engine.psts import (PAWN_PST, KNIGHT_PST, BISHOP_PST, ROOK_PST,
 from engine.pawn_eval_masks import FILE_MASKS, ADJACENT_FILES_MASKS, PASSED_MASKS
 from core.attacks import PAWN_ATTACKS, KING_ATTACKS, EXTENDED_KING_ZONE
 from engine.pawn_eval_hash import _pawn_eval_cache
+from engine.endgame_eval import is_drawn_wrong_bishop, endgame_eval
 
 def _material_eval(gs):
     wp = gs.whitePawns.bit_count()   * 100
@@ -47,64 +48,6 @@ def _position_eval(gs, total_material):
     score += (phase * KING_MG_PST[white_king_sq] + (1 - phase) * KING_EG_PST[white_king_sq])
     score -= (phase * KING_MG_PST[black_king_sq ^ 56] + (1 - phase) * KING_EG_PST[black_king_sq ^ 56])
     return score, phase
-
-# #Pawn related penalty/bonuses
-# DOUBLED_PENALTY  = 20
-# ISOLATED_PENALTY = 20
-# PASSED_BONUS     = 60
-# PASSED_RANK_BONUS = [0, 10, 20, 40, 65, 100, 150, 0]
-# CONNECTED_PAWNS_BONUS = 10
-# PAWN_ISLAND_PENALTY = 10
-
-# def _pawn_eval(gs):
-#     score = 0
-#     wp = gs.whitePawns
-#     bp = gs.blackPawns
-#     for sq in iterateBits(wp):
-#         file = sq % 8
-#         if (FILE_MASKS[file] & wp).bit_count() > 1:
-#             score -= DOUBLED_PENALTY
-#         if (ADJACENT_FILES_MASKS[file] & wp) == 0:
-#             score -= ISOLATED_PENALTY
-#         if (PASSED_MASKS[0][sq] & bp) == 0:
-#             rank = sq // 8
-#             score += PASSED_BONUS + PASSED_RANK_BONUS[rank]
-#         #connected pawns
-#         if (PAWN_ATTACKS[0][sq] & wp).bit_count() != 0:
-#             score += CONNECTED_PAWNS_BONUS
-#     for sq in iterateBits(bp):
-#         file = sq % 8
-#         if (FILE_MASKS[file] & bp).bit_count() > 1:
-#             score += DOUBLED_PENALTY
-#         if (ADJACENT_FILES_MASKS[file] & bp) == 0:
-#             score += ISOLATED_PENALTY
-#         if (PASSED_MASKS[1][sq] & wp) == 0:
-#             rank = sq // 8
-#             score -= PASSED_BONUS + PASSED_RANK_BONUS[7 - rank]
-#         if (PAWN_ATTACKS[1][sq] & bp).bit_count() != 0:
-#             score -= CONNECTED_PAWNS_BONUS
-#     #pawn islands
-#     wislands = _pawn_islands(wp)
-#     bislands = _pawn_islands(bp)
-#     if wislands >> 1:
-#         score -= (wislands - 1) * PAWN_ISLAND_PENALTY
-#     if bislands >> 1:
-#         score += (bislands - 1) * PAWN_ISLAND_PENALTY
-#     return score
-
-# def _pawn_islands(bb):
-#     occupied_files = 0
-#     for file in range(8):
-#         if FILE_MASKS[file] & bb:
-#             occupied_files |= (1 << file)
-#     #count 0 to 1 transitions
-#     islands, prev = 0, 0
-#     for file in range(8):
-#         bit = (occupied_files >> file) & 1
-#         if bit and not prev:
-#             islands += 1
-#         prev = bit
-#     return islands
 
 OPEN_FILE_BONUS = 25
 ROOK_ON_SEVENTH_BONUS = 20
@@ -250,6 +193,10 @@ def evaluate(gs, alpha, beta):
     if total_material < ENDGAME_THRESHOLD:
         is_endgame = True
 
+    #wrong bishop endgame
+    if is_drawn_wrong_bishop(gs, "WHITE") or is_drawn_wrong_bishop(gs, "BLACK"):
+        return 0, is_endgame
+
     #lazy evaluation
     if not is_endgame:
         lazy = material_score + position_score
@@ -266,7 +213,13 @@ def evaluate(gs, alpha, beta):
     bishop_score = _bishop_eval(gs)
     mopup_score = _mopup_eval(gs)
     tempo = TEMPO_BONUS if gs.whiteToMove else -TEMPO_BONUS
+
+    #endgame terms
+    endgame_score = 0
+    if is_endgame:
+        endgame_score = endgame_eval(gs)
+
     #endgame bool for search
-    return material_score + position_score + pawn_score + rook_score + king_score + bishop_score + mopup_score + tempo, is_endgame
+    return material_score + position_score + pawn_score + rook_score + king_score + bishop_score + mopup_score + tempo + endgame_score, is_endgame
 
     
