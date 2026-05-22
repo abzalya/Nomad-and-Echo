@@ -123,3 +123,42 @@ def connected_passers(white_passed, black_passed):
         file = sq % 8
         if ADJACENT_FILES_MASKS[file] & black_passed:
             score -= CONNECTED_PASSED_BONUS
+
+#wonrg colour bishop endgame
+#return true if wrong bishop
+def is_drawn_wrong_bishop(gs, side_attacking):
+    if side_attacking == WHITE:
+        bishops = gs.whiteBishops
+        pawns = gs.whitePawns
+        other = (gs.whiteRooks | gs.whiteKnights | gs.whiteQueens | 
+                 gs.blackPawns | gs.blackRooks | gs.blackKnights | 
+                 gs.blackBishops | gs.blackQueens)
+    else:
+        bishops = gs.blackBishops
+        pawns = gs.blackPawns
+        other = (gs.blackRooks | gs.blackKnights | gs.blackQueens | 
+                 gs.whitePawns | gs.whiteRooks | gs.whiteKnights | 
+                 gs.whiteBishops | gs.whiteQueens)
+    
+    if other != 0:
+        return False  # other material on board
+    if bishops.bit_count() != 1:
+        return False
+    if pawns.bit_count() != 1:
+        return False
+    
+    pawn_sq = next(iterateBits(pawns))
+    pawn_file = pawn_sq % 8
+    if pawn_file != 0 and pawn_file != 7:
+        return False  # not a rook pawn
+    
+    bishop_sq = next(iterateBits(bishops))
+    bishop_color = (bishop_sq // 8 + bishop_sq % 8) & 1
+    
+    if side_attacking == WHITE:
+        promo_sq = pawn_file + 56
+    else:
+        promo_sq = pawn_file
+    promo_color = (promo_sq // 8 + promo_sq % 8) & 1
+    
+    return bishop_color != promo_color
