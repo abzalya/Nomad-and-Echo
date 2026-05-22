@@ -7,6 +7,7 @@ from core.move_generator import legalMoves
 from core.move import MoveFlag
 from engine.search import best_move, iterative_deepening, _Info
 from engine.tt import tt_clear
+from engine.polyglot import PolyglotBook
 
 FILES = "abcdefgh"
 
@@ -57,10 +58,11 @@ def _allocate_time(remaining_ms, inc_ms, movestogo=None):
 
 _LARGE_DEPTH = 64  # sentinel for time-limited searches
 
-def uci_loop():
+def uci_loop(book_path=None):
     sys.stdin.reconfigure(encoding='utf-8-sig')
     game  = Game()
     depth = 3
+    book  = PolyglotBook(book_path) if book_path and os.path.isfile(book_path) else None
 
     for line in sys.stdin:
         line = line.strip()
@@ -122,10 +124,12 @@ def uci_loop():
             elif "infinite" in parts:
                 search_depth = _LARGE_DEPTH
 
-            if soft_time_limit is not None:
-                move = iterative_deepening(game.gs, soft_time_limit)
-            else:
-                move, _ = best_move(game.gs, search_depth, _Info(None), -10_000_000, 10_000_000)
+            move = book.probe(game.gs, game.legal_moves) if book else None
+            if move is None:
+                if soft_time_limit is not None:
+                    move = iterative_deepening(game.gs, soft_time_limit)
+                else:
+                    move, _ = best_move(game.gs, search_depth, _Info(None), -10_000_000, 10_000_000)
             print(f"bestmove {move_to_uci(move) if move else '0000'}")
 
         elif line == "quit":
@@ -134,4 +138,7 @@ def uci_loop():
         sys.stdout.flush()
 
 if __name__ == "__main__":
-    uci_loop()
+    book_path = None
+    if "--book" in sys.argv:
+        book_path = sys.argv[sys.argv.index("--book") + 1]
+    uci_loop(book_path)

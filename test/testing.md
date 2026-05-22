@@ -25,6 +25,7 @@
 | Nomad-v0.13 | PVS  + RFP, Razoring (re-enabled) | Good start as an improveemnt over v0.12. This will serve as a foundation for the re-enabled RFP, razoring. Re-enable one by one and confirm improvement before committing and tagging. Re-enabled RFP on top of PVS has shown to be an improvement. Adding Razoring on top is neutral. OK to keep.|
 | Nomad-v0.14 | Aspiration Windows | +49 Elo, LOS 94.6% over v0.13 |
 | Nomad-v0.15 | Check Extensions + Pawn Hash Table | +45.4 ELO, LOS 93% over v0.14 |
+| Nomad-v0.16 | komodo opening book | ~ +21 ELO LOS 77%|
 
 ## VS
 
@@ -42,7 +43,8 @@
 | v0.13pre (PVS+RFP) vs v0.13pre (PVS only)| 41 - 30 - 29 | +38, LOS 90% |
 | v0.13 vs v0.13pre(PVS+RFP) | 40 - 37 - 23 | Neutral, Keep. |
 | v0.14 vs v0.13 | 45 - 31 - 24 | Aspiration windows are an improvement. Interestingly, slightly more dominant as black. |
-| Nomad-v0.15 | 45 - 32 - 23  | Small improvement. My only incoming changes are going to be tweaks to time management and opening books. This might be the last algorithm changes before v1.0 |
+| v0.15 vs v0.14 | 45 - 32 - 23  | Small improvement. My only incoming changes are going to be tweaks to time management and opening books. This might be the last algorithm changes before v1.0 |
+| v0.16 vs v0.15 | 36 - 30 - 34  | Opening book adds a little bit, but the high drawrate indicates the close match strength wise. Expected.  |
 
 ## Claude Profile
 
