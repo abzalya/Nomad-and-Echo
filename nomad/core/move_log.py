@@ -1,7 +1,7 @@
 #move to string for the move log
-from core.move import MoveFlag
-from core.bitboard import PIECE_BITBOARDS
-from core.attacks import isSquareAttacked
+from nomad.core.move import MoveFlag
+from nomad.core.bitboard import PIECE_BITBOARDS
+from nomad.core.attacks import isSquareAttacked
 
 PIECE_LETTER = {
     "whitePawns":   "",

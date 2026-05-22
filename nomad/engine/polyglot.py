@@ -1,7 +1,7 @@
 import struct
 import os
-from core.bitboard import iterateBits
-from core.move import MoveFlag
+from nomad.core.bitboard import iterateBits
+from nomad.core.move import MoveFlag
 
 # Polyglot Zobrist random table (781 entries).
 # These are the fixed constants defined by the Polyglot spec — every .bin book

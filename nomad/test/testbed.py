@@ -1,10 +1,10 @@
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from core.game import Game
-from engine.search import iterative_deepening
-from engine.uci import uci_to_move, move_to_uci
+from nomad.core.game import Game
+from nomad.engine.search import iterative_deepening
+from nomad.engine.uci import uci_to_move, move_to_uci
 
 OPERA_GAME = (
     "e2e4 e7e5 g1f3 d7d6 d2d4 c8g4 d4e5 g4f3 d1f3 d6e5 "

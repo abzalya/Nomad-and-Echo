@@ -1,5 +1,5 @@
-from core.bitboard import iterateBits
-from engine.pawn_eval_masks import ADJACENT_FILES_MASKS, PASSED_MASKS
+from nomad.core.bitboard import iterateBits
+from nomad.engine.pawn_eval_masks import ADJACENT_FILES_MASKS, PASSED_MASKS
 
 
 

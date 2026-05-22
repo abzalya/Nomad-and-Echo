@@ -1,9 +1,9 @@
 # Move Generation
-from core.move import Move, MoveFlag
-from core.bitboard import iterateBits, RANK_18
-from core.attacks import pawnActions, pawnAttacks, pawnMoves, knightMoves, kingMoves, bishopAttacks, rookAttacks, queenAttacks, isSquareAttacked, KING_ATTACKS, attackedBy, PAWN_ATTACKS, KNIGHT_ATTACKS
-from core.apply_move import applyMove, undoMove
-from core.ray_attacks import RAY_ATTACKS
+from nomad.core.move import Move, MoveFlag
+from nomad.core.bitboard import iterateBits, RANK_18
+from nomad.core.attacks import pawnActions, pawnAttacks, pawnMoves, knightMoves, kingMoves, bishopAttacks, rookAttacks, queenAttacks, isSquareAttacked, KING_ATTACKS, attackedBy, PAWN_ATTACKS, KNIGHT_ATTACKS
+from nomad.core.apply_move import applyMove, undoMove
+from nomad.core.ray_attacks import RAY_ATTACKS
 
 def generateMoves(gs):
     allMoves = []

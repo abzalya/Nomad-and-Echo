@@ -1,6 +1,6 @@
 import copy
-from core.move_generator import legalMoves
-from core.apply_move import applyMove
+from nomad.core.move_generator import legalMoves
+from nomad.core.apply_move import applyMove
 
 #Counting total legal nodes at each depth from a starting position
 def perft(gs, depth):

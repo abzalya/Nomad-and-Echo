@@ -1,12 +1,12 @@
 #static position evaluation
 
-from core.bitboard import iterateBits
-from engine.psts import (PAWN_PST, KNIGHT_PST, BISHOP_PST, ROOK_PST,
+from nomad.core.bitboard import iterateBits
+from nomad.engine.psts import (PAWN_PST, KNIGHT_PST, BISHOP_PST, ROOK_PST,
                           QUEEN_PST, KING_MG_PST, KING_EG_PST)
-from engine.pawn_eval_masks import FILE_MASKS, ADJACENT_FILES_MASKS, PASSED_MASKS
-from core.attacks import PAWN_ATTACKS, KING_ATTACKS, EXTENDED_KING_ZONE
-from engine.pawn_eval_hash import _pawn_eval_cache
-from engine.endgame_eval import is_drawn_wrong_bishop, endgame_eval
+from nomad.engine.pawn_eval_masks import FILE_MASKS, ADJACENT_FILES_MASKS, PASSED_MASKS
+from nomad.core.attacks import PAWN_ATTACKS, KING_ATTACKS, EXTENDED_KING_ZONE
+from nomad.engine.pawn_eval_hash import _pawn_eval_cache
+from nomad.engine.endgame_eval import is_drawn_wrong_bishop, endgame_eval
 
 def _material_eval(gs):
     wp = gs.whitePawns.bit_count()   * 100

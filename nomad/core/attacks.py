@@ -1,6 +1,6 @@
-from core.bitboard import FULL, NOT_A_FILE, NOT_H_FILE, NOT_AB_FILE, NOT_GH_FILE, RANK_2, RANK_7
-from core.bitboard import iterateBits
-from core.ray_attacks import RAY_ATTACKS
+from nomad.core.bitboard import FULL, NOT_A_FILE, NOT_H_FILE, NOT_AB_FILE, NOT_GH_FILE, RANK_2, RANK_7
+from nomad.core.bitboard import iterateBits
+from nomad.core.ray_attacks import RAY_ATTACKS
 
 def knightAttacks(sq):
     bb = 1 << sq

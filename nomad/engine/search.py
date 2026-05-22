@@ -1,12 +1,12 @@
 import time
-from engine.eval import evaluate
-from engine.move_order import movesOrdered, see, pieceValueOnSq
-from engine.tt import tt_get, tt_store, EXACT, LOWER, UPPER
-from core.move_generator import generateMoves, generateQuiescence
-from core.move import MoveFlag
-from core.apply_move import applyMove, undoMove
-from core.attacks import isSquareAttacked, attackedBy, inCheck
-from core.zobrist import ZOBRIST_SIDE, ZOBRIST_EP
+from nomad.engine.eval import evaluate
+from nomad.engine.move_order import movesOrdered, see, pieceValueOnSq
+from nomad.engine.tt import tt_get, tt_store, EXACT, LOWER, UPPER
+from nomad.core.move_generator import generateMoves, generateQuiescence
+from nomad.core.move import MoveFlag
+from nomad.core.apply_move import applyMove, undoMove
+from nomad.core.attacks import isSquareAttacked, attackedBy, inCheck
+from nomad.core.zobrist import ZOBRIST_SIDE, ZOBRIST_EP
 
 MATE_SCORE     = 100000
 MATE_THRESHOLD = 90000

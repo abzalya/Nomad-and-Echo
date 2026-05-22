@@ -1,4 +1,4 @@
-from core import zobrist
+from nomad.core import zobrist
 
 def gamestate_from_fen(fen_str):
     gs = GameState()

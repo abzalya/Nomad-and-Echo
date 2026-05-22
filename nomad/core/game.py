@@ -1,10 +1,10 @@
-from core.board import GameState
-from core.move_generator import legalMoves
-from core.apply_move import applyMove, undoMove
-from core.attacks import isSquareAttacked
-from core.draw_conditions import fiftyMoveRule, insufficientMaterial, threefoldRepetition
-from core.move_log import move_to_str, is_check_checkmate_str
-from engine.search import best_move, _Info
+from nomad.core.board import GameState
+from nomad.core.move_generator import legalMoves
+from nomad.core.apply_move import applyMove, undoMove
+from nomad.core.attacks import isSquareAttacked
+from nomad.core.draw_conditions import fiftyMoveRule, insufficientMaterial, threefoldRepetition
+from nomad.core.move_log import move_to_str, is_check_checkmate_str
+from nomad.engine.search import best_move, _Info
 
 class Game:
     #new class owns the board state, the current legal move list, and the game outcome.

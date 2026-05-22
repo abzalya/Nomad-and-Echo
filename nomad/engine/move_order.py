@@ -1,7 +1,7 @@
-from core.move import MoveFlag
-from core.apply_move import applyMove, undoMove
-from core.move_generator import generateMoves, generateQuiescence
-from core.attacks import attackersTo
+from nomad.core.move import MoveFlag
+from nomad.core.apply_move import applyMove, undoMove
+from nomad.core.move_generator import generateMoves, generateQuiescence
+from nomad.core.attacks import attackersTo
 
 def pieceValueOnSq(sq, gs):
     bit = 1 << sq

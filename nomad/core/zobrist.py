@@ -1,7 +1,7 @@
 import random
 random.seed(1)
 
-from core.bitboard import iterateBits, PIECE_BITBOARDS
+from nomad.core.bitboard import iterateBits, PIECE_BITBOARDS
 
 PIECE_INDEX = {attr: i for i, attr in enumerate(PIECE_BITBOARDS)}
 

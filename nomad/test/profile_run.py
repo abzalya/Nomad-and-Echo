@@ -2,12 +2,12 @@ import cProfile
 import pstats
 import io
 import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 print("starting profile...", flush=True)
-from core.game import Game
-from core.move import MoveFlag
-from engine.search import iterative_deepening
-from engine.uci import uci_to_move
+from nomad.core.game import Game
+from nomad.core.move import MoveFlag
+from nomad.engine.search import iterative_deepening
+from nomad.engine.uci import uci_to_move
 
 # Position from the Opera game, just before the queen sac — rich middlegame
 OPENING = "e2e4 e7e5 g1f3 d7d6 d2d4 c8g4 d4e5 g4f3 d1f3 d6e5 f1c4 g8f6 f3b3 d8e7 b1c3 c7c6 c1g5 b7b5 c3b5 c6b5 c4b5 b8d7 e1c1 a8d8".split()

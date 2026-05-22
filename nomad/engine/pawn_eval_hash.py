@@ -1,8 +1,8 @@
 #Pawn eval is a slow part of my evaluation, it is only dependent on pawns and therefore doesnt change as much
 #repeated positions with the same pawn strcuture are common enough to hit 80%+ hitrate in middle games
-from core.bitboard import iterateBits
-from engine.pawn_eval_masks import FILE_MASKS, ADJACENT_FILES_MASKS, PASSED_MASKS
-from core.attacks import PAWN_ATTACKS
+from nomad.core.bitboard import iterateBits
+from nomad.engine.pawn_eval_masks import FILE_MASKS, ADJACENT_FILES_MASKS, PASSED_MASKS
+from nomad.core.attacks import PAWN_ATTACKS
 
 _SIZE = 1 << 20  #1M slots
 _PAWN_TT   = [None] * _SIZE

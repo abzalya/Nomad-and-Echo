@@ -1,4 +1,4 @@
-from core.bitboard import FULL, NOT_A_FILE, NOT_H_FILE
+from nomad.core.bitboard import FULL, NOT_A_FILE, NOT_H_FILE
 
 
 # (shift_amount, file_mask, is_positive_shift)

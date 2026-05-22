@@ -1,6 +1,6 @@
-from core.move import MoveFlag
-from core.bitboard import iterateBits, RANK_2, RANK_7
-from core.zobrist import ZOBRIST_EP, ZOBRIST_CASTLING, ZOBRIST_PIECES, ZOBRIST_SIDE
+from nomad.core.move import MoveFlag
+from nomad.core.bitboard import iterateBits, RANK_2, RANK_7
+from nomad.core.zobrist import ZOBRIST_EP, ZOBRIST_CASTLING, ZOBRIST_PIECES, ZOBRIST_SIDE
 
 #Piece-index constants matching the order used in ZOBRIST_PIECES.
 _WP, _WR, _WN, _WB, _WQ, _WK = 0, 1, 2, 3, 4, 5

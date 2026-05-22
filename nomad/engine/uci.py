@@ -1,13 +1,13 @@
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from core.game import Game
-from core.board import gamestate_from_fen
-from core.move_generator import legalMoves
-from core.move import MoveFlag
-from engine.search import best_move, iterative_deepening, _Info
-from engine.tt import tt_clear
-from engine.polyglot import PolyglotBook
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+from nomad.core.game import Game
+from nomad.core.board import gamestate_from_fen
+from nomad.core.move_generator import legalMoves
+from nomad.core.move import MoveFlag
+from nomad.engine.search import best_move, iterative_deepening, _Info
+from nomad.engine.tt import tt_clear
+from nomad.engine.polyglot import PolyglotBook
 
 FILES = "abcdefgh"
 
