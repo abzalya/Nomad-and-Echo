@@ -148,20 +148,34 @@ def is_drawn_wrong_bishop(gs, side_attacking):
 
 
 #unite
+#STATUS (post-ablation 2026-05-22):
+#  ACTIVE:   connected_passers — small bonus, simple bitboard intersect, low risk.
+#  DISABLED: king_and_pawn — encourages king activity but seems to cost more Elo
+#                            than it gains (likely pushes king into tactical danger).
+#  DISABLED: unchatable_pawns — even with blocker check, 250cp bonus per uncatchable
+#                               pawn produces large eval swings the search misjudges.
+#
+#Full-stack ablation: main with ALL three terms vs v0.16 → 41.5% (-60 Elo, 100 games)
+#                    main with all three OFF vs v0.16 → 48.3% (-12 Elo, 30 games, ~neutral)
+#Keep the disabled functions for future investigation/tuning/re-enabling
+
 def endgame_eval(gs):
-    side_to_move = "WHITE" if gs.whiteToMove else "BLACK"
     white_passed, black_passed = passed_pawns(gs.whitePawns, gs.blackPawns)
-    wk_sq = gs.whiteKing.bit_length() - 1
-    bk_sq = gs.blackKing.bit_length() - 1
 
-    #all occupancy for blocker checks
-    all_pieces = (gs.whitePawns | gs.whiteRooks | gs.whiteKnights | gs.whiteBishops |
-                  gs.whiteQueens | gs.whiteKing | gs.blackPawns | gs.blackRooks |
-                  gs.blackKnights | gs.blackBishops | gs.blackQueens | gs.blackKing)
+    # DISABLED: king_and_pawn
+    # side_to_move = "WHITE" if gs.whiteToMove else "BLACK"
+    # wk_sq = gs.whiteKing.bit_length() - 1
+    # bk_sq = gs.blackKing.bit_length() - 1
+    # k_and_p_score = king_and_pawn(white_passed, black_passed, wk_sq, bk_sq)
 
-    k_and_p_score = king_and_pawn(white_passed, black_passed, wk_sq, bk_sq)
-    unchatable_pawns_score = unchatable_pawns(white_passed, black_passed, wk_sq, bk_sq, side_to_move, all_pieces)
+    # DISABLED: unchatable_pawns
+    # all_pieces = (gs.whitePawns | gs.whiteRooks | gs.whiteKnights | gs.whiteBishops |
+    #               gs.whiteQueens | gs.whiteKing | gs.blackPawns | gs.blackRooks |
+    #               gs.blackKnights | gs.blackBishops | gs.blackQueens | gs.blackKing)
+    # unchatable_pawns_score = unchatable_pawns(white_passed, black_passed, wk_sq, bk_sq, side_to_move, all_pieces)
+
+    #ACTIVE
     connected_passers_score = connected_passers(white_passed, black_passed)
 
-    return k_and_p_score + unchatable_pawns_score + connected_passers_score
+    return connected_passers_score
 

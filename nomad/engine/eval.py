@@ -214,8 +214,7 @@ def evaluate(gs, alpha, beta):
     mopup_score = _mopup_eval(gs)
     tempo = TEMPO_BONUS if gs.whiteToMove else -TEMPO_BONUS
 
-    #endgame terms — tapered by (1 - phase) so contribution ramps up smoothly
-    #as material drops; no discontinuity at the is_endgame threshold
+    #endgame terms — only safe/cheap subset active (see endgame_eval.py docstring)
     endgame_score = 0
     if is_endgame:
         endgame_score = int(endgame_eval(gs) * (1 - phase))
