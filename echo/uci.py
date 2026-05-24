@@ -29,7 +29,7 @@ def print_id_and_options():
     print("id author Abzal Amirbay")
     print("option name UseBook type check default true")
     print("option name BookOnly type check default false")
-    print("option name MaiaElo type combo default 1500 var 1700")
+    print("option name MaiaElo type combo default 1500 var 1400 var 1600 var 1700 var 1800 var 1900")
     print("uciok", flush=True)
 
 
