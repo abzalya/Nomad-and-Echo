@@ -10,7 +10,9 @@ USERNAME = "abzalya"
 class Config:
     use_book: bool = True
     book_only: bool = False
-    MaiaElo: int = 1500
+    maia_elo: int = 1500
+    lc0_path: Path = ECHO_ROOT / "bin" / "lc0.exe"
+    weights_dir: Path = ARTIFACTS / "weights"
 
     def apply_setoption(self, line: str):
         parts = line.split()
@@ -20,4 +22,4 @@ class Config:
         elif name == "BookOnly":
             self.book_only = value.lower() == "true"
         elif name == "MaiaElo":
-            self.MaiaElo = int(value)
+            self.maia_elo = int(value)

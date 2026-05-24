@@ -36,7 +36,7 @@ def print_id_and_options():
 def main():
     sys.stdin.reconfigure(encoding="utf-8-sig")
     cfg = Config()
-    engine = Echo(cfg)
+    engine = None
     board = chess.Board()
 
     for line in sys.stdin:
@@ -48,6 +48,8 @@ def main():
             print_id_and_options()
 
         elif line == "isready":
+            if engine is None:
+                engine = Echo(cfg)
             print("readyok", flush=True)
 
         elif line.startswith("setoption"):
@@ -60,11 +62,13 @@ def main():
             board = parse_position(line)
 
         elif line.startswith("go"):
-            move, source = engine.choose_move(board)
-            print(f"info string source={source}", flush=True)
-            print(f"bestmove {move}", flush=True)
+            if engine:
+                move, source = engine.choose_move(board)
+                print(f"info string source={source}", flush=True)
+                print(f"bestmove {move}", flush=True)
 
         elif line == "quit":
+            if engine: engine.close()
             break
 
 
