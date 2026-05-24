@@ -31,7 +31,7 @@ class Echo:
                 return move, info
         if self.maia:
             move, t_ms = self.maia.choose_move(board)
-            info = f"source=maia elo={self.cfg.maia_elo} nodes=1 t_ms={t_ms}"
+            info = f"source=maia elo={self.cfg.maia_elo} nodes={self.maia.nodes} t_ms={t_ms}"
             return move, info
         move = random.choice(list(board.legal_moves)).uci()
         return move, "source=random"
