@@ -1,0 +1,116 @@
+# Echo
+
+Echo is a mimic bot the idea is for it to play chess like me (chess.com user `abzalya`, ~1500 rapid).
+
+To achieve this, Echo's approach is two parted:
+
+1. **Opening book** — built from ~8,200 (to-date) chess.com games. Each position is
+   hashed and moves recorded with frequency. Echo samples moves
+   weighted by how often that move was actually played, so it reproduces my repertoire.
+
+2. **Maia** — once the book runs out (typically after 8-15 plies), moves are handed off to
+   Maia, a neural network trained to predict what a human at a given Elo would play. It runs
+   inside lc0 at `go nodes 1`, one policy evaluation, no search. Which preserves the human-mimicking property. For additional context on Maia, see:
+   - Maia paper (for context, not required reading): https://arxiv.org/abs/2006.01855
+    - Maia GitHub: https://github.com/CSSLab/maia-chess
+
+Echo is a UCI engine. Run it in CuteChess or any UCI-compatible GUI.
+
+Unlike Nomad, Echo is not self-contained out of the box. You need to build the book and supply the lc0 binary and Maia weights. They have been gitignored.
+
+---
+
+## Setup
+
+### 1. Build the book
+
+Run these two scripts in order from the repo root:
+
+```
+python echo/fetcher.py
+python echo/book_builder.py
+```
+
+`fetcher.py` pulls chess.com games into `echo/artifacts/games_raw.pgn`.
+`book_builder.py` parses them and writes `echo/artifacts/echo_book.pkl`.
+
+To inspect the book afterwards:
+
+```
+python echo/inspect_book.py stats
+python echo/inspect_book.py lookup --after "e2e4"
+```
+
+### 3. Download lc0
+
+Echo uses lc0 to run Maia. Download the right binary for your machine:
+
+**Windows (modern CPU)**
+Download `lc0-vX.XX.X-windows-cpu-dnnl.zip` from
+`https://github.com/LeelaChessZero/lc0/releases/latest`
+Copy `lc0.exe`, `dnnl.dll`, `mimalloc-override.dll`, `mimalloc-redirect.dll` into `echo/bin/`.
+
+**macOS (Apple Silicon / modern Intel)**
+Download `lc0-vX.XX.X-macos.tar.gz` from the same releases page.
+Extract and copy the `lc0` binary into `echo/bin/`.
+You may need to run `xattr -d com.apple.quarantine echo/bin/lc0` to clear Gatekeeper.
+
+**Linux (older CPU, no AVX2 — e.g. 2013 Mac Pro running Linux)**
+Download the BLAS build: `lc0-vX.XX.X-linux-blas.tar.gz`.
+The standard builds assume AVX2; the BLAS build does not. Copy the `lc0` binary into `echo/bin/`.
+
+### 4. Download Maia weights
+
+Download the Maia weight files from `https://github.com/CSSLab/maia-chess/releases`.
+
+Files are named `maia-1100.pb.gz` through `maia-1900.pb.gz` (one per Elo bucket).
+Place them in `echo/artifacts/weights/`.
+
+The default is `maia-1500.pb.gz`. Download at least that one.
+
+### 5. Sanity check lc0
+
+Before running Echo, verify lc0 works with the weights. From the repo root:
+
+```
+.\echo\bin\lc0.exe --weights=echo\artifacts\weights\maia-1500.pb.gz   # Windows
+./echo/bin/lc0     --weights=echo/artifacts/weights/maia-1500.pb.gz   # Linux / macOS
+```
+
+Then type manually:
+```
+uci
+position startpos
+go nodes 1
+```
+
+If you get `bestmove <move>` back, you are good.
+
+---
+
+## Running in CuteChess
+
+Use `echo/echo.bat` (Windows) as the engine command in CuteChess:
+
+```
+C:\path\to\chess-and-engine\echo\echo.bat
+```
+
+The `.bat` file sets the working directory and Python path correctly before launching `uci.py`.
+
+On Linux / macOS, point CuteChess at a shell script equivalent:
+```bash
+#!/bin/bash
+cd /path/to/chess-and-engine
+python -m echo.uci
+```
+
+---
+
+## UCI options
+
+| Option   | Type  | Default | Effect                                          |
+|----------|-------|---------|-------------------------------------------------|
+| UseBook  | check | true    | Toggle the opening book on/off                  |
+| BookOnly | check | false   | Never call Maia; play random moves out of book  |
+| MaiaElo  | combo | 1500    | Which Maia weight file to use (1100–1900)       |
