@@ -1,0 +1,3 @@
+USERNAME = "abzalya"
+
+DEFAULT_MAIA_ELO = 1500

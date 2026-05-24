@@ -8,3 +8,8 @@ dist/
 build/
 CLAUDE.md
 .claude/
+.pytest_cache/
+.vscode/
+
+#Echo artifacts
+echo/artifacts/
