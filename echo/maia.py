@@ -23,11 +23,14 @@ class Maia:
             line = self.proc.stdout.readline()
             if token in line: return line
 
-    def choose_move(self, board: Board) -> str:
+    def choose_move(self, board: Board) -> tuple[str, int]:
+        import time
         self._send(f"position fen {board.fen()}")
+        t0 = time.monotonic()
         self._send("go nodes 1")
         line = self._read_until("bestmove")
-        return line.split()[1]
+        t_ms = int((time.monotonic() - t0) * 1000)
+        return line.split()[1], t_ms
 
     def close(self):
         self._send("quit"); self.proc.wait(timeout=5)

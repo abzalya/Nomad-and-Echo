@@ -64,7 +64,7 @@ def main():
         elif line.startswith("go"):
             if engine:
                 move, source = engine.choose_move(board)
-                print(f"info string source={source}", flush=True)
+                print(f"info string {source}", flush=True)
                 print(f"bestmove {move}", flush=True)
 
         elif line == "quit":

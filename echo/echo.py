@@ -1,5 +1,6 @@
 import random
 from chess import Board
+from chess.polyglot import zobrist_hash
 from echo.book import Book
 from echo.config import Config
 from pathlib import Path
@@ -21,8 +22,16 @@ class Echo:
         if self.maia: self.maia.close()
 
     def choose_move(self, board: Board) -> tuple[str, str]:
-        if self.book and (m := self.book.lookup(board)):
-            return m, "book"
+        if self.book:
+            result = self.book.lookup(board)
+            if result:
+                move, freq, total = result
+                candidates = len(self.book.data.get(zobrist_hash(board), {}))
+                info = f"source=book candidates={candidates} picked={move} freq={freq}/{total}"
+                return move, info
         if self.maia:
-            return self.maia.choose_move(board), "maia"
-        return random.choice(list(board.legal_moves)).uci(), "random"
+            move, t_ms = self.maia.choose_move(board)
+            info = f"source=maia elo={self.cfg.maia_elo} nodes=1 t_ms={t_ms}"
+            return move, info
+        move = random.choice(list(board.legal_moves)).uci()
+        return move, "source=random"

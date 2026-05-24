@@ -10,7 +10,7 @@ USERNAME = "abzalya"
 class Config:
     use_book: bool = True
     book_only: bool = False
-    maia_elo: int = 1500
+    maia_elo: int = 1700
     lc0_path: Path = ECHO_ROOT / "bin" / "lc0.exe"
     weights_dir: Path = ARTIFACTS / "weights"
 
