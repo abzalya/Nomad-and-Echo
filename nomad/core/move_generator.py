@@ -285,18 +285,20 @@ def generateMoves(gs):
 
     return allMoves, in_check
 
-def legalMoves(gs):
-    allLegalMoves = []
+def legalMoves(gs): #update legalMoves with the EN_PASSANT check only
     moves, _ = generateMoves(gs)
+    allLegalMoves = moves
     for move in moves:
-        applyMove(gs, move)
-        gs.whiteToMove = not gs.whiteToMove  # flip back to check own king
-        ownKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
-        sq = ownKing.bit_length() - 1
-        if not isSquareAttacked(sq, gs):
-            allLegalMoves.append(move)
-        gs.whiteToMove = not gs.whiteToMove  # restore before undo
-        undoMove(gs)
+        if move.flags & MoveFlag.EN_PASSANT:
+            applyMove(gs, move)
+            gs.whiteToMove = not gs.whiteToMove
+            moverKing = gs.whiteKing if gs.whiteToMove else gs.blackKing
+            illegal = isSquareAttacked(moverKing.bit_length() - 1, gs)
+            gs.whiteToMove = not gs.whiteToMove
+            if not illegal:
+                allLegalMoves.append(move)
+            gs.whiteToMove = not gs.whiteToMove
+            undoMove(gs)
     return allLegalMoves
 
 def captureMovesOnly(gs):
