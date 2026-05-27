@@ -2,7 +2,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 
-class MoveRequests(BaseModel):
+class MoveRequest(BaseModel):
     fen: str
     history: list[str] = Field(default_factory=list)
     think_ms: int = Field(ge=1, le=60000)
@@ -17,4 +17,3 @@ class MoveResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     version: str
-    
