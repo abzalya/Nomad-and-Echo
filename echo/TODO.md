@@ -1,0 +1,1 @@
+- [] Simulate human thinking with some sort of delay (Echo is near-instant right now)

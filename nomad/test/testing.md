@@ -27,6 +27,7 @@
 | Nomad-v0.15 | Check Extensions + Pawn Hash Table | +45.4 ELO, LOS 93% over v0.14 |
 | Nomad-v0.16 | komodo opening book | ~ +21 ELO LOS 77%|
 | Nomad-v1.0pre | endgame knowledge eval terms | small regression at the moment. |
+| Nomad-v1.0 | v1 release | ~1840 over 250 games vs SF1900 |
 
 ## VS
 
