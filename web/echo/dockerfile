@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# libgomp1 is required by lc0's BLAS build.
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY web/echo/requirements.txt /app/web/echo/requirements.txt
+RUN pip install --no-cache-dir -r /app/web/echo/requirements.txt
+
+COPY echo/ /app/echo/
+COPY web/echo/ /app/web/echo/
+
+RUN chmod +x /app/echo/bin/lc0 || true
+
+WORKDIR /app/web/echo
+EXPOSE 8002
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002"]
+
+#echo requires some runtime assets that arent in git:
+# lc0 binary
+# opening book
+# maia weights

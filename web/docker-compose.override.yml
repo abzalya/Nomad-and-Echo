@@ -1,0 +1,16 @@
+# Local development overlay — auto-loaded by `docker compose up` when run from web/.
+# Publishes service ports on localhost and points the frontend at the local gateway.
+# (Not used in production: prod is invoked with explicit -f flags, which skips this file.)
+services:
+  gateway:
+    ports:
+      - "8000:8000"
+    environment:
+      CORS_ORIGINS: http://localhost:3000
+
+  frontend:
+    build:
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"

@@ -1,0 +1,51 @@
+# Base service definitions, shared by local dev and production.
+##   Local dev:   cd web && docker compose up --build
+#                (auto-merges docker-compose.override.yml — publishes ports on localhost)
+#
+#   Production:  cd web && docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build
+#                (Traefik labels + external `proxy` network; no host ports — needs CHESS_DOMAIN set)
+#
+# Engines (nomad, echo) stay private on chessnet. Only gateway + frontend are ever
+# reachable from outside: directly on the host in dev, via Traefik in prod.
+services:
+  nomad:
+    build:
+      context: ..
+      dockerfile: web/nomad/dockerfile
+    networks:
+      - chessnet
+
+  echo:
+    build:
+      context: ..
+      dockerfile: web/echo/dockerfile
+    networks:
+      - chessnet
+    environment:
+      MAIA_ELO: "1700"
+      ECHO_USE_BOOK: "true"
+      ECHO_BOOK_ONLY: "false"
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: web/gateway/dockerfile
+    networks:
+      - chessnet
+    environment:
+      NOMAD_URL: http://nomad:8001
+      ECHO_URL: http://echo:8002
+    depends_on:
+      - nomad
+      - echo
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: dockerfile
+    depends_on:
+      - gateway
+
+networks:
+  chessnet:
+    driver: bridge
