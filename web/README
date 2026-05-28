@@ -1,0 +1,19 @@
+**WEB**
+How to run
+Locally without Docker (3 terminals):
+
+
+.\venv\Scripts\python.exe -m uvicorn main:app --app-dir web/nomad --port 8001
+.\venv\Scripts\python.exe -m uvicorn main:app --app-dir web/echo --port 8002
+.\venv\Scripts\python.exe -m uvicorn main:app --app-dir web/gateway --port 8000
+
+and frontend
+cd web/frontend
+bun dev
+
+
+fun stuff to add:
+
+the position on landing can rotate have some interesting ones, which games they are from and maybe even a link to a game ?
+
+1. Quips moved to lib/quips.ts — one file, two bots, one array per trigger. Edit freely; the store will pick a random line. The triggers are documented in the file header (check-given, check-received, big-capture, win, loss, draw). start is intentionally an empty array — nothing fires at game start.
