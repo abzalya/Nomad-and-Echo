@@ -1,10 +1,13 @@
 #API contract pydantic models for Echo
-from typing import Optional
+from typing import Annotated, Optional
 from pydantic import BaseModel, Field
 
+#uci move is 5 chars max (e7e8q), cap loosely
+UciStr = Annotated[str, Field(max_length=10)]
+
 class MoveRequest(BaseModel):
-    fen: str
-    history: list[str] = Field(default_factory=list)
+    fen: str = Field(max_length=120)
+    history: list[UciStr] = Field(default_factory=list, max_length=600)
 
 class MoveResponse(BaseModel):
     uci: str

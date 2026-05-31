@@ -1,9 +1,12 @@
 # Base service definitions, shared by local dev and production.
-##   Local dev:   cd web && docker compose up --build
+#   Local dev:   cd web && docker compose up --build
 #                (auto-merges docker-compose.override.yml — publishes ports on localhost)
 #
 #   Production:  cd web && docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build
 #                (Traefik labels + external `proxy` network; no host ports — needs CHESS_DOMAIN set)
+#
+# Tunables come from web/.env (see .env.example), all have defaults so an empty
+# .env is fine. Only CHESS_DOMAIN is required, and only for prod.
 #
 # Engines (nomad, echo) stay private on chessnet. Only gateway + frontend are ever
 # reachable from outside: directly on the host in dev, via Traefik in prod.
@@ -14,6 +17,17 @@ services:
       dockerfile: web/nomad/dockerfile
     networks:
       - chessnet
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8001/health').status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1g
 
   echo:
     build:
@@ -22,9 +36,22 @@ services:
     networks:
       - chessnet
     environment:
-      MAIA_ELO: "1700"
-      ECHO_USE_BOOK: "true"
-      ECHO_BOOK_ONLY: "false"
+      MAIA_ELO: "${MAIA_ELO:-1700}"
+      ECHO_USE_BOOK: "${ECHO_USE_BOOK:-true}"
+      ECHO_BOOK_ONLY: "${ECHO_BOOK_ONLY:-false}"
+      LC0_PATH: "${LC0_PATH:-/app/echo/bin/lc0}"
+      WEIGHTS_DIR: "${WEIGHTS_DIR:-/app/echo/artifacts/weights}"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8002/health').status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2g
 
   gateway:
     build:
@@ -35,16 +62,28 @@ services:
     environment:
       NOMAD_URL: http://nomad:8001
       ECHO_URL: http://echo:8002
+      UNLIMITED_THINK_MS: "${UNLIMITED_THINK_MS:-5000}"
+      HINT_THINK_MS: "${HINT_THINK_MS:-1500}"
+      TIMEOUT_SLACK_MS: "${TIMEOUT_SLACK_MS:-5000}"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/health').status==200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     depends_on:
-      - nomad
-      - echo
+      nomad:
+        condition: service_healthy
+      echo:
+        condition: service_healthy
 
   frontend:
     build:
       context: ./frontend
       dockerfile: dockerfile
     depends_on:
-      - gateway
+      gateway:
+        condition: service_healthy
 
 networks:
   chessnet:

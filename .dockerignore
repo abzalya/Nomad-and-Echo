@@ -1,0 +1,30 @@
+# context is the repo root (nomad/echo/gateway use context: ..)
+# don't ignore echo/bin or echo/artifacts, those get dropped in by hand and need to reach the image
+
+.git/
+.gitignore
+.dockerignore
+
+#python junk
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+venv/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+#editor / agent
+.vscode/
+.claude/
+CLAUDE.md
+docs/
+
+#big PGN corpus, web doesn't use it
+nomad/test/
+
+#frontend builds from its own context
+web/frontend/node_modules/
+web/frontend/.next/
+
+**/.DS_Store

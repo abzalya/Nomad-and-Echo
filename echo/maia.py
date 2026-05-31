@@ -22,6 +22,8 @@ class Maia:
     def _read_until(self, token: str) -> str:
         while True:
             line = self.proc.stdout.readline()
+            if line == "":  #empty = EOF, lc0 died (bad weights / wrong binary)
+                raise RuntimeError(f"lc0 exited before '{token}' (check weights/binary)")
             if token in line: return line
 
     def choose_move(self, board: Board) -> tuple[str, int]:

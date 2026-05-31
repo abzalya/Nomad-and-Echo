@@ -4,10 +4,14 @@ FROM python:3.11-slim
 WORKDIR /app
 
 COPY web/nomad/requirements.txt /app/web/nomad/requirements.txt
-RUN pip install --no-cache-dir -r 
+RUN pip install --no-cache-dir -r /app/web/nomad/requirements.txt
 
 COPY nomad/ /app/nomad/
 COPY web/nomad/ /app/web/nomad/
+
+#don't run as root
+RUN useradd --create-home --uid 10001 appuser && chown -R appuser /app
+USER appuser
 
 WORKDIR /app/web/nomad
 EXPOSE 8001

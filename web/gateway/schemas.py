@@ -1,10 +1,13 @@
 #Public contract
-from typing import Literal, Optional
+from typing import Annotated, Literal, Optional
 from pydantic import BaseModel, Field
 
+#uci move is 5 chars max (e7e8q), cap loosely
+UciStr = Annotated[str, Field(max_length=10)]
+
 class MoveRequest(BaseModel):
-    fen: str
-    history: list[str] = Field(default_factory=list)
+    fen: str = Field(max_length=120)
+    history: list[UciStr] = Field(default_factory=list, max_length=600)
     opponent: Literal["nomad", "echo"]
     think_ms: Optional[int] = Field(default=None, ge=1, le=60_000)
 

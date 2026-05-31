@@ -1,3 +1,4 @@
+#build from repo root
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -12,13 +13,18 @@ RUN pip install --no-cache-dir -r /app/web/echo/requirements.txt
 COPY echo/ /app/echo/
 COPY web/echo/ /app/web/echo/
 
+#linux binary is just 'lc0' (no .exe), LC0_PATH points at it
 RUN chmod +x /app/echo/bin/lc0 || true
+
+#don't run as root
+RUN useradd --create-home --uid 10001 appuser && chown -R appuser /app
+USER appuser
 
 WORKDIR /app/web/echo
 EXPOSE 8002
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002"]
 
-#echo requires some runtime assets that arent in git:
-# lc0 binary
-# opening book
-# maia weights
+#echo needs runtime assets that arent in git, drop these into echo/ before building:
+# echo/bin/lc0  (linux lc0 binary)
+# echo/artifacts/weights/maia-<elo>.pb.gz
+# echo/artifacts/echo_book.pkl

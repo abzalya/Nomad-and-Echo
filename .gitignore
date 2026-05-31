@@ -14,4 +14,9 @@ CLAUDE.md
 #Echo artifacts
 echo/artifacts/
 echo/bin/
-echo/bin/lc0.exe
+
+#keep .env out of git, .env.example is the committed template
+.env
+*.env
+!.env.example
+!*.env.example
