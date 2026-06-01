@@ -1,17 +1,28 @@
 # Production overlay — fronted by an external, shared Traefik instance.
 #
 #   cd web
-#   echo "CHESS_DOMAIN=chess.example.com" > .env      # set your real subdomain once
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build
+#   echo "CHESS_DOMAIN=chess.example.com" > .env   # set your real subdomain once
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
-# Assumes Traefik is already running on an external Docker network named `proxy`,
-# with a TLS entrypoint `websecure` and a Let's Encrypt cert resolver `le`.
+# TLS is terminated by Cloudflare at the edge; traffic reaches this box through a
+# Cloudflare Tunnel and hits Traefik on a plain-HTTP entrypoint named `web`.
+# Traefik does NOT manage certificates here (no Let's Encrypt, no certresolver) —
+# the tunnel is already encrypted. Traefik runs on an external network `proxy`.
 #
 # Routing: everything on https://$CHESS_DOMAIN goes to the frontend, except /api/*
-# which goes to the gateway. Same origin => no CORS needed in the browser.
-# No host ports are published — Traefik is the only ingress.
+# which goes to the gateway (the longer rule wins on Traefik priority). Same
+# origin => no browser CORS. No host ports — the tunnel -> Traefik is the only ingress.
 services:
+  # Engines stay private (chessnet, no labels). restart so they self-heal on reboot.
+  nomad:
+    restart: unless-stopped
+
+  echo:
+    restart: unless-stopped
+
   gateway:
+    restart: unless-stopped
     networks:
       - chessnet
       - proxy
@@ -21,21 +32,20 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
       - "traefik.http.routers.chess-api.rule=Host(`${CHESS_DOMAIN}`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.chess-api.entrypoints=websecure"
-      - "traefik.http.routers.chess-api.tls.certresolver=le"
+      - "traefik.http.routers.chess-api.entrypoints=web"
       - "traefik.http.services.chess-api.loadbalancer.server.port=8000"
 
   frontend:
     # No build-arg: client uses relative "/api", Traefik routes <domain>/api to
     # the gateway (same origin). The same image works on any domain.
+    restart: unless-stopped
     networks:
       - proxy
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
       - "traefik.http.routers.chess-web.rule=Host(`${CHESS_DOMAIN}`)"
-      - "traefik.http.routers.chess-web.entrypoints=websecure"
-      - "traefik.http.routers.chess-web.tls.certresolver=le"
+      - "traefik.http.routers.chess-web.entrypoints=web"
       - "traefik.http.services.chess-web.loadbalancer.server.port=3000"
 
 networks:
