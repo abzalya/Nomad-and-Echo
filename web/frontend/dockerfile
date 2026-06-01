@@ -9,8 +9,8 @@ FROM oven/bun:1-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ARG NEXT_PUBLIC_API_URL=http://localhost:8000
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# No NEXT_PUBLIC_API_URL build-arg: the client uses relative "/api" paths, so
+# the same image works on any domain (Pi staging, Mac Pro prod) with no rebuild.
 RUN bun run build
 
 # run stage

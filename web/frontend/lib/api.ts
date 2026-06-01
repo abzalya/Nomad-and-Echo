@@ -1,7 +1,11 @@
 // Thin client for the FastAPI gateway (web/gateway).
-// Contract: spec §16.3. Set NEXT_PUBLIC_API_URL to override the default.
-
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// Contract: spec §16.3.
+// BASE is empty by default => calls are relative ("/api/..."), same-origin.
+//   prod: Traefik routes <domain>/api/* to the gateway (same origin, no CORS).
+//   dev:  next.config.ts rewrites() proxies /api/* to the gateway at runtime.
+// NEXT_PUBLIC_API_URL stays as an optional escape hatch; leave it unset so
+// nothing is baked into the bundle.
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export type Opponent = "nomad" | "echo";
 

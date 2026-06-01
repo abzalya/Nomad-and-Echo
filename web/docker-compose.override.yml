@@ -1,16 +1,20 @@
 # Local development overlay — auto-loaded by `docker compose up` when run from web/.
-# Publishes service ports on localhost and points the frontend at the local gateway.
 # (Not used in production: prod is invoked with explicit -f flags, which skips this file.)
+#
+# Same-origin model, matching prod: the browser only ever talks to the frontend
+# on :3000 using relative "/api" paths. The Next server proxies /api to the
+# gateway over chessnet (see frontend GATEWAY_URL + next.config.ts rewrites()).
+# Because it's a server-side proxy, there is no browser CORS in dev.
 services:
   gateway:
+    # Published only so you can curl the API directly while debugging; the app
+    # itself never hits this host port.
     ports:
       - "8000:8000"
-    environment:
-      CORS_ORIGINS: http://localhost:3000
 
   frontend:
-    build:
-      args:
-        NEXT_PUBLIC_API_URL: http://localhost:8000
+    # Join chessnet so the Next server's /api rewrite can reach the gateway.
+    networks:
+      - chessnet
     ports:
       - "3000:3000"

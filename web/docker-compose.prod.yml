@@ -26,9 +26,8 @@ services:
       - "traefik.http.services.chess-api.loadbalancer.server.port=8000"
 
   frontend:
-    build:
-      args:
-        NEXT_PUBLIC_API_URL: https://${CHESS_DOMAIN}
+    # No build-arg: client uses relative "/api", Traefik routes <domain>/api to
+    # the gateway (same origin). The same image works on any domain.
     networks:
       - proxy
     labels:

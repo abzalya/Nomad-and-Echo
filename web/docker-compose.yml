@@ -10,8 +10,16 @@
 #
 # Engines (nomad, echo) stay private on chessnet. Only gateway + frontend are ever
 # reachable from outside: directly on the host in dev, via Traefik in prod.
+#
+# Each service has BOTH `image:` and `build:`:
+#   - `docker compose up --build`  -> builds locally AND tags it as that image
+#   - `docker compose pull`        -> pulls the prebuilt image from GHCR (server)
+# So dev builds from source; the server just pulls what GitHub Actions pushed.
+# TAG selects which image version: defaults to `latest`, set TAG=<git-sha> in
+# web/.env on the server to pin/roll back to an exact build.
 services:
   nomad:
+    image: ghcr.io/abzalya/chess-nomad:${TAG:-latest}
     build:
       context: ..
       dockerfile: web/nomad/dockerfile
@@ -30,6 +38,7 @@ services:
           memory: 1g
 
   echo:
+    image: ghcr.io/abzalya/chess-echo:${TAG:-latest}
     build:
       context: ..
       dockerfile: web/echo/dockerfile
@@ -54,6 +63,7 @@ services:
           memory: 2g
 
   gateway:
+    image: ghcr.io/abzalya/chess-gateway:${TAG:-latest}
     build:
       context: ..
       dockerfile: web/gateway/dockerfile
@@ -78,6 +88,7 @@ services:
         condition: service_healthy
 
   frontend:
+    image: ghcr.io/abzalya/chess-frontend:${TAG:-latest}
     build:
       context: ./frontend
       dockerfile: dockerfile
